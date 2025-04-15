@@ -6,16 +6,6 @@
       "use": "@vercel/next"
     }
   ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
@@ -58,5 +48,7 @@
     }
   ],
   "regions": ["iad1"],
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "cleanUrls": true,
+  "trailingSlash": false
 } 
