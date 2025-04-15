@@ -21,7 +21,11 @@ export async function updateSession(request) {
     }
   )
 
- 
+  // Skip authentication check for admin routes
+  if (request.nextUrl.pathname.startsWith('/admin')) {
+    return supabaseResponse
+  }
+
   const {
     data: { user },
   } = await supabase.auth.getUser()
