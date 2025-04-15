@@ -1,0 +1,22 @@
+{
+    "name": "MediConnect",
+    "short_name": "MediConnect",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#6200ee",
+    "description": "MediConnect - Your Health, Your Way",
+    "icons": [
+      {
+        "src": "/logo.jpeg",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "/logo.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ]
+  }
+  

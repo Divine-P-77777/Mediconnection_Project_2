@@ -1,0 +1,56 @@
+/src
+ ├── /app
+ │   ├── /admin
+ │   │   ├── AdminNav.js
+ │   │   ├── AdminFoot.js
+ │   │   ├── AdminHome.js
+ │   │   ├── Dashboard.js   # Manage appointments in health centers
+ │   │   ├── UploadDoc.js   # Upload reports, bills, prescriptions
+ │   │   ├── Dr_Manager.js  # Add/Edit doctors, approve credentials
+ │   │
+ │   ├── /developer
+ │   │   ├── DevNav.js
+ │   │   ├── DevFoot.js
+ │   │   ├── DevHome.js
+ │   │   ├── ApprovalManager.js  # Approve health centers & admins
+ │   │
+ │   ├── /user
+ │   │   ├── UserNav.js
+ │   │   ├── UserFoot.js
+ │   │   ├── UserHome.js
+ │   │   ├── BookApp.js           # Book slot at health center
+ │   │   ├── BooKLiveConsult.js   # Book and pay for live consult
+ │   │   ├── DownloadDoc.js       # Download reports, bills, prescriptions
+ │   │   ├── UserProfile.js       # User profile settings
+ │   │   ├── ContactUs.js
+ │   │   ├── AboutUs.js
+ │   │
+ │   ├
+ │   ├── /doctor
+ │   │   ├── Dr_Nav.js
+ │   │   ├── Dr_Foot.js
+ │   │   ├── Dr_Profile.js        # Profile & credentials
+ │   │   ├── Dr_UploadDoc.js      # Upload prescriptions & reports
+ │   │   ├── LiveConsultPanel.js  # Handle live consultation
+ │   │   ├── LiveConsultPanel.js  # Handle live consultation
+ │   |
+ │   |── /components
+ │   |── /api
+ │   |── /auth
+ │   |── /lib
+ │   |── /middleware
+ ├── /layouts
+ │   ├── AdminLayout.js
+ │   ├── DeveloperLayout.js
+ │   ├── UserLayout.js
+ │   ├── DoctorLayout.js
+ │
+ ├── /pages
+ │   ├── admin/*
+ │   ├── developer/*
+ │   ├── user/*
+ │   ├── doctor/*
+ │
+ ├── /auth  # NextAuth.js setup for role-based authentication
+ │   ├── auth-config.js
+ │   ├── middleware.js
