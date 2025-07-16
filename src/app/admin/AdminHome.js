@@ -10,7 +10,7 @@ import Link from "next/link";
 import supabase from "@/utils/supabase/client";
 import { Users, FileText, Upload, UserPlus, Calendar, Clock, FileUp, UserCheck } from "lucide-react";
 
-// Move features outside component to prevent recreation
+
 const features = [
   { 
     icon: <FaCalendarCheck size={30} />, 
@@ -237,7 +237,7 @@ export default function AdminHome() {
           </div>
         </CardHeader>
         <CardContent>
-          {/* Add your appointments table or list here */}
+         
           <div className="text-center text-muted-foreground">No recent appointments</div>
         </CardContent>
       </Card>

@@ -3,11 +3,7 @@ import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
 
 const teamMembers = [
-  { name: "Deepak Prasad", role: "Full Stack Developer" },
-  { name: "Mansha Panday", role: "Backend Specialist" },
-  { name: "Vishakha Puri", role: "Frontend Developer" },
-  { name: "Shristy Kumari", role: "UI/UX Designer" },
-  { name: "Aastha Yadav", role: "Project Manager" },
+  { name: "Deepak Prasad", role: "Full Stack Developer" }
 ];
 
 const techStack = [
