@@ -2,11 +2,12 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "./components/ClientWrapper";
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import {Provider} from "./Provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  metadataBase: new URL("https://mediconnection.vercel.app"), // ✅ Replace with your actual domain
+  metadataBase: new URL("https://mediconnection.vercel.app"), 
   title: "Mediconnection",
   description: "Let's connect with nearest health center .",
   icons: {
@@ -59,8 +60,9 @@ export default function RootLayout({ children }) {
         <meta name="twitter:image" content="/logo.png" />
       </head>
       <body className={`${inter.className}  `}>
-        <ClientWrapper>{children}
-        <SpeedInsights />
+        <ClientWrapper>
+          <Provider>{children}</Provider>
+          <SpeedInsights />
         </ClientWrapper>
       </body>
     </html>

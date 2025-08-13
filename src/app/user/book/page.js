@@ -3,13 +3,13 @@ import { useState, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { format, addDays, eachDayOfInterval, isSameDay } from "date-fns";
 import { motion } from "framer-motion";
-import { healthCentersData } from "@/app/constants";
+import { healthCentersData } from "@/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 // import DatePicker from "react-date-picker";
 import "react-date-picker/dist/DatePicker.css";
 import "react-calendar/dist/Calendar.css";
-import supabase from "@/utils/supabase/client"
+import supabase from "@/supabase/client"
 ;
 import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
 

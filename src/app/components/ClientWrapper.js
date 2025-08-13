@@ -2,7 +2,7 @@
 
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
-import { store, persistor } from "../store/store";
+import { store, persistor } from "../../store/store";
 import { useEffect, useState } from "react";
 
 export default function ClientWrapper({ children }) {

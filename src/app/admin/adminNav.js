@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleDarkMode } from "../store/themeSlice";
+import { toggleDarkMode } from "../../store/themeSlice";
 import { usePathname } from 'next/navigation';
 
 const AdminNav = () => {

@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
   const getNavAndFooter = () => {
     if (pathname.startsWith("/admin")) {
       return { Nav: AdminNav, Foot: AdminFoot };
-    } else if (pathname.startsWith("/developer")) {
+    } else if (pathname.startsWith("/super_admin")) {
       return { Nav: DeveloperNav, Foot: DeveloperFoot };
     } else if (pathname.startsWith("/doctor")) {
       return { Nav: DoctorNav, Foot: DoctorFoot };

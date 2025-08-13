@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleDarkMode } from "./store/themeSlice";
+import { toggleDarkMode } from "../store/themeSlice";
 import Image from "next/image";
 
 const Page = () => {

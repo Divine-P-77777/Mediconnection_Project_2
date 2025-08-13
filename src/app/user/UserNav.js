@@ -4,10 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleDarkMode } from "../store/themeSlice";
+import { toggleDarkMode } from "../../store/themeSlice";
 import { usePathname } from 'next/navigation';
-import LoginButton from "../components/LoginLogoutButton";
-import UserGreetText from "../components/UserGreetText";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,7 +20,7 @@ const Navbar = () => {
     { name: "Live Consult", path: "/user/consult" },
     { name: "About Us", path: "/user/about" },
     { name: "Contact Us", path: "/user/contact" },
-    { name: "Login", path: "/user/login" },
+    { name: "Login", path: "/user/auth" },
   ];
 
   return (
@@ -34,9 +32,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo with enhanced hover effect */}
         <Link href="/user" className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-          <Image src="/logo.png" alt="Logo" width={60} height={60} 
+          {/* <Image src="/logo.png" alt="Logo" width={60} height={60} 
             className="rounded-xl border hover:shadow-lg hover:border-cyan-400 transition-all duration-300" 
-          />
+          /> */}
           <span className="text-xl font-bold hover:text-cyan-400 transition-colors duration-300">Mediconnect</span>
         </Link>
 

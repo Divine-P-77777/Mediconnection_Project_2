@@ -1,9 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore, persistReducer } from "redux-persist";
-import storage from "redux-persist/lib/storage"; // defaults to localStorage
+import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
 import themeReducer from "./themeSlice";
-import businessReducer from "./businessSlice"; // ✅ Renamed to `businessReducer` for clarity
 
 // Persist config for theme
 const themePersistConfig = {
@@ -12,17 +11,9 @@ const themePersistConfig = {
   whitelist: ["isDarkMode"]
 };
 
-// Persist config for business
-const businessPersistConfig = {
-  key: "business",
-  storage,
-  whitelist: ["selectedBusiness"]
-};
-
-// Combine reducers
+// Combine reducers (only theme now)
 const rootReducer = combineReducers({
   theme: persistReducer(themePersistConfig, themeReducer),
-  business: persistReducer(businessPersistConfig, businessReducer), // ✅ Now persisted
 });
 
 // Create store with middleware configuration

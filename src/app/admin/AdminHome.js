@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { motion } from 'framer-motion';
 import { FaCalendarCheck, FaVideo, FaFileDownload } from 'react-icons/fa';
 import Link from "next/link";
-import supabase from "@/utils/supabase/client";
+import supabase from "@/supabase/client";
 import { Users, FileText, Upload, UserPlus, Calendar, Clock, FileUp, UserCheck } from "lucide-react";
 
 

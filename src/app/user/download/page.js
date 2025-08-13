@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { sampleData } from "@/app/constants";
-import { healthCentersData } from "@/app/constants";
+import { sampleData } from "@/constants";
+import { healthCentersData } from "@/constants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 

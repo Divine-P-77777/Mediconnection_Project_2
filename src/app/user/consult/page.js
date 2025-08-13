@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format, addDays } from "date-fns";
-import supabase from "@/utils/supabase/client"
+import supabase from "@/supabase/client"
 ; 
 import { useSelector } from "react-redux";
 import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
