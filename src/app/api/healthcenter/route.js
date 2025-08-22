@@ -1,0 +1,56 @@
+import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
+export async function POST(req) {
+  try {
+    const {
+      email,
+      password,
+      username,
+      name,
+      hcrn_hfc,
+      address,
+      contact,
+      pincode,
+    } = await req.json();
+
+    // Validate input (all required)
+    if (!email || !password || !username || !name || !hcrn_hfc || !address || !contact || !pincode) {
+      return NextResponse.json({ error: 'All fields required' }, { status: 400 });
+    }
+
+    // Sign up user with all metadata required by triggers
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: 'health_center',
+          username,
+          name,
+          hcrn_hfc,
+          address,
+          contact,
+          pincode,
+          approved: false,
+        },
+      },
+    });
+    if (error) throw error;
+
+    const userId = data.user?.id;
+    if (!userId) throw new Error('User creation failed');
+
+    return NextResponse.json({
+      message: 'Health Center registered. Waiting for admin approval.',
+      user: { id: userId, email },
+    });
+  } catch (err) {
+    return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 });
+  }
+}

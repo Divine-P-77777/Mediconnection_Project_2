@@ -1,365 +1,436 @@
 "use client"
-import { useState, useEffect, useMemo } from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
-import { format, addDays, eachDayOfInterval, isSameDay } from "date-fns";
-import { motion } from "framer-motion";
-import { healthCentersData } from "@/constants";
+import { format, isValid, parseISO } from "date-fns";
+import { supabase } from "@/supabase/client";
+import Calendar from "./Calender";
+import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-// import DatePicker from "react-date-picker";
-import "react-date-picker/dist/DatePicker.css";
-import "react-calendar/dist/Calendar.css";
-import supabase from "@/supabase/client"
-;
-import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
+import { useForm, Controller } from "react-hook-form";
+import { useAuth } from "@/hooks/useAuth";
+const cn = (cls, dark) =>
+  Array.isArray(cls) 
+    ? cls.map((c) => (typeof c === "function" ? c(dark) : c)).join(" ")
+    : typeof cls === "function"
+      ? cls(dark)
+      : cls;
 
-// Styled component for dark mode classes
-const cn = (classes, isDark) => {
-    if (!Array.isArray(classes)) return typeof classes === 'function' ? classes(isDark) : classes;
-    return classes.map(c => (typeof c === 'function' ? c(isDark) : c)).join(' ');
-};
+function BookAppointment() {
+  const isDarkMode = useSelector((s) => s.theme.isDarkMode);
+
+  // Search & Centers
+  const [pincode, setPincode] = useState("");
+  const [healthCenters, setHealthCenters] = useState([]);
+  const [selectedCenter, setSelectedCenter] = useState(null);
+  const [loadingCenters, setLoadingCenters] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [appointmentDate, setAppointmentDate] = useState(null);
+  const [selectedTime, setSelectedTime] = useState("");
+  const [selectedPurpose, setSelectedPurpose] = useState("");
+  const { user } = useAuth();
 
 
-const Calendar = ({ selectedCenter, selectedDate, handleDateSelect, isDarkMode }) => {
-    const today = new Date();
-    const daysInRange = eachDayOfInterval({ start: today, end: addDays(today, 4) });
-    const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+ 
 
-    return (
-        <Card className={cn([isDark => `px-0 py-3 sm:p-6 rounded-xl shadow-lg ${isDark ? "bg-gray-800 text-white" : "bg-white text-black"}`], isDarkMode)}>
-            <CardHeader className="flex justify-center">
-                <CardTitle>Select Date</CardTitle>
-            </CardHeader>,
-            <CardContent className="px-3">
-                <div className="grid grid-cols-7 sm:gap-2 mb-2 font-semibold text-center">
-                    {weekDays.map(day => <div key={day}>{day}</div>)}
-                </div>
-                <div className="grid grid-cols-7 gap-2 sm:gap-2">
-                    {daysInRange.map((day, index) => {
-                        const slotStatus = selectedCenter?.SlotStatus?.[index] || "not_available";
+  // react-hook-form
+  const {
+    control,
+    handleSubmit,
+    reset: formReset,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    defaultValues: {
+      fullName: "",
+      phone: "",
+      gender: "",
+      dob: null,
+    },
+  });
 
-                        const isSelected = selectedDate && isSameDay(day, selectedDate);
-                        const bgColor = {
-                            available: "bg-green-500",
-                            not_available: "bg-red-500",
-                            off: "bg-yellow-500"
-                        }[slotStatus] || "bg-gray-400";
+  // watch values for form fields
+  const personalInfo = watch();
 
-                        return (
-                            <motion.div
-                                key={day}
-                                whileHover={{ scale: slotStatus === "available" ? 1.05 : 1 }}
-                                className={cn([
-                                    `p-2 text-center transition-all rounded-full sm:rounded-lg md:rounded-md lg:rounded-none`,
-                                    isSelected ? "ring-2 ring-white bg-cyan-300 text-black" : `${bgColor} text-white`,
-                                    slotStatus === "available" ? "cursor-pointer" : "cursor-not-allowed"
-                                ])}
-                                onClick={() => slotStatus === "available" && handleDateSelect(day)}
-                            >
-                                {format(day, "d")}
-                            </motion.div>
-                        );
-                    })}
-                </div>
-                <div className="mt-10 flex-col flex sm:flex-row justify-center sm:items-center mx-auto gap-3">
-                    {[
-                        { color: "bg-green-400", text: "Available" },
-                        { color: "bg-red-400", text: "Not Available" },
-                        { color: "bg-yellow-400", text: "Off Day" },
-                        { color: "bg-cyan-400", text: "Selected" }
-                    ].map((item) => (
-                        <div key={item.text} className="flex items-center">
-                            <span className={`${item.color} rounded-full w-4 h-4`} />
-                            <span className="ml-2">{item.text}</span>
-                        </div>
-                    ))}
-                </div>
-            </CardContent>
+  // Reset all fields including react-hook-form
+  const resetAll = () => {
+    setPincode("");
+    setHealthCenters([]);
+    setSelectedCenter(null);
+    setAppointmentDate(null);
+    setSelectedTime("");
+    setSelectedPurpose("");
+    setHasSearched(false);
+    formReset();
+  };
+
+  // Fetch centers by pincode
+  const fetchCenters = async () => {
+    if (pincode.length !== 6) return alert("Enter valid 6-digit pincode");
+
+    setLoadingCenters(true);
+    setHasSearched(true);
+
+    const { data, error } = await supabase
+      .from("health_centers_public")
+      .select("*")
+      .eq("pincode", pincode)
+      .eq("approved", true)
+      .eq("current_status", true);
+
+    setLoadingCenters(false);
+    if (error) return alert("Failed to load centers");
+
+    setHealthCenters(data || []);
+    setSelectedCenter(data?.[0] || null);
+  };
+
+  // Validate a date (string or Date)
+  const isValidDate = (d) => {
+    if (!d) return false;
+    if (d instanceof Date) return isValid(d);
+    if (typeof d === "string") {
+      const parsed = parseISO(d);
+      return isValid(parsed);
+    }
+    return false;
+  };
+
+  // Book appointment handler (react-hook-form submit)
+  const onSubmit = async (data) => {
+      if (!user?.id) {
+    alert("You must be logged in to book an appointment.");
+    return;
+  }
+    const { fullName, phone, gender, dob } = data;
+    if (
+      !selectedCenter ||
+      !appointmentDate ||
+      !selectedTime ||
+      !selectedPurpose ||
+      !fullName.trim() ||
+      !phone.trim() ||
+      !gender.trim() ||
+      !dob ||
+      !isValidDate(dob) ||
+      !isValidDate(appointmentDate)
+    ) {
+      alert("All fields are required");
+      return;
+    }
+ 
+   
+    const { error } = await supabase.from("appointments").insert([
+      {
+        center_id: selectedCenter.id,
+        user_id: user?.id,
+        center_name: selectedCenter.name,
+        date: format(new Date(appointmentDate), "yyyy-MM-dd"),
+        time: selectedTime,
+        purpose: selectedPurpose,
+        user_name: fullName,
+        phone,
+        gender,
+        dob: format(new Date(dob), "yyyy-MM-dd"),
+      },
+    ]);
+
+    if (error) alert("Booking failed");
+    else {
+      alert("Appointment booked!");
+      resetAll();
+    }
+  };
+
+  // Ensure we always have arrays
+  const availabilityList = Array.isArray(selectedCenter?.availability)
+    ? selectedCenter.availability
+    : [];
+
+  const purposesList = Array.isArray(selectedCenter?.purposes)
+    ? selectedCenter.purposes
+    : [];
+
+  // Get available days for the calendar (for highlighting or selection)
+  const availableDaysOfWeek = availabilityList
+    .filter((a) => a.status === "available")
+    .map((a) => a.day_of_week);
+
+  // Find availability for the selected appointment day
+  let slotsForDate = [];
+  let statusForDate = "";
+
+  if (appointmentDate) {
+    const dayOfWeek = format(appointmentDate, "EEEE");
+    const found = availabilityList.find((a) => a.day_of_week === dayOfWeek);
+
+    if (found) {
+      statusForDate = found.status;
+      slotsForDate = found.slot_time
+        .map((s) => s.split(","))
+        .flat()
+        .map((s) => s.trim())
+        .filter(Boolean);
+    }
+  }
+
+  // Active services
+  const activePurposes = purposesList
+    .filter((p) => p.status === "active")
+    .map((p) => p.service_name);
+
+  return (
+    <div
+      className={cn(
+        [
+          (isDark) =>
+            `w-full min-h-screen mt-10 px-4 py-5 transition-all ${isDark ? "bg-[#0A192F] text-white" : "bg-white text-black"
+            }`,
+        ],
+        isDarkMode
+      )}
+    >
+      <h1 className="text-2xl sm:text-3xl font-bold text-center mt-20 mb-6">
+        Book Your Appointment
+      </h1>
+
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Pincode Search */}
+        <Card className="p-6 shadow-lg">
+          <CardHeader className="flex justify-center">
+            <CardTitle>Enter Your Pincode</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              placeholder="Enter 6-digit pincode"
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
+              maxLength={6}
+              className={cn(
+                [
+                  (isDark) =>
+                    `w-full p-3 rounded-lg border ${isDark ? "bg-[#0A192F] text-white" : "bg-white text-black"
+                    }`,
+                ],
+                isDarkMode
+              )}
+            />
+            <Button onClick={fetchCenters} disabled={loadingCenters || pincode.length !== 6}>
+              {loadingCenters ? "Searching..." : "Search"}
+            </Button>
+          </CardContent>
         </Card>
-    );
-};
 
-const BookAppointment = () => {
-    const isDarkMode = useSelector(state => state.theme.isDarkMode);
-    const [pincode, setPincode] = useState("");
-    const [filteredCenters, setFilteredCenters] = useState(healthCentersData);
-    const [selectedCenter, setSelectedCenter] = useState(healthCentersData[0] || null);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedTime, setSelectedTime] = useState("");
-    const [selectedPurpose, setSelectedPurpose] = useState("");
-    const [personalInfo, setPersonalInfo] = useState({
-        fullName: "",
-        phone: "",
-        gender: ""
-    });
-    const [isLoadingCenters, setIsLoadingCenters] = useState(false);
-    const [hasSearched, setHasSearched] = useState(false);
+        {/* Health Center List */}
+        {hasSearched && (
+          <Card className="p-6 shadow-lg">
+            <CardHeader className="flex justify-center">
+              <CardTitle>Select Health Center</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {healthCenters.length === 0 ? (
+                <div className="text-red-500 text-center">No health centers found</div>
+              ) : (
+                <select
+                  className="w-full p-3 rounded-lg border"
+                  value={selectedCenter?.id || ""}
+                  onChange={(e) => {
+                    const center = healthCenters.find((c) => String(c.id) === e.target.value);
+                    setSelectedCenter(center || null);
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a Health Center
+                  </option>
+                  {healthCenters.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-    useEffect(() => {
-        const maxDate = new Date();
-        maxDate.setFullYear(maxDate.getFullYear() - 1);
-        setSelectedDate(maxDate);
-    }, []);
+        {/* Appointment Flow */}
+        {selectedCenter && (
+          <>
+            {/* Calendar - optionally restrict selectable days */}
+            <Calendar
+              selectedCenter={selectedCenter}
+              selectedDate={appointmentDate}
+              handleDateSelect={setAppointmentDate}
+              isDarkMode={isDarkMode}
+              availableDaysOfWeek={availableDaysOfWeek}
+            />
 
-    useEffect(() => {
-        if (pincode) {
-            const filtered = healthCentersData.filter(center => center.pincode === pincode);
-            setFilteredCenters(filtered);
-            if (filtered.length > 0) {
-                setSelectedCenter(filtered[0]);
-            }
-        } else {
-            setFilteredCenters(healthCentersData);
-            setSelectedCenter(healthCentersData[0] || null);
-        }
-    }, [pincode]);
-
-    const handleInputChange = (e) => {
-        setPersonalInfo(prev => ({ ...prev, [e.target.name]: e.target.value }));
-    };
-
-    const bookAppointment = async () => {
-        if (!selectedCenter || !selectedDate || !selectedTime || !selectedPurpose || !personalInfo.fullName || !personalInfo.phone || !personalInfo.gender) {
-            alert("All fields are required.");
-            return;
-        }
-
-        const newAppointment = {
-            center_id: selectedCenter.id,
-            center_name: selectedCenter.center,
-            date: format(selectedDate, "yyyy-MM-dd"),
-            time: selectedTime,
-            purpose: selectedPurpose,
-            user_name: personalInfo.fullName,
-            phone: personalInfo.phone,
-            gender: personalInfo.gender.toLowerCase(),
-        };
-
-        const { data, error } = await supabase
-            .from("appointment") // ✅ Correct table name
-            .insert([newAppointment])
-            .select()
-            .single();
-
-        if (error) {
-            console.error("Error booking appointment:", error.message);
-            alert("Booking failed. Please try again.");
-        } else {
-            alert("Appointment booked successfully!");
-            console.log("New Appointment:", data);
-            setSelectedCenter({ id: "", center: "" });  // Instead of null, set an empty object
-            setSelectedDate("");
-            setSelectedTime("");
-            setSelectedPurpose("");
-            setPersonalInfo({
-                fullName: "",
-                phone: "",
-                gender: ""
-            });
-
-        }
-    };
-
-    useEffect(() => {
-        console.log("BookAppointment component mounted");
-        return () => console.log("BookAppointment component unmounted");
-    }, []);
-
-    return (
-        <div className={cn([isDark => `w-full min-h-screen mt-10 px-4 py-5 transition-all duration-300 ${isDark ? "bg-[#0A192F] text-white" : "bg-white text-black"}`], isDarkMode)}>
-            <h1 className="text-2xl mt-20 sm:text-3xl font-bold text-center my-6">Book Your Appointment</h1>
-
-            <div className="max-w-4xl mx-auto space-y-8">
-                {/* Pincode Input */}
-                <Card className="p-6 shadow-lg">
-                    <CardHeader className="flex justify-center">
-                        <CardTitle>Enter Your Pincode</CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex flex-col sm:flex-row gap-3">
-                        <input
-                            type="text"
-                            placeholder="Enter 6-digit pincode"
-                            value={pincode}
-                            onChange={(e) => setPincode(e.target.value)}
-                            maxLength={6} minLength={6}
-                            className={cn([isDark => `w-full p-3 rounded-lg border ${isDark ? "bg-[#0A192F] text-white" : "bg-white text-black"}`], isDarkMode)}
-                        />
-                        <Button
-                            onClick={() => {
-                                if (pincode.length === 6) {
-                                    setIsLoadingCenters(true);
-                                    setHasSearched(true);
-
-                                    setTimeout(() => {
-                                        const filtered = healthCentersData.filter(center => center.pincode === pincode);
-                                        setFilteredCenters(filtered);
-                                        setSelectedCenter(filtered[0] || null);
-                                        setIsLoadingCenters(false);
-                                    }, 500); // Simulate async fetch delay
-                                } else {
-                                    alert("Please enter a valid 6-digit pincode.");
-                                }
-                            }}
-                        >
-                            Search
-                        </Button>
-                    </CardContent>
-                </Card>
-
-                {/* Health Center Selection */}
-                <Card className="p-6 shadow-lg">
-                    <CardHeader className="flex justify-center">
-                        <CardTitle>Select Health Center</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {isLoadingCenters ? (
-                            <div className="flex justify-center py-4">
-                                <div className="w-6 h-6 border-4 border-blue-400 border-t-transparent animate-spin rounded-full"></div>
-                            </div>
-                        ) : hasSearched ? (
-                            filteredCenters.length > 0 ? (
-                                <select
-                                    className={cn([isDark => `w-full p-3 rounded-lg border ${isDark ? "bg-[#0A192F] text-white" : "bg-white text-black"}`], isDarkMode)}
-                                    value={selectedCenter?.id || ""}
-                                    onChange={e => {
-                                        const selectedId = e.target.value;
-                                        const center = filteredCenters.find(c => c.id === selectedId);
-                                        setSelectedCenter(center || null);
-                                    }}
-                                >
-                                    <option value="" disabled>Select a Health Center</option>
-                                    {filteredCenters.map(center => (
-                                        <option key={center.id} value={center.id}>{center.center}</option>
-                                    ))}
-                                </select>
-                            ) : (
-                                <div className="text-red-500 text-center">No health centers available in this pincode</div>
-                            )
-                        ) : (
-                            <div className="text-gray-500 text-center">Please enter a pincode and click Search</div>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {selectedCenter && (
-                    <>
-                        <Calendar {...{ selectedCenter, selectedDate, handleDateSelect: setSelectedDate, isDarkMode }} />
-
-                        {/* Time Slots */}
-                        <Card className={cn(`p-6 shadow-lg ${isDarkMode ? "bg-gray-800" : "bg-white"}`)}>
-                            <CardHeader>
-                                <CardTitle>Select Time Slot</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                {selectedCenter?.timeSlots?.map(time => (
-                                    <Button
-                                        key={time}
-                                        onClick={() => setSelectedTime(time)}
-                                        className={cn(
-                                            `p-3 rounded-lg text-sm font-medium transition-all ${selectedTime === time
-                                                ? "bg-[#00A8E8] text-white"
-                                                : isDarkMode
-                                                    ? "bg-black/25 border border-cyan-400"
-                                                    : "bg-white border border-black"
-                                            }`
-                                        )}
-                                    >
-                                        {time}
-                                    </Button>
-                                ))}
-                            </CardContent>
-                        </Card>
-
-                        {/* Purpose Selection */}
-                        <Card className={cn(`p-6 shadow-lg ${isDarkMode ? "bg-gray-800" : "bg-white"}`)}>
-                            <CardHeader>
-                                <CardTitle>Purpose of Visit</CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {selectedCenter?.purposes?.map(purpose => (
-                                    <Button
-                                        key={purpose}
-                                        onClick={() => setSelectedPurpose(purpose)}
-                                        className={cn(
-                                            `p-3 rounded-lg text-sm font-medium transition-all ${selectedPurpose === purpose
-                                                ? "bg-[#00A8E8] text-white"
-                                                : isDarkMode
-                                                    ? "bg-black/25 border border-cyan-400"
-                                                    : "bg-white border border-black"
-                                            }`
-                                        )}
-                                    >
-                                        {purpose}
-                                    </Button>
-                                ))}
-                            </CardContent>
-                        </Card>
-
-                        {/* Personal Information */}
-                        <Card className="p-6 shadow-lg">
-                            <CardHeader className="flex justify-center"><CardTitle>Personal Information</CardTitle></CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    <div className="grid md:grid-cols-1 gap-4 items-start">
-                                        <div className="flex sm:flex-row flex-col justify-between gap-1 sm:gap-0 items-center">
-                                            <label className="block text-lg text-center mb-2 sm:mb-5 w-full sm:w-1/2 px-10 py-1">Full Name</label>
-                                            <input
-                                                name="fullName"
-                                                placeholder="Enter your full name"
-                                                value={personalInfo.fullName}
-                                                onChange={handleInputChange}
-                                                className={cn([isDark => `p-3 w-3/4 rounded-lg border ${isDark ? "bg-black/25 border-cyan-400" : "bg-white border-black"}`], isDarkMode)}
-                                            />
-                                        </div>
-
-                                        <div className="flex sm:flex-row flex-col justify-between gap-1 sm:gap-0">
-                                            <label className="block text-lg w-full sm:w-1/2 text-center mb-6">Date of Birth (DOB)</label>
-                                            <div className="relative w-full sm:w-3/4">
-                                                <SeamlessCalendar onDateChange={setSelectedDate} />
-                                            </div>
-                                        </div>
-
-                                        <div className="flex sm:flex-row flex-col justify-between gap-1 sm:gap-0 items-center">
-                                            <label className="block text-lg text-center mb-2 sm:mb-5 w-full sm:w-1/2 px-10 py-1">Phone Number</label>
-                                            <input
-                                                name="phone"
-                                                placeholder="Enter your phone number"
-                                                value={personalInfo.phone}
-                                                onChange={handleInputChange}
-                                                className={cn([isDark => `p-3 w-3/4 rounded-lg border ${isDark ? "bg-black/25 border-cyan-400" : "bg-white border-black"}`], isDarkMode)}
-                                            />
-                                        </div>
-
-                                        <div className="flex sm:flex-row flex-col justify-between gap-1 sm:gap-0 items-center">
-                                            <label className="block text-lg text-center mb-2 sm:mb-5 w-full sm:w-1/2 px-10 py-1">Gender</label>
-                                            <select
-                                                name="gender"
-                                                value={personalInfo.gender}
-                                                onChange={handleInputChange}
-                                                className={cn([isDark => `p-3 w-3/4 rounded-lg border ${isDark ? "bg-black/25 border-cyan-400" : "bg-white border-black"}`], isDarkMode)}
-                                            >
-                                                <option value="">Select Gender</option>
-                                                {["Male", "Female", "Other"].map(opt => (
-                                                    <option className="text-black" key={opt} value={opt.toLowerCase()}>{opt}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-
-                                    <Button
-                                        onClick={bookAppointment}
-                                        className="w-full bg-[#00A8E8] text-white py-3 rounded-lg hover:bg-[#0077B6] transition-colors"
-                                    >
-                                        Confirm Booking
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </>
+            {/* Time Slots */}
+            <Card className="p-6 shadow-lg">
+              <CardHeader>
+                <CardTitle>Select Time Slot</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {slotsForDate.length > 0 && statusForDate === "available" ? (
+                  slotsForDate.map((time) => (
+                    <Button
+                      key={time}
+                      onClick={() => setSelectedTime(time)}
+                      className={selectedTime === time ? "bg-cyan-500 text-white" : "bg-white border"}
+                    >
+                      {time} <span className="ml-2 text-xs">Available</span>
+                    </Button>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center text-red-500">
+                    No available slots for this day
+                  </div>
                 )}
-            </div>
-        </div>
-    );
-};
+              </CardContent>
+            </Card>
 
-export default BookAppointment;
+            {/* Purposes */}
+            <Card className="p-6 shadow-lg">
+              <CardHeader>
+                <CardTitle>Purpose of Visit</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {activePurposes.length > 0 ? (
+                  activePurposes.map((service) => (
+                    <Button
+                      key={service}
+                      onClick={() => setSelectedPurpose(service)}
+                      className={selectedPurpose === service ? "bg-cyan-500 text-white" : "bg-white border"}
+                    >
+                      {service}
+                    </Button>
+                  ))
+                ) : (
+                  <div className="col-span-full text-center text-red-500">
+                    No available services for this center
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Personal Info */}
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <Card className="p-6 shadow-lg">
+                <CardHeader>
+                  <CardTitle>Personal Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Controller
+                    name="fullName"
+                    control={control}
+                    rules={{ required: "Full Name is required" }}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        placeholder="Full Name"
+                        className="w-full p-3 rounded-lg border"
+                      />
+                    )}
+                  />
+                  {errors.fullName && (
+                    <div className="text-red-500 text-sm">{errors.fullName.message}</div>
+                  )}
+
+                  {/* FIXED: DOB - always set as Date object */}
+                  <Controller
+                    name="dob"
+                    control={control}
+                    rules={{
+                      required: "Date of Birth is required",
+                      validate: (v) => isValidDate(v) || "Invalid date",
+                    }}
+                    render={({ field }) => (
+                      <SeamlessCalendar
+                        onDateChange={(date) => {
+                          // Always set as Date object or null
+                          if (date instanceof Date && isValid(date)) {
+                            field.onChange(date);
+                          } else if (typeof date === "string" && isValid(new Date(date))) {
+                            field.onChange(new Date(date));
+                          } else {
+                            field.onChange(null);
+                          }
+                        }}
+                        selectedDate={field.value}
+                      />
+                    )}
+                  />
+                  {errors.dob && (
+                    <div className="text-red-500 text-sm">{errors.dob.message}</div>
+                  )}
+
+                  <Controller
+                    name="phone"
+                    control={control}
+                    rules={{
+                      required: "Phone is required",
+                      pattern: {
+                        value: /^[0-9]{10}$/,
+                        message: "Phone must be 10 digits",
+                      },
+                    }}
+                    render={({ field }) => (
+                      <input
+                        {...field}
+                        placeholder="Phone"
+                        className="w-full p-3 rounded-lg border"
+                        maxLength={10}
+                        onChange={e => field.onChange(e.target.value.replace(/\D/g, ""))}
+                      />
+                    )}
+                  />
+                  {errors.phone && (
+                    <div className="text-red-500 text-sm">{errors.phone.message}</div>
+                  )}
+
+                  <Controller
+                    name="gender"
+                    control={control}
+                    rules={{ required: "Gender is required" }}
+                    render={({ field }) => (
+                      <select
+                        {...field}
+                        className="w-full p-3 rounded-lg border"
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                    )}
+                  />
+                  {errors.gender && (
+                    <div className="text-red-500 text-sm">{errors.gender.message}</div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    disabled={
+                      !selectedCenter ||
+                      !appointmentDate ||
+                      !selectedTime ||
+                      !selectedPurpose ||
+                      isSubmitting
+                    }
+                    className="w-full bg-cyan-500 text-white py-3 rounded-lg"
+                  >
+                    {isSubmitting ? "Booking..." : "Confirm Booking"}
+                  </Button>
+                </CardContent>
+              </Card>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default BookAppointment; 

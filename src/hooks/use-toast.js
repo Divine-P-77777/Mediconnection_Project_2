@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const useToast = () => {
-  const success = (message) => {
+  const Success = (message) => {
     toast.success(message, {
       position: "top-right",
       autoClose: 3000,
@@ -11,7 +11,7 @@ export const useToast = () => {
     });
   };
 
-  const error = (message) => {
+  const errorToast = (message) => {
     toast.error(message, {
       position: "top-right",
       autoClose: 3000,
@@ -35,5 +35,5 @@ export const useToast = () => {
     });
   };
 
-  return { success, error, warn, info };
+  return { Success, errorToast, warn, info };
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
 const monthNames = [
@@ -6,22 +6,39 @@ const monthNames = [
   "August", "September", "October", "November", "December"
 ];
 
-const isLeapYear = (year) => {
-  return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-};
-
+const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 const getFebDays = (year) => (isLeapYear(year) ? 29 : 28);
 
-export default function SeamlessCalendar() {
+export default function SeamlessCalendar({ onDateChange, selectedDate: externalDate }) {
   const currDate = new Date();
   const isDarkMode = useSelector(state => state.theme.isDarkMode);
-  const [month, setMonth] = useState(currDate.getMonth());
-  const [year, setYear] = useState(currDate.getFullYear());
-  const [selectedDate, setSelectedDate] = useState(currDate);
+
+  // Use controlled date if provided, else fallback to local state
+  const [month, setMonth] = useState(
+    externalDate ? externalDate.getMonth() : currDate.getMonth()
+  );
+  const [year, setYear] = useState(
+    externalDate ? externalDate.getFullYear() : currDate.getFullYear()
+  );
+  const [selectedDate, setSelectedDate] = useState(
+    externalDate || currDate
+  );
+
+  // Keep local state in sync with externalDate
+  useEffect(() => {
+    if (externalDate) {
+      setMonth(externalDate.getMonth());
+      setYear(externalDate.getFullYear());
+      setSelectedDate(externalDate);
+    }
+  }, [externalDate]);
+
   const daysOfMonth = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
   const handleDateSelect = (day) => {
-    setSelectedDate(new Date(year, month, day));
+    const newDate = new Date(year, month, day);
+    setSelectedDate(newDate);
+    if (onDateChange) onDateChange(newDate); // <-- Notify parent
   };
 
   const generateCalendarDays = () => {
@@ -33,7 +50,10 @@ export default function SeamlessCalendar() {
     }
 
     for (let i = 1; i <= daysOfMonth[month]; i++) {
-      const isSelected = i === selectedDate.getDate() && year === selectedDate.getFullYear() && month === selectedDate.getMonth();
+      const isSelected = selectedDate &&
+        i === selectedDate.getDate() &&
+        year === selectedDate.getFullYear() &&
+        month === selectedDate.getMonth();
       days.push(
         <div
           key={i}
@@ -48,7 +68,6 @@ export default function SeamlessCalendar() {
     }
     return days;
   };
-  
 
   return (
     <div className={`flex flex-col items-center p-4 rounded-lg shadow-sm transition-all duration-300
@@ -82,7 +101,7 @@ export default function SeamlessCalendar() {
       <div className="grid grid-cols-7 gap-1">{generateCalendarDays()}</div>
 
       {/* Selected Date Display */}
-      <p className="mt-4">Selected Date: {`${monthNames[month]} ${selectedDate.getDate()}, ${year}`}</p>
+      <p className="mt-4">Selected Date: {selectedDate ? `${monthNames[month]} ${selectedDate.getDate()}, ${year}` : "None"}</p>
     </div>
   );
 }

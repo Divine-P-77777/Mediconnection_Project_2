@@ -35,7 +35,7 @@ export default function AuthPage() {
       const role = user?.user_metadata?.role;
       if (role === 'admin') return router.replace('/admin');
       if (role === 'driver') return router.replace('/driver');
-      return router.replace('/client');
+      return router.replace('/user');
     }
   }, [user, loading, router]);
 

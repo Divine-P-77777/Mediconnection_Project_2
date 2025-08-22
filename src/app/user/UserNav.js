@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleDarkMode } from "../../store/themeSlice";
+import { toggleDarkMode } from "@/store/themeSlice";
 import { usePathname } from 'next/navigation';
+import { useAuth } from "@/hooks/useAuth";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -13,6 +14,7 @@ const Navbar = () => {
   const dispatch = useDispatch();
   const pathname = usePathname();
 
+  const { user, signOut } = useAuth(); // get user info & logout
   const navItems = [
     { name: "Home", path: "/user" },
     { name: "Book Appointment", path: "/user/book" },
@@ -20,27 +22,22 @@ const Navbar = () => {
     { name: "Live Consult", path: "/user/consult" },
     { name: "About Us", path: "/user/about" },
     { name: "Contact Us", path: "/user/contact" },
-    { name: "Login", path: "/user/auth" },
   ];
 
   return (
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-300 shadow-md shadow-cyan-500/20 py-3 px-4 
-        ${isDarkMode ? "bg-[#0A192F] text-[#F8F8F8]" : "bg-[#1ba5e5] text-[#0A192F]"}
-      `}
+        ${isDarkMode ? "bg-[#0A192F] text-[#F8F8F8]" : "bg-[#1ba5e5] text-[#0A192F]"}`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        {/* Logo with enhanced hover effect */}
+
+        {/* Logo */}
         <Link href="/user" className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-          {/* <Image src="/logo.png" alt="Logo" width={60} height={60} 
-            className="rounded-xl border hover:shadow-lg hover:border-cyan-400 transition-all duration-300" 
-          /> */}
           <span className="text-xl font-bold hover:text-cyan-400 transition-colors duration-300">Mediconnect</span>
         </Link>
 
-        {/* Desktop Navigation with rounded container */}
-        <div className={`hidden md:flex items-center gap-2 p-2 rounded-full 
-          ${isDarkMode ? "bg-black" : "bg-white/30"}`}>
+        {/* Desktop Navigation */}
+        <div className={`hidden md:flex items-center gap-2 p-2 rounded-full ${isDarkMode ? "bg-black" : "bg-white/30"}`}>
           {navItems.map((item) => (
             <Link
               key={item.path}
@@ -48,8 +45,7 @@ const Navbar = () => {
               className={`relative px-4 py-2 rounded-full transition-all duration-300 
                 ${pathname === item.path ? 
                   (isDarkMode ? "bg-cyan-500/20 text-cyan-400" : "bg-white text-[#1ba5e5]") 
-                  : "hover:bg-white/10"}
-                hover:scale-105 hover:shadow-md`}
+                  : "hover:bg-white/10"} hover:scale-105 hover:shadow-md`}
             >
               {item.name}
               {pathname === item.path && (
@@ -59,12 +55,12 @@ const Navbar = () => {
           ))}
         </div>
 
+        {/* Right-side buttons */}
         <div className="flex justify-between items-center gap-4">
-          {/* Dark Mode Toggle with enhanced animation */}
+          {/* Dark Mode Toggle */}
           <button
             onClick={() => dispatch(toggleDarkMode())}
-            className="rounded-full p-2 transition-all duration-300 hover:scale-110 hover:rotate-12
-              focus:outline-none hover:shadow-lg"
+            className="rounded-full p-2 transition-all duration-300 hover:scale-110 hover:rotate-12 focus:outline-none hover:shadow-lg"
           >
             <Image
               src={isDarkMode ? "/sun.png" : "/moon.png"}
@@ -76,7 +72,24 @@ const Navbar = () => {
             />
           </button>
 
-          {/* Mobile Menu Button with animation */}
+          {/* Auth Button */}
+          {user ? (
+            <button
+              onClick={signOut}
+              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/auth"
+              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
+            >
+              Login
+            </Link>
+          )}
+
+          {/* Mobile Menu Button */}
           <button 
             onClick={() => setMenuOpen(!menuOpen)} 
             className={`md:hidden p-2 rounded-full transition-all duration-300
@@ -90,21 +103,17 @@ const Navbar = () => {
               className="hover:scale-110 transition-transform duration-300"
             />
           </button>
-
-           {/* <UserGreetText /> */}
-          {/* <LoginButton />  */}
         </div>
       </div>
 
-      {/* Mobile Navigation with enhanced animation */}
+      {/* Mobile Navigation */}
       {menuOpen && (
         <div
           className={`absolute top-16 right-4 w-64 p-4 rounded-2xl shadow-xl transition-all duration-300 
             border backdrop-blur-sm transform origin-top-right
             ${isDarkMode ? 
               "bg-[#0A192F]/90 text-[#F8F8F8] border-cyan-500" : 
-              "bg-white/90 text-[#0A192F] border-gray-900"}
-          `}
+              "bg-white/90 text-[#0A192F] border-gray-900"}`}
         >
           {navItems.map((item) => (
             <Link
@@ -112,14 +121,31 @@ const Navbar = () => {
               href={item.path}
               className={`block text-center px-4 py-3 my-2 rounded-xl transition-all duration-300 
                 ${pathname === item.path ?
-                  (isDarkMode ? "bg-cyan-500/20 text-cyan-400" : "bg-[#1ba5e5]/10 text-[#1ba5e5]")
-                  : "hover:bg-cyan-500/10"}
-                hover:scale-105 hover:shadow-md`}
+                  (isDarkMode ? "bg-cyan-500/20 text-cyan-400" : "bg-[#1ba5e5]/10 text-[#1ba5e5]") :
+                  "hover:bg-cyan-500/10"} hover:scale-105 hover:shadow-md`}
               onClick={() => setMenuOpen(false)}
             >
               {item.name}
             </Link>
           ))}
+
+          {/* Mobile Auth Button */}
+          {user ? (
+            <button
+              onClick={() => { signOut(); setMenuOpen(false); }}
+              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg mt-2"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/auth/login"
+              className="block w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg mt-2"
+              onClick={() => setMenuOpen(false)}
+            >
+              Login
+            </Link>
+          )}
         </div>
       )}
     </nav>

@@ -4,14 +4,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Mail, Lock, User, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { useSelector } from 'react-redux';
 
 const SignUpForm = () => {
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
-  const { toast } = useToast();
-   const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
+  const { Success, errorToast } = useToast();
+  const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
 
   const {
     register,
@@ -20,30 +18,43 @@ const SignUpForm = () => {
     reset,
   } = useForm();
 
-  const onSubmit = async (data) => {
-    try {
-      setLoading(true);
+const onSubmit = async (data) => {
+  try {
+    setLoading(true);
 
-      // Force "user" role — block any other roles
-      await signUp(data.email, data.password, data.username, { role: 'user' });
+    const res = await fetch("/api/user-register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "signup",
+        email: data.email,
+        password: data.password,
+        username: data.username,
+      }),
+    });
 
-      toast({
-        title: '🎉 Account Created',
-        description: 'Welcome! You can now log in to your account.',
-      });
-      reset();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: '❌ Signup Failed',
-        description: error.message || 'Something went wrong',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const result = await res.json();
 
-  // Common classes
+    if (!res.ok) throw new Error(result.error || "Signup failed");
+
+   Success(
+      "🎉 Account Created",
+      
+    );
+
+    reset();
+  } catch (error) {
+    console.log(error)
+    errorToast(
+     
+      `❌ Signup Failed: ${error.message}`
+      
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
   const baseinputClass =
     'pl-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200';
   const placeholderColor = isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500';
@@ -134,7 +145,6 @@ const SignUpForm = () => {
         {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
       </div>
 
-      {/* Submit */}
       <button
         type="submit"
         className="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 font-medium"
@@ -144,7 +154,6 @@ const SignUpForm = () => {
         Create Account
       </button>
 
-      {/* Info text */}
       <p className={`text-xs text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
         By signing up, you agree to our Terms & Privacy Policy.
       </p>

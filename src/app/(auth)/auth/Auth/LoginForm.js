@@ -1,24 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
-
-import button from '@/components/ui/button';
-import input from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
+import { Mail, Lock, Loader2, Eye, EyeOff} from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/useAuth';
 import { useSelector } from 'react-redux';
+import { supabase } from '@/supabase/client';
 
 const LoginForm = () => {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const { signIn, signInWithGoogle } = useAuth();
-  const { toast } = useToast();
+  const { Success, errorToast } = useToast();
 
- const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
+  const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -27,61 +23,77 @@ const LoginForm = () => {
     formState: { errors },
   } = useForm();
 
-  const onSubmit = async (data) => {
+  // Redirect if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (!error && session?.user) {
+        if (session.user.user_metadata?.role === 'user') {
+          router.replace('/user');
+          return;
+        }
+      }
+      setCheckingSession(false);
+    };
+    checkSession();
+  }, [router]);
+
+  // Email/password login
+  const onSubmit = async (formData) => {
     try {
       setLoading(true);
-      const { user } = await signIn(data.email, data.password);
 
-      // Role restriction
-      if (user?.role !== 'user') {
-        toast({
-          variant: 'destructive',
-          title: 'Access Denied',
-          description: 'Only customer accounts are allowed to log in here.',
-        });
+      const res = await fetch('/api/user-register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'login',
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      if (data?.user?.user_metadata?.role !== 'user') {
+        errorToast('Only customer accounts can log in here.');
         return;
       }
 
-      toast({
-        title: 'Welcome back!',
-        description: `Logged in as ${user.email}`,
-      });
-      router.push('/');
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Login Failed',
-        description: error.message || 'Unable to log in. Please try again.',
-      });
+      Success('Welcome back!');
+      router.push('/user');
+    } catch (err) {
+      errorToast(`Login Failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // Google login
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
-      const { user } = await signInWithGoogle();
-      if (user?.role !== 'user') {
-        toast({
-          variant: 'destructive',
-          title: 'Access Denied',
-          description: 'Only customer accounts can log in with Google.',
-        });
-        return;
-      }
-      toast({ title: 'Welcome!', description: `Logged in as ${user.email}` });
-      router.push('/');
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Google Login Failed',
-        description: error.message || 'Please try again later.',
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/`, // redirect after login
+        },
       });
-    } finally {
+      if (error) throw error;
+    } catch (err) {
+      errorToast(`Google Login Failed: ${err.message}`);
       setLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <form
@@ -130,26 +142,31 @@ const LoginForm = () => {
       </div>
 
       {/* Submit */}
-      <button type="submit" className="w-full" disabled={loading}>
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      <button
+        type="submit"
+        className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 font-medium disabled:opacity-50"
+        disabled={loading}
+      >
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Login
       </button>
 
+      {/* OR separator */}
+      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+        <span>or</span>
+      </div>
+
       {/* Google Login */}
-      <button
-        type="button"
-        variant="outline"
-        onClick={handleGoogleLogin}
-        className="w-full flex items-center justify-center gap-2"
-        disabled={loading}
-      >
-        <img
-          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-          alt="Google"
-          className="h-5 w-5"
-        />
-        Continue with Google
-      </button>
+<button
+  type="button"
+  onClick={handleGoogleLogin}
+  className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 font-medium hover:bg-gray-100 disabled:opacity-50"
+  disabled={loading}
+>
+  <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
+  Continue with Google
+</button>
+
 
       {/* Forgot Password */}
       <div className="text-sm text-center mt-3">

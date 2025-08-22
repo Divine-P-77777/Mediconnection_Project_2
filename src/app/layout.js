@@ -62,7 +62,7 @@ export default function RootLayout({ children }) {
       <body className={`${inter.className}  `}>
         <ClientWrapper>
           <Provider>{children}</Provider>
-          <SpeedInsights />
+          {/* <SpeedInsights /> */}
         </ClientWrapper>
       </body>
     </html>

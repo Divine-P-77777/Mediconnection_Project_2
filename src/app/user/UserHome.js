@@ -7,8 +7,8 @@ import { useSelector } from 'react-redux';
 import { Carousel, CarouselItem } from '@/components/ui/carousel';
 import { FaCalendarCheck, FaVideo, FaFileDownload } from 'react-icons/fa';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
+import {useAuth} from "@/hooks/useAuth";
 const features = [
   { icon: <FaCalendarCheck size={30} />, title: 'Book a Slot',link: '/user/book', description: 'Schedule an appointment with top doctors.' },
   { icon: <FaVideo size={30} />, title: 'Live Consultation',link: '/user/consult', description: 'Get instant medical advice via video call.' },
@@ -23,7 +23,9 @@ const testimonials = [
 
 export default function UserHome() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-  const router = useRouter();
+  
+  const { user } = useAuth();
+
   return (
     <motion.div 
       className={`w-full flex-1 flex flex-col transition-all duration-300 ${isDarkMode ? 'bg-[#0A192F] text-white' : 'bg-white text-black'}`}
@@ -35,7 +37,7 @@ export default function UserHome() {
         transition={{ duration: 0.5 }}
         className="text-center py-12 pt-30 container mx-auto px-4"
       >
-        <h1 className="text-4xl font-bold">Welcome to HealthConnect</h1>
+        <h1 className="text-4xl font-bold">Welcome {user?.email} to Mediconnection</h1>
         <p className="mt-2 text-lg">Your trusted healthcare partner, anytime, anywhere.</p>
         <div className="mt-6 flex justify-center gap-4">
           <Button className="bg-[#00A8E8] text-white px-6 py-3 hover:bg-[#0077B6] transition-all duration-300">Book Appointment</Button>
