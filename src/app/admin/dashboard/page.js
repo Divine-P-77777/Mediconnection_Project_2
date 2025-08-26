@@ -1,24 +1,25 @@
 import AdminDashboard from './AdminDashboard';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export default async function DashboardPage() {
   try {
-    // fetch all health centers directly
-    const { data: healthCenters, error } = await supabaseAdmin
-      .from('health_centers')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/adminaccess`, {
+      method: 'GET',
+      cache: 'no-store', // avoids stale data in Next.js
+    });
 
-    if (error) throw error;
+    if (!res.ok) throw new Error('Failed to fetch data from API');
+
+    const { success, healthCenters } = await res.json();
+
+    if (!success) throw new Error('API did not return success');
 
     return <AdminDashboard centers={healthCenters || []} />;
   } catch (err) {
     console.error('Dashboard load error:', err);
-    return <div className="p-6 text-red-600">Error loading health centers</div>;
+    return (
+      <div className="p-6 text-red-600">
+        Error loading health centers. Please try again later.
+      </div>
+    );
   }
 }

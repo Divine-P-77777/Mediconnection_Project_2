@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { supabase } from "@/supabase/client";
 import { useRouter } from "next/navigation";
+import { useToast } from '@/hooks/use-toast'
 
-const allowedSuperAdmins = ["dynamicphillic77777@gmail.com"];
-
-
-
+const allowedSuperAdmins =process.env.NEXT_PUBLIC_SUPER_ADMINS;
 
 export default function AdminAuthPage() {
   const router = useRouter();
-  const [tab, setTab] = useState("login"); 
+  const { toast } = useToast();
+
+  const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,18 +30,25 @@ export default function AdminAuthPage() {
         email,
         password,
         options: {
-          data: { role: "super_admin" }, // 👈 goes to raw_user_meta_data
+          data: { role: "super_admin" },
         },
       });
 
       if (error) throw error;
 
       if (data.user) {
-        setSuccessMsg("✅ Registration successful. You can now log in.");
+        toast({
+          title: "✅ Registration Successful",
+          description: "You can now log in as Super Admin.",
+        });
         setTab("login");
       }
     } catch (err) {
-      setErrorMsg(err.message || "Registration failed.");
+      toast({
+        variant: "destructive",
+        title: "❌ Registration Failed",
+        description: err.message || "Something went wrong.",
+      });
     } finally {
       setLoading(false);
     }
@@ -65,14 +72,56 @@ export default function AdminAuthPage() {
       const user = data.user;
 
       if (user && allowedSuperAdmins.includes(user.email)) {
-        setSuccessMsg("✅ Welcome Super Admin!");
-        router.push("/super-admin"); // redirect to dashboard
+        toast({
+          title: "✅ Welcome Super Admin!",
+          description: "Redirecting you to dashboard...",
+        });
+        router.push("/super-admin");
       } else {
         await supabase.auth.signOut();
         throw new Error("You are not authorized as a Super Admin.");
       }
     } catch (err) {
-      setErrorMsg(err.message || "Login failed.");
+      toast({
+        variant: "destructive",
+        title: "❌ Login Failed",
+        description: err.message || "Invalid credentials.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Forgot Password
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        variant: "destructive",
+        title: "⚠️ Missing Email",
+        description: "Please enter your email to reset your password.",
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/admin`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "📩 Reset Link Sent",
+        description: "Check your email inbox to reset your password.",
+      });
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "❌ Reset Failed",
+        description: err.message || "Could not send reset link.",
+      });
     } finally {
       setLoading(false);
     }
@@ -86,7 +135,9 @@ export default function AdminAuthPage() {
           <button
             onClick={() => setTab("login")}
             className={`w-1/2 py-2 ${
-              tab === "login" ? "border-b-2 border-indigo-600 font-bold" : "text-gray-500"
+              tab === "login"
+                ? "border-b-2 border-indigo-600 font-bold"
+                : "text-gray-500"
             }`}
           >
             Login
@@ -94,7 +145,9 @@ export default function AdminAuthPage() {
           <button
             onClick={() => setTab("register")}
             className={`w-1/2 py-2 ${
-              tab === "register" ? "border-b-2 border-indigo-600 font-bold" : "text-gray-500"
+              tab === "register"
+                ? "border-b-2 border-indigo-600 font-bold"
+                : "text-gray-500"
             }`}
           >
             Register
@@ -121,20 +174,32 @@ export default function AdminAuthPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full border px-3 py-2 rounded-md"
-            required
+            required={tab === "register" || tab === "login"}
           />
-
-          {errorMsg && <p className="text-red-500 text-sm">{errorMsg}</p>}
-          {successMsg && <p className="text-green-600 text-sm">{successMsg}</p>}
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? "Please wait..." : tab === "login" ? "Login" : "Register"}
+            {loading
+              ? "Please wait..."
+              : tab === "login"
+              ? "Login"
+              : "Register"}
           </button>
         </form>
+
+        {/* Forgot Password Button */}
+        {tab === "login" && (
+          <button
+            onClick={handleForgotPassword}
+            disabled={loading}
+            className="w-full mt-3 text-sm text-indigo-600 hover:underline disabled:opacity-50"
+          >
+            Forgot Password?
+          </button>
+        )}
       </div>
     </div>
   );

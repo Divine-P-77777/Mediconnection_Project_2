@@ -2,7 +2,7 @@
 "use client"
 import { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { supabase } from '@/utils/supabaseClient';
+import { supabase } from '@/supabase/client';
 
 export default function adminRegister() {
     const isDarkMode = useSelector((state) => state.theme.isDarkMode);

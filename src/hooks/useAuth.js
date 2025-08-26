@@ -13,14 +13,14 @@ export const AuthProvider = ({ children }) => {
 
   const router = useRouter();
 
-  // Determine user role safely
+  // ✅ Determine user role safely
   const role = user?.user_metadata?.role ?? 'guest';
   const isSuperAdmin = role === 'super_admin';
   const isDoctor = role === 'doctor';
   const isHealthCenter = role === 'health_center';
   const isUser = role === 'user';
 
-  // Load session and listen for auth changes
+  // ✅ Load session and listen for auth changes
   useEffect(() => {
     const loadSession = async () => {
       const { data, error } = await supabase.auth.getSession();
@@ -41,21 +41,36 @@ export const AuthProvider = ({ children }) => {
     return () => listener?.subscription.unsubscribe();
   }, []);
 
-  // Logout function
+  // ✅ Logout function
   const signOut = async () => {
     try {
-      // Ask for confirmation
       const confirmLogout = window.confirm("Are you sure you want to log out?");
       if (!confirmLogout) return;
 
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      // Redirect to login page after successful logout
-      router.push('/user');
+      router.push('/user'); // redirect after logout
     } catch (err) {
       console.error('Logout error:', err.message);
       alert(`Logout failed: ${err.message}`);
+    }
+  };
+
+  // ✅ Reset Password function (works for ALL roles)
+  const resetPassword = async (newPassword) => {
+    try {
+      if (!newPassword || newPassword.length < 6) {
+        throw new Error('Password must be at least 6 characters long');
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+
+      return { success: true };
+    } catch (err) {
+      console.error('Reset password error:', err.message);
+      return { success: false, error: err.message };
     }
   };
 
@@ -71,6 +86,7 @@ export const AuthProvider = ({ children }) => {
         isHealthCenter,
         isUser,
         signOut,
+        resetPassword, // ✅ expose reset function
       }}
     >
       {loading ? (
@@ -84,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Custom hook
+// ✅ Custom hook
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuth must be used within an AuthProvider');

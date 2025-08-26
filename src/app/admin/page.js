@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import AdminHome from "./AdminHome.js";
 // import AboutUs from "./about/page";

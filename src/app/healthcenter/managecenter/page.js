@@ -5,7 +5,7 @@ import { supabase } from "@/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import Select from "@/components/ui/select"; // ✅ custom wrapper
+import Select from "@/components/ui/select"; 
 import { useToast } from "@/hooks/use-toast";
 
 const DAYS = [

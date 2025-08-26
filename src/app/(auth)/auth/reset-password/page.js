@@ -4,47 +4,46 @@ import { useEffect, useState } from 'react'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast } from '@/hooks/use-toast'
-import  Button  from '@/components/ui/Button'
-import  Input  from '@/components/ui/Input'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { supabase } from '@/supabase/client'
-import Lenis from "@studio-freight/lenis";
-import { useAppSelector } from "@/store/hooks";
+import Lenis from "@studio-freight/lenis"
+import { useSelector } from 'react-redux'
 
 export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
 
-  const { resetPassword} = useAuth()
-  const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
-  const { toast } = useToast()
+  const { resetPassword } = useAuth()
+  const isDarkMode = useSelector((state) => state.theme.isDarkMode)
+  const { Success, errorToast } = useToast()
 
+  // ✅ Lenis setup
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smooth: true,
+      smoothTouch: false,
+    })
 
-   useEffect(() => {
-      const lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
-        smooth: true,
-        smoothTouch: false,
-      } [0]);
-      
-    
-      function raf(time) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-    
-      requestAnimationFrame(raf);
-    
-      return () => {
-        lenis.destroy();
-      };
-    }, []);
+    function raf(time) {
+      lenis.raf(time)
+      requestAnimationFrame(raf)
+    }
 
+    requestAnimationFrame(raf)
 
+    return () => {
+      lenis.destroy()
+    }
+  }, [])
+
+  // ✅ Validate reset link
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
       if (error || !data.user) {
@@ -56,34 +55,25 @@ export default function ResetPasswordPage() {
     })
   }, [])
 
+  // ✅ Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (password !== confirmPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Mismatch',
-        description: 'Passwords do not match',
-      })
+      errorToast("Passwords do not match")
       return
     }
 
     try {
       await supabase.auth.updateUser({ password })
-      toast({
-        title: 'Password Updated',
-        description: 'You can now log in',
-      })
+      Success("Password updated! You can now log in.")
       window.location.href = '/auth'
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Reset Failed',
-        description: error.message,
-      })
+    } catch (err) {
+      errorToast(`Reset failed: ${err.message}`)
     }
   }
 
+  // ✅ Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -92,7 +82,10 @@ export default function ResetPasswordPage() {
     )
   }
 
+  // ✅ Error state (modified to use react-toastify)
   if (error) {
+    // fire toast immediately when error exists
+    errorToast(error)
     return (
       <>
       <div

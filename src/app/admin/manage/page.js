@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Upload, UserPlus } from 'lucide-react';
-import { healthCentersData } from '@/constants';
 
 const ManageDoctors = () => {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
