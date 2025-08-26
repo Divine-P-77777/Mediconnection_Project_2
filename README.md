@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🏥 Mediconnect  
 
-## Getting Started
+Mediconnect is a healthcare workflow platform built with **Next.js**, **Supabase**, and **Cloudinary**.  
+It streamlines the process of **health center registration, admin approval, doctor management, and patient consultations** with secure role-based access.  
 
-First, run the development server:
+---
 
+## 🚀 Features  
+- Health center onboarding & admin approval system  
+- Secure role-based authentication (Super Admin, Health Center, Doctor, User)  
+- Real-time dashboards powered by Supabase  
+- Document & report uploads with Cloudinary  
+- Responsive UI with Next.js and TailwindCSS  
+
+---
+
+## 🛠️ Tech Stack  
+- **Next.js (JavaScript)** – Frontend & API Routes  
+- **Supabase** – Authentication, Database, RLS Policies  
+- **Cloudinary** – Media & Document Storage  
+- **Tailwind CSS** – Modern UI Styling  
+
+---
+
+## ⚙️ Setup Instructions  
+
+### 1️⃣ Clone the Repository  
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/your-username/mediconnect.git
+cd mediconnect
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Install Dependencies
+```
+npm install
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Configure Environment Variables
+Create a file named .env.local in the frontend directory with the following variables:
+```
+NEXT_PUBLIC_SUPABASE_URL=*********
+NEXT_PUBLIC_SUPABASE_ANON_KEY=*********
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+CLOUD_NAME=*********
+CLOUDINARY_URL=*********
 
-## Learn More
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=*********
+NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=*********
 
-To learn more about Next.js, take a look at the following resources:
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=*********
+NEXT_PUBLIC_SUPER_ADMINS=your-super-admin-email@example.com
+```
+For backend or admin usage, create a .env file and add:
+```
+SUPABASE_SERVICE_ROLE_KEY=*********
+CLOUDINARY_API_KEY=*********
+CLOUDINARY_API_SECRET=*********
+SUPABASE_URL=*********
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+Run the Development Server
+```
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The app should now be running at http://localhost:3000
 
-## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+🔐 Authentication & Roles
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Super Admin – Approves health centers
+Health Center – Manages doctors & patients
+Doctor – Handles consultations
+User/Patient – Books appointments, downloads reports
+
+
+📜 License
+This project is licensed under the MIT License.
+You’re free to use, modify, and distribute it with proper attribution.
