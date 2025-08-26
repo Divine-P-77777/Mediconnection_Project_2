@@ -26,8 +26,7 @@ It streamlines the process of **health center registration, admin approval, doct
 
 ### 1️⃣ Clone the Repository  
 ```bash
-git clone https://github.com/your-username/mediconnect.git
-cd mediconnect
+https://github.com/Divine-P-77777/Mediconnection_Project_2.git .
 ```
 
 Install Dependencies
