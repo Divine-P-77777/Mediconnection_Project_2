@@ -1,10 +1,12 @@
 import AdminDashboard from './AdminDashboard';
 
+export const dynamic = "force-dynamic"; // ✅ tells Next.js this page is dynamic
+
 export default async function DashboardPage() {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/adminaccess`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/adminaccess`, {
       method: 'GET',
-      cache: 'no-store', // avoids stale data in Next.js
+      cache: 'no-store', 
     });
 
     if (!res.ok) throw new Error('Failed to fetch data from API');

@@ -7,6 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toggleDarkMode } from "@/store/themeSlice";
 import { usePathname } from 'next/navigation';
 import { useAuth } from "@/hooks/useAuth";
+import { Sun, Moon, Menu, X, LogOut, LogIn } from "lucide-react";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -26,14 +27,15 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300 shadow-md shadow-cyan-500/20 py-3 px-4 
-        ${isDarkMode ? "bg-[#0A192F] text-[#F8F8F8]" : "bg-[#1ba5e5] text-[#0A192F]"}`}
+      className={`fixed top-0 w-full z-50 transition-all duration-300  py-3 px-4 
+        ${isDarkMode ? "bg-[#0A192F] text-[#F8F8F8]" : "bg-cyan-200 text-[#0A192F]"}`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center">
 
         {/* Logo */}
-        <Link href="/user" className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-          <span className="text-xl font-bold hover:text-cyan-400 transition-colors duration-300">Mediconnect</span>
+        <Link href="/user" className="flex items-center gap-2">
+          <Image src="/logo.png" alt="Mediconnect" width={52} height={52} />
+          <span className="text-xl font-bold">Mediconnection</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -55,55 +57,46 @@ const Navbar = () => {
           ))}
         </div>
 
-        {/* Right-side buttons */}
-        <div className="flex justify-between items-center gap-4">
+        {/* Right-side buttons (Desktop only) */}
+        <div className="hidden md:flex justify-between items-center gap-4">
           {/* Dark Mode Toggle */}
           <button
             onClick={() => dispatch(toggleDarkMode())}
-            className="rounded-full p-2 transition-all duration-300 hover:scale-110 hover:rotate-12 focus:outline-none hover:shadow-lg"
+            className="rounded-full p-2"
           >
-            <Image
-              src={isDarkMode ? "/sun.png" : "/moon.png"}
-              alt="Theme Toggle"
-              width={32}
-              height={32}
-              className={`rounded-full border transition-all duration-300
-                ${isDarkMode ? "border-cyan-500 hover:border-yellow-400" : "border-gray-900 hover:border-blue-400"}`}
-            />
+            {isDarkMode ? (
+              <Sun className="w-6 h-6 text-yellow-400" />
+            ) : (
+              <Moon className="w-6 h-6 text-black-500" />
+            )}
           </button>
 
           {/* Auth Button */}
           {user ? (
             <button
               onClick={signOut}
-              className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
+              className="flex items-center gap-2 border-4 border-red-500 bg-white text-red-500 px-4 py-1 rounded-full transition-all duration-300 hover:bg-red-500 hover:text-white"
             >
-              Logout
+              <LogOut size={18} /> Logout
             </button>
           ) : (
             <Link
               href="/auth"
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all duration-300"
+              className="flex items-center gap-2 border-4 border-cyan-400 bg-white text-black px-3 py-1 rounded-full transition-all duration-300 hover:bg-cyan-400 hover:text-white"
             >
-              Login
+              <LogIn size={18} /> Login
             </Link>
           )}
-
-          {/* Mobile Menu Button */}
-          <button 
-            onClick={() => setMenuOpen(!menuOpen)} 
-            className={`md:hidden p-2 rounded-full transition-all duration-300
-              ${isDarkMode ? "hover:bg-cyan-500/20" : "hover:bg-white/30"}`}
-          >
-            <Image 
-              src={menuOpen ? "/close.svg" : "/menu.svg"} 
-              alt="Menu" 
-              width={32} 
-              height={32}
-              className="hover:scale-110 transition-transform duration-300"
-            />
-          </button>
         </div>
+
+        {/* Mobile Menu Button */}
+        <button 
+          onClick={() => setMenuOpen(!menuOpen)} 
+          className={`md:hidden p-2 rounded-full transition-all duration-300
+            ${isDarkMode ? "hover:bg-cyan-500/20" : "hover:bg-white/30"}`}
+        >
+          {menuOpen ? <X size={28} /> : <Menu size={28} />}
+        </button>
       </div>
 
       {/* Mobile Navigation */}
@@ -129,21 +122,30 @@ const Navbar = () => {
             </Link>
           ))}
 
+          {/* Mobile Dark Mode Toggle */}
+          <button
+            onClick={() => dispatch(toggleDarkMode())}
+            className="w-full flex items-center justify-center gap-2 border border-cyan-400 bg-white text-black px-4 py-2 rounded-lg mt-4 transition-all duration-300 hover:bg-cyan-400 hover:text-white"
+          >
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+            {isDarkMode ? "Light Mode" : "Dark Mode"}
+          </button>
+
           {/* Mobile Auth Button */}
           {user ? (
             <button
               onClick={() => { signOut(); setMenuOpen(false); }}
-              className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg mt-2"
+              className="w-full flex items-center justify-center gap-2 border border-red-500 bg-white text-red-500 px-4 py-2 rounded-lg mt-2 transition-all duration-300 hover:bg-red-500 hover:text-white"
             >
-              Logout
+              <LogOut size={18} /> Logout
             </button>
           ) : (
             <Link
-              href="/auth/login"
-              className="block w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg mt-2"
+              href="/auth"
+              className="w-full flex items-center justify-center gap-2 border border-cyan-400 bg-white text-black px-4 py-2 rounded-lg mt-2 transition-all duration-300 hover:bg-cyan-400 hover:text-white"
               onClick={() => setMenuOpen(false)}
             >
-              Login
+              <LogIn size={18} /> Login
             </Link>
           )}
         </div>

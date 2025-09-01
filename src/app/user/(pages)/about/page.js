@@ -22,7 +22,7 @@ export default function About() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
   return (
-    <div className={`mt-10 min-h-screen px-6 py-12 md:px-16 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
+    <div className={`mt-10 min-h-screen px-6 py-12  md:px-16 ${isDarkMode ? "bg-gray-900 text-white" : "bg-white text-black"}`}>
       {/* Page Header */}
       <motion.h1
         initial={{ opacity: 0, y: -20 }}

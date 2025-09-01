@@ -54,3 +54,9 @@
  ├── /auth  # NextAuth.js setup for role-based authentication
  │   ├── auth-config.js
  │   ├── middleware.js
+
+
+
+ In Appointment also mention governement and private filter and also set the price per healthcenter which gonna set by the healthcente , by default its free
+
+ Also same from the doctors site for consultation 

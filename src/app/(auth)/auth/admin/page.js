@@ -5,11 +5,11 @@ import { supabase } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import { useToast } from '@/hooks/use-toast'
 
-const allowedSuperAdmins =process.env.NEXT_PUBLIC_SUPER_ADMINS;
+const allowedSuperAdmins = process.env.NEXT_PUBLIC_SUPER_ADMINS;
 
 export default function AdminAuthPage() {
   const router = useRouter();
-  const { toast } = useToast();
+  const { Success, errorToast } = useToast();
 
   const [tab, setTab] = useState("login");
   const [email, setEmail] = useState("");
@@ -37,18 +37,11 @@ export default function AdminAuthPage() {
       if (error) throw error;
 
       if (data.user) {
-        toast({
-          title: "✅ Registration Successful",
-          description: "You can now log in as Super Admin.",
-        });
+        Success( "✅ Registration Successful");
         setTab("login");
       }
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "❌ Registration Failed",
-        description: err.message || "Something went wrong.",
-      });
+      errorToast( "destructive");
     } finally {
       setLoading(false);
     }
@@ -72,21 +65,16 @@ export default function AdminAuthPage() {
       const user = data.user;
 
       if (user && allowedSuperAdmins.includes(user.email)) {
-        toast({
-          title: "✅ Welcome Super Admin!",
-          description: "Redirecting you to dashboard...",
-        });
-        router.push("/super-admin");
+        Success( "✅ Welcome Super Admin!");
+        router.push("/admin/dashboard");
       } else {
         await supabase.auth.signOut();
         throw new Error("You are not authorized as a Super Admin.");
       }
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "❌ Login Failed",
-        description: err.message || "Invalid credentials.",
-      });
+      errorToast("❌ Login Failed",
+        err.message
+      );
     } finally {
       setLoading(false);
     }
@@ -95,11 +83,8 @@ export default function AdminAuthPage() {
   // Handle Forgot Password
   const handleForgotPassword = async () => {
     if (!email) {
-      toast({
-        variant: "destructive",
-        title: "⚠️ Missing Email",
-        description: "Please enter your email to reset your password.",
-      });
+      errorToast(
+        "⚠️ Missing Email");
       return;
     }
 
@@ -112,16 +97,11 @@ export default function AdminAuthPage() {
 
       if (error) throw error;
 
-      toast({
-        title: "📩 Reset Link Sent",
-        description: "Check your email inbox to reset your password.",
-      });
+      Success( "📩 Reset Link Sent");
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "❌ Reset Failed",
-        description: err.message || "Could not send reset link.",
-      });
+      errorToast(
+        "destructive" , err.message
+      );
     } finally {
       setLoading(false);
     }

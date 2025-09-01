@@ -2,11 +2,11 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import UserHome from "./UserHome";
-import BookAppointment from "./book/page";
-import Download from "./download/page";
-import BooKLiveConsult from "./consult/page";
-import AboutUs from "./about/page";
-import Contact from "./contact/page";
+import BookAppointment from "./(pages)/book/page";
+import Download from "./(pages)/download/page";
+import BooKLiveConsult from "./(pages)/consult/page";
+import AboutUs from "./(pages)/about/page";
+import Contact from "./(pages)/contact/page";
 
 const routes = {
   "/user": <UserHome />,
