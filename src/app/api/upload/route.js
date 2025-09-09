@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import cloudinary from "cloudinary";
 import { Readable } from "stream";
-
 import { createClient } from "@supabase/supabase-js";
 import busboy from "busboy";
-
 
 // Cloudinary config
 cloudinary.v2.config({
@@ -28,11 +26,20 @@ export const config = {
 export async function POST(req) {
   try {
     const { searchParams } = new URL(req.url);
+
+    // Support both appointment and consult
     const appointmentId = searchParams.get("appointmentId");
+    const consultId = searchParams.get("consultId");
     const fileType = searchParams.get("fileType"); // "reports" | "bills" | "prescriptions"
 
-    if (!appointmentId || !fileType) {
-      return NextResponse.json({ message: "Missing appointmentId or fileType" }, { status: 400 });
+    const id = appointmentId || consultId;
+    const table = appointmentId ? "appointments" : "liveconsult";
+
+    if (!id || !fileType) {
+      return NextResponse.json(
+        { message: "Missing appointmentId/consultId or fileType" },
+        { status: 400 }
+      );
     }
 
     const contentType = req.headers.get("content-type");
@@ -41,36 +48,33 @@ export async function POST(req) {
     }
 
     const bb = busboy({ headers: { "content-type": contentType } });
-let fileBuffer = null;
-let fileName = "";
+    let fileBuffer = null;
 
-bb.on("file", (_, file, info) => {
-  fileName = info.filename;
-  const chunks = [];
-  file.on("data", (chunk) => chunks.push(chunk));
-  file.on("end", () => {
-    fileBuffer = Buffer.concat(chunks);
-  });
-});
+    bb.on("file", (_, file) => {
+      const chunks = [];
+      file.on("data", (chunk) => chunks.push(chunk));
+      file.on("end", () => {
+        fileBuffer = Buffer.concat(chunks);
+      });
+    });
 
-await new Promise((resolve, reject) => {
-  bb.on("finish", resolve);
-  bb.on("error", reject);
+    await new Promise((resolve, reject) => {
+      bb.on("finish", resolve);
+      bb.on("error", reject);
 
-  const reader = req.body.getReader();
-  const stream = new Readable({ read() {} });
+      const reader = req.body.getReader();
+      const stream = new Readable({ read() {} });
 
-  (async () => {
-    let done, value;
-    while ({ done, value } = await reader.read(), !done) {
-      stream.push(Buffer.from(value));
-    }
-    stream.push(null);
-  })();
+      (async () => {
+        let done, value;
+        while (({ done, value } = await reader.read()), !done) {
+          stream.push(Buffer.from(value));
+        }
+        stream.push(null);
+      })();
 
-  stream.pipe(bb);
-});
-
+      stream.pipe(bb);
+    });
 
     if (!fileBuffer) {
       return NextResponse.json({ message: "No file uploaded" }, { status: 400 });
@@ -79,7 +83,7 @@ await new Promise((resolve, reject) => {
     // Upload to Cloudinary
     const result = await new Promise((resolve, reject) => {
       const uploadStream = cloudinary.v2.uploader.upload_stream(
-        { folder: "appointments", resource_type: "auto" },
+        { folder: "documents", resource_type: "auto" },
         (err, res) => {
           if (err) reject(err);
           else resolve(res);
@@ -92,28 +96,28 @@ await new Promise((resolve, reject) => {
 
     // Fetch existing field
     const { data: existing, error: fetchError } = await supabase
-      .from("appointments")
+      .from(table)
       .select(fileType)
-      .eq("id", appointmentId)
+      .eq("id", id)
       .single();
 
     if (fetchError) throw fetchError;
 
     const oldFiles = existing?.[fileType] || [];
 
-    // Update appointment row
+    // Update row with new file
     const { error: updateError } = await supabase
-      .from("appointments")
+      .from(table)
       .update({
         [fileType]: [...oldFiles, fileUrl],
       })
-      .eq("id", appointmentId);
+      .eq("id", id);
 
     if (updateError) throw updateError;
 
     return NextResponse.json({ url: fileUrl });
   } catch (err) {
-    console.error(err);
+    console.error("Upload error:", err);
     return NextResponse.json({ message: err.message }, { status: 500 });
   }
 }

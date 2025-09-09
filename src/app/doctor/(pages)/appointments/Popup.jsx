@@ -1,144 +1,200 @@
+// app/components/LiveConsultPopup.jsx
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/client";
 import { Button } from "@/components/ui/button";
 
-export default function Popup({ id, type = "appointment", onClose, onUpdate }) {
-  const [docs, setDocs] = useState({ reports: [], bills: [], prescriptions: [] });
+async function fetchFiles(consultId) {
+  const { data, error } = await supabase
+    .from("liveconsult")
+    .select("reports, bills, prescriptions")
+    .eq("id", consultId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching files:", error.message);
+    return { reports: [], bills: [], prescriptions: [] };
+  }
+
+  return {
+    reports: data?.reports || [],
+    bills: data?.bills || [],
+    prescriptions: data?.prescriptions || [],
+  };
+}
+
+export default function LiveConsultPopup({ consultId, onClose, onUpdate }) {
   const [files, setFiles] = useState({ reports: [], bills: [], prescriptions: [] });
+  const [newFiles, setNewFiles] = useState({ reports: [], bills: [], prescriptions: [] });
   const [loading, setLoading] = useState(false);
 
-  // Fetch existing documents
+  // ✅ Fetch files when popup opens
   useEffect(() => {
-    if (!id) return;
+    if (!consultId) return;
+    setLoading(true);
+    fetchFiles(consultId)
+      .then(setFiles)
+      .finally(() => setLoading(false));
+  }, [consultId]);
 
-    const fetchDocs = async () => {
-      try {
-        const res = await fetch(`/api/${type}/docs?id=${id}`);
-        const data = await res.json();
-        if (data.success) {
-          setDocs({
-            reports: data.docs.reports || [],
-            bills: data.docs.bills || [],
-            prescriptions: data.docs.prescriptions || [],
-          });
-          setFiles({
-            reports: data.docs.reports || [],
-            bills: data.docs.bills || [],
-            prescriptions: data.docs.prescriptions || [],
-          });
-        }
-      } catch (err) {
-        console.error("Fetch docs error:", err);
-      }
-    };
+  // Handle new file selection
+  const handleFiles = (e, type) => {
+    setNewFiles((prev) => ({
+      ...prev,
+      [type]: Array.from(e.target.files),
+    }));
+  };
 
-    fetchDocs();
-  }, [id, type]);
-
-  const handleFiles = useCallback(
-    (e, key) => {
-      const selectedFiles = Array.from(e.target.files);
-      setFiles((prev) => ({ ...prev, [key]: [...prev[key].filter(f => typeof f === "string"), ...selectedFiles] }));
-    },
-    []
-  );
-
-  const uploadFiles = async (fileList, fileType) => {
+  // ✅ Upload files to Cloudinary via API
+  const uploadToCloudinary = async (filesArr, fileType) => {
     const uploadedUrls = [];
-    for (const file of fileList) {
-      if (typeof file === "string") {
-        uploadedUrls.push(file); // already uploaded
-        continue;
-      }
-
+    for (const file of filesArr) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch(`/api/upload?table=${type}&id=${id}&fileType=${fileType}`, {
+      const res = await fetch(`/api/upload?consultId=${consultId}&fileType=${fileType}`, {
         method: "POST",
         body: formData,
       });
 
+      if (!res.ok) throw new Error(`Failed to upload ${file.name}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Upload failed");
-      uploadedUrls.push(data.url);
+      if (data.url) uploadedUrls.push(data.url);
     }
     return uploadedUrls;
   };
 
-  const handleSubmit = async () => {
-    if (!id) return alert("Invalid item!");
-
+  // ✅ Delete file from Supabase
+  const handleDelete = async (fileType, url) => {
     setLoading(true);
     try {
-      const reportsUrls = await uploadFiles(files.reports, "reports");
-      const billsUrls = await uploadFiles(files.bills, "bills");
-      const prescriptionsUrls = await uploadFiles(files.prescriptions, "prescriptions");
+      const updatedList = files[fileType].filter((u) => u !== url);
+      const { error } = await supabase
+        .from("liveconsult")
+        .update({ [fileType]: updatedList })
+        .eq("id", consultId);
 
-      // Update DB
-      const res = await fetch(`/api/${type}/updateDocs`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id,
-          reports: reportsUrls,
-          bills: billsUrls,
-          prescriptions: prescriptionsUrls,
-        }),
-      });
+      if (error) throw error;
 
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      setFiles((prev) => ({
+        ...prev,
+        [fileType]: updatedList,
+      }));
+      if (onUpdate) onUpdate();
+    } catch (err) {
+      alert("Delete failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Submit new files & update Supabase
+  const handleSubmit = async () => {
+    if (!consultId) return alert("Invalid consult!");
+    setLoading(true);
+    try {
+      let updatedReports = [...files.reports];
+      let updatedBills = [...files.bills];
+      let updatedPrescriptions = [...files.prescriptions];
+
+      // Upload new files (with correct fileType)
+      if (newFiles.reports.length) {
+        const urls = await uploadToCloudinary(newFiles.reports, "reports");
+        updatedReports = [...updatedReports, ...urls];
+      }
+      if (newFiles.bills.length) {
+        const urls = await uploadToCloudinary(newFiles.bills, "bills");
+        updatedBills = [...updatedBills, ...urls];
+      }
+      if (newFiles.prescriptions.length) {
+        const urls = await uploadToCloudinary(newFiles.prescriptions, "prescriptions");
+        updatedPrescriptions = [...updatedPrescriptions, ...urls];
+      }
+
+      // Update Supabase
+      const { error } = await supabase
+        .from("liveconsult")
+        .update({
+          reports: updatedReports,
+          bills: updatedBills,
+          prescriptions: updatedPrescriptions,
+        })
+        .eq("id", consultId);
+
+      if (error) throw error;
 
       alert("Documents uploaded successfully!");
-      onUpdate();
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
-      console.error(err);
       alert("Upload failed: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const renderFileList = (list) =>
-    list.map((file, idx) =>
-      typeof file === "string" ? (
-        <a
-          key={idx}
-          href={file}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 underline block truncate max-w-full"
-        >
-          View {idx + 1}
-        </a>
+  // ✅ File list renderer
+  const renderFileList = (fileType) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {files[fileType]?.length === 0 ? (
+        <span className="text-xs text-gray-400">No files</span>
       ) : (
-        <p key={idx} className="truncate max-w-full">
-          {file.name}
-        </p>
-      )
-    );
+        files[fileType].map((url) => (
+          <div
+            key={url}
+            className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"
+          >
+            <span className="truncate max-w-[150px] text-xs">{url.split("/").pop()}</span>
+            <Button size="xs" variant="outline" onClick={() => window.open(url, "_blank")}>
+              View
+            </Button>
+            <Button size="xs" variant="destructive" onClick={() => handleDelete(fileType, url)}>
+              Delete
+            </Button>
+          </div>
+        ))
+      )}
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-lg space-y-4 shadow-lg overflow-y-auto max-h-[90vh]">
-        <h2 className="text-lg font-bold">Upload Documents</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-lg space-y-4">
+        <h2 className="text-lg font-bold">Upload/View Documents</h2>
 
-        {["reports", "bills", "prescriptions"].map((key) => (
-          <div key={key}>
-            <label className="block mb-1 font-medium capitalize">{key} (PDF)</label>
-            <input
-              type="file"
-              multiple
-              accept="application/pdf"
-              onChange={(e) => handleFiles(e, key)}
-              className="mb-2"
-            />
-            <div className="space-y-1">{renderFileList(files[key])}</div>
-          </div>
-        ))}
+        <div>
+          <label className="block mb-1">Reports (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            onChange={(e) => handleFiles(e, "reports")}
+          />
+          {renderFileList("reports")}
+        </div>
+
+        <div>
+          <label className="block mb-1">Bills (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            onChange={(e) => handleFiles(e, "bills")}
+          />
+          {renderFileList("bills")}
+        </div>
+
+        <div>
+          <label className="block mb-1">Prescriptions (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            onChange={(e) => handleFiles(e, "prescriptions")}
+          />
+          {renderFileList("prescriptions")}
+        </div>
 
         <div className="flex justify-end gap-2 mt-4">
           <Button onClick={onClose} variant="secondary">

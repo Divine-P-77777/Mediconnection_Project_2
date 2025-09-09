@@ -1,12 +1,26 @@
 "use client";
+
 import { useState, useEffect } from "react";
+import { supabase } from "@/supabase/client";
 import { Button } from "@/components/ui/button";
 
-// Utility to fetch existing files for the appointment
+// ✅ Fetch directly from Supabase
 async function fetchFiles(appointmentId) {
-  const res = await fetch(`/api/upload?appointmentId=${appointmentId}`, { method: "GET" });
-  const data = await res.json();
-  return data.files || { reports: [], bills: [], prescriptions: [] };
+  const { data, error } = await supabase
+    .from("appointments")
+    .select("reports, bills, prescriptions")
+    .eq("id", appointmentId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching files:", error.message);
+    return { reports: [], bills: [], prescriptions: [] };
+  }
+  return {
+    reports: data?.reports || [],
+    bills: data?.bills || [],
+    prescriptions: data?.prescriptions || [],
+  };
 }
 
 export default function Popup({ appointmentId, onClose, onUpdate }) {
@@ -14,7 +28,7 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
   const [newFiles, setNewFiles] = useState({ reports: [], bills: [], prescriptions: [] });
   const [loading, setLoading] = useState(false);
 
-  // Fetch existing files on open
+  // ✅ Fetch existing files from Supabase when popup opens
   useEffect(() => {
     if (!appointmentId) return;
     setLoading(true);
@@ -23,13 +37,14 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
       .finally(() => setLoading(false));
   }, [appointmentId]);
 
-  // Handle new file uploads
-  const handleFiles = (e, type) => setNewFiles((prev) => ({
-    ...prev,
-    [type]: Array.from(e.target.files),
-  }));
+  // Handle new file selection
+  const handleFiles = (e, type) =>
+    setNewFiles((prev) => ({
+      ...prev,
+      [type]: Array.from(e.target.files),
+    }));
 
-  // Upload files to backend (Cloudinary or other)
+  // Upload files to backend (Cloudinary)
   const uploadToCloudinary = async (filesArr, fileType) => {
     const uploadedUrls = [];
     for (const file of filesArr) {
@@ -57,10 +72,9 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ appointmentId, fileType, url }),
       });
-      // Remove from files state
-      setFiles(prev => ({
+      setFiles((prev) => ({
         ...prev,
-        [fileType]: prev[fileType].filter(u => u !== url)
+        [fileType]: prev[fileType].filter((u) => u !== url),
       }));
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -78,7 +92,7 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
       for (const type of ["reports", "bills", "prescriptions"]) {
         if (newFiles[type]?.length) {
           const urls = await uploadToCloudinary(newFiles[type], type);
-          setFiles(prev => ({
+          setFiles((prev) => ({
             ...prev,
             [type]: [...prev[type], ...urls],
           }));
@@ -94,17 +108,24 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
     }
   };
 
-  // Format for file lists
+  // File list renderer
   const renderFileList = (fileType) => (
     <div className="flex flex-wrap gap-2 mt-2">
       {files[fileType]?.length === 0 ? (
         <span className="text-xs text-gray-400">No files</span>
       ) : (
-        files[fileType].map((url, idx) => (
-          <div key={url} className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">
+        files[fileType].map((url) => (
+          <div
+            key={url}
+            className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"
+          >
             <span className="truncate max-w-[90px] text-xs">{url.split("/").pop()}</span>
-            <Button size="xs" variant="outline" onClick={() => window.open(url, "_blank")}>View</Button>
-            <Button size="xs" variant="destructive" onClick={() => handleDelete(fileType, url)}>Delete</Button>
+            <Button size="xs" variant="outline" onClick={() => window.open(url, "_blank")}>
+              View
+            </Button>
+            <Button size="xs" variant="destructive" onClick={() => handleDelete(fileType, url)}>
+              Delete
+            </Button>
           </div>
         ))
       )}
@@ -135,7 +156,9 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={onClose} variant="secondary">Cancel</Button>
+          <Button onClick={onClose} variant="secondary">
+            Cancel
+          </Button>
           <Button onClick={handleSubmit} disabled={loading}>
             {loading ? "Uploading..." : "Upload"}
           </Button>

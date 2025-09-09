@@ -1,108 +1,29 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/supabase/client";
+import { serviceSupabase } from "@/supabase/serviceClient";
 
+// POST: update prescriptions/reports/bills arrays
 export async function POST(req) {
   try {
     const body = await req.json();
-    let {
-      userId,
-      doctorId,
-      fullName,
-      dob,
-      phone,
-      gender,
-      email,
-      consultationDate,
-      consultationTime,
-      speciality,
-      bill,
-      prescriptions,
-      reports,
-      status,
-    } = body;
+    const { id, reports, bills, prescriptions } = body;
 
-    // Trim
-    fullName = fullName?.trim();
-    dob = dob?.trim();
-    email = email?.trim();
-    consultationTime = consultationTime?.trim();
-    speciality = speciality?.trim();
-    gender = gender?.trim();
-    consultationDate = consultationDate?.trim();
-    status = status?.trim();
+    if (!id) return NextResponse.json({ success: false, error: "Missing id" }, { status: 400 });
 
-    // Validate required
-    if (
-      !userId ||
-      !doctorId ||
-      !fullName ||
-      !dob ||
-      !phone ||
-      !gender ||
-      !email ||
-      !consultationDate ||
-      !consultationTime ||
-      !speciality
-    ) {
-      return NextResponse.json(
-        { success: false, error: "All fields are required" },
-        { status: 400 }
-      );
-    }
-
-    const phoneNumber = Number(phone);
-    if (isNaN(phoneNumber)) {
-      return NextResponse.json(
-        { success: false, error: "Phone must be a valid number" },
-        { status: 400 }
-      );
-    }
-
-    if (isNaN(new Date(dob).getTime())) {
-      return NextResponse.json(
-        { success: false, error: "Invalid date of birth" },
-        { status: 400 }
-      );
-    }
-    if (isNaN(new Date(consultationDate).getTime())) {
-      return NextResponse.json(
-        { success: false, error: "Invalid consultation date" },
-        { status: 400 }
-      );
-    }
-
-    // Insert
-    const { data, error } = await supabase
+    // Update arrays in the liveconsult table
+    const { error } = await serviceSupabase
       .from("liveconsult")
-      .insert([
-        {
-          user_id: userId,
-          doctor_id: doctorId,
-          full_name: fullName,
-          dob,
-          phone: phoneNumber,
-          gender,
-          email,
-          consultation_date: consultationDate,
-          consultation_time: consultationTime,
-          speciality,
-          bill: bill || 0,
-          prescriptions: prescriptions || [],
-          reports: reports || [],
-          status: status || "pending",
-        },
-      ])
-      .select()
-      .single();
+      .update({
+        reports, // array of URLs
+        bills, // array of URLs
+        prescriptions // array of URLs
+      })
+      .eq("id", id);
 
-    if (error) throw error;
-
-    return NextResponse.json({ success: true, booking: data });
+    if (error) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("Live consult booking error:", err);
-    return NextResponse.json(
-      { success: false, error: err.message || "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

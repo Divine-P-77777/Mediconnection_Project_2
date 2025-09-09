@@ -199,12 +199,12 @@ export default function DoctorAppointments() {
       </Card>
 
 {showPopup && (
-  <Popup
-    id={selectedId}         
-    type="liveconsult"        
-    onClose={closePopup}
-    onUpdate={fetchAppointments}
-  />
+<Popup
+  consultId={selectedId}
+  type="liveconsult"
+  onClose={closePopup}
+  onUpdate={fetchAppointments}
+/>
 )}
 
     </div>
