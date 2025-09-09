@@ -11,38 +11,49 @@ import Popup from "./Popup";
 export default function ManageAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [healthCenterId, setHealthCenterId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
-  // Fetch logged-in health center user
+  // Fetch health center id for logged-in user
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchHealthCenterId = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) setUser(user);
+      if (!user?.id) return setLoading(false);
+
+      // You might need to fetch health_center_id from your health_centers table:
+      // If the logged-in user IS the health center, use user.id directly.
+      // If not, fetch health center associated with user.
+      const { data: center } = await supabase
+        .from("health_centers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      setHealthCenterId(center?.id || null);
     };
-    fetchUser();
+    fetchHealthCenterId();
   }, []);
 
   // Fetch appointments for this health center
+  const fetchAppointments = async () => {
+    if (!healthCenterId) return setLoading(false);
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("center_id", healthCenterId)
+      .order("date", { ascending: true })
+      .order("time", { ascending: true });
+    setLoading(false);
+    if (error) return console.error(error.message);
+    setAppointments(data || []);
+  };
+
   useEffect(() => {
-    if (!user) return;
-
-    const fetchAppointments = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("*")
-        .eq("center_id", user.id) // health center's supabase user id
-        .order("date", { ascending: true })
-        .order("time", { ascending: true });
-
-      setLoading(false);
-      if (error) return console.error(error.message);
-      setAppointments(data || []);
-    };
-
+    if (!healthCenterId) return;
     fetchAppointments();
-  }, [user]);
+    // eslint-disable-next-line
+  }, [healthCenterId]);
 
   // Update appointment status
   const updateStatus = async (id, status) => {
@@ -50,12 +61,8 @@ export default function ManageAppointments() {
       .from("appointments")
       .update({ status })
       .eq("id", id);
-
     if (error) return alert("Failed to update status");
-
-    setAppointments((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, status } : app))
-    );
+    fetchAppointments();
   };
 
   return (
@@ -129,16 +136,7 @@ export default function ManageAppointments() {
             <Popup
               appointmentId={selectedAppointment.id}
               onClose={() => setSelectedAppointment(null)}
-              onUpdate={async () => {
-                // Refresh appointments after upload
-                const { data, error } = await supabase
-                  .from("appointments")
-                  .select("*")
-                  .eq("center_id", user.id)
-                  .order("date", { ascending: true })
-                  .order("time", { ascending: true });
-                if (!error) setAppointments(data || []);
-              }}
+              onUpdate={fetchAppointments}
             />
           )}
         </CardContent>

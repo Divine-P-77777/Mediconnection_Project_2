@@ -9,22 +9,15 @@ const monthNames = [
 const isLeapYear = (year) => (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
 const getFebDays = (year) => (isLeapYear(year) ? 29 : 28);
 
-export default function SeamlessCalendar({ onDateChange, selectedDate: externalDate }) {
+export default function SeamlessCalendar({ onDateChange, selectedDate: externalDate, allowedDates = [] }) {
   const currDate = new Date();
   const isDarkMode = useSelector(state => state.theme.isDarkMode);
 
-  // Use controlled date if provided, else fallback to local state
-  const [month, setMonth] = useState(
-    externalDate ? externalDate.getMonth() : currDate.getMonth()
-  );
-  const [year, setYear] = useState(
-    externalDate ? externalDate.getFullYear() : currDate.getFullYear()
-  );
-  const [selectedDate, setSelectedDate] = useState(
-    externalDate || currDate
-  );
+  const [month, setMonth] = useState(externalDate ? externalDate.getMonth() : currDate.getMonth());
+  const [year, setYear] = useState(externalDate ? externalDate.getFullYear() : currDate.getFullYear());
+  const [selectedDate, setSelectedDate] = useState(externalDate || null);
 
-  // Keep local state in sync with externalDate
+  // Sync with externalDate
   useEffect(() => {
     if (externalDate) {
       setMonth(externalDate.getMonth());
@@ -35,10 +28,20 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
 
   const daysOfMonth = [31, getFebDays(year), 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
+  const isDateAllowed = (date) => {
+    if (!allowedDates || allowedDates.length === 0) return true; // allow all if not provided
+    return allowedDates.some(d => 
+      d.getFullYear() === date.getFullYear() &&
+      d.getMonth() === date.getMonth() &&
+      d.getDate() === date.getDate()
+    );
+  };
+
   const handleDateSelect = (day) => {
     const newDate = new Date(year, month, day);
+    if (!isDateAllowed(newDate)) return; // ignore clicks on unavailable dates
     setSelectedDate(newDate);
-    if (onDateChange) onDateChange(newDate); // <-- Notify parent
+    if (onDateChange) onDateChange(newDate);
   };
 
   const generateCalendarDays = () => {
@@ -50,15 +53,21 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
     }
 
     for (let i = 1; i <= daysOfMonth[month]; i++) {
+      const current = new Date(year, month, i);
+      const allowed = isDateAllowed(current);
+
       const isSelected = selectedDate &&
         i === selectedDate.getDate() &&
         year === selectedDate.getFullYear() &&
         month === selectedDate.getMonth();
+
       days.push(
         <div
           key={i}
           className={`p-2 w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all duration-300
-            ${isSelected ? "bg-cyan-500 text-white" : isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-300"}
+            ${isSelected ? "bg-cyan-500 text-white" : allowed 
+              ? (isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-300") 
+              : "opacity-30 cursor-not-allowed"}
           `}
           onClick={() => handleDateSelect(i)}
         >

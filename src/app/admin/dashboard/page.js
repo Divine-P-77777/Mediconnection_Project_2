@@ -1,6 +1,6 @@
 import AdminDashboard from './AdminDashboard';
 
-export const dynamic = "force-dynamic"; // ✅ tells Next.js this page is dynamic
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   try {
@@ -25,3 +25,9 @@ export default async function DashboardPage() {
     );
   }
 }
+
+
+
+
+
+

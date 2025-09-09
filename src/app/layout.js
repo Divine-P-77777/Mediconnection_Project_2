@@ -58,6 +58,7 @@ export default function RootLayout({ children }) {
         <meta name="twitter:title" content="Dynamic FD" />
         <meta name="twitter:description" content="Check out our achievements and journey!" />
         <meta name="twitter:image" content="/logo.png" />
+        <script src="https://sdk.cashfree.com/js/v3/cashfree.js" async></script>
       </head>
       <body className={`${inter.className}  `}>
         <ClientWrapper>

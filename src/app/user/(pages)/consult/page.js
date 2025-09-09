@@ -1,262 +1,127 @@
 "use client";
 
-import { useState } from "react";
-import { format, addDays } from "date-fns";
-import {supabase} from "@/supabase/client"
-; 
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/supabase/client";
+import { format } from "date-fns";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import BookingModal from "./BookingModal";
+import ConsultationsTable from "./ConsultationsTable";
+const preselectedServices = [
+  "General Medicine",
+  "Pediatrics",
+  "Cardiology",
+  "Dermatology",
+  "Orthopedics",
+  "Neurology",
+];
 
-export default function BooKLiveConsult() {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    dob: "",
-    phone: "",
-    email: "",
-    gender: "male",
-    consultationDate: "",
-    consultationTime: "",
-    speciality: "General Medicine",
-  });
-
+export default function ExploreConsult() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
+  const [search, setSearch] = useState("");
+  const [activeServiceTab, setActiveServiceTab] = useState(preselectedServices[0]);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [bookingDoctor, setBookingDoctor] = useState(null);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  // Fetch doctors offering selected service
+const fetchDoctors = async () => {
+  try {
+    setLoading(true);
+    const url = new URL("/api/doctor", window.location.origin);
+    if (search) url.searchParams.set("search", search);
+    else url.searchParams.set("service", activeServiceTab);
 
-  // Handle DOB change from SeamlessCalendar
-  const handleDOBChange = (date) => {
-    setFormData({ ...formData, dob: format(date, "yyyy-MM-dd") });
-  };
+    const res = await fetch(url);
+    const data = await res.json();
 
-  // Handle Consultation Date change with restrictions
-  const handleConsultationDateChange = (date) => {
-    setFormData({ ...formData, consultationDate: format(date, "yyyy-MM-dd") });
-  };
+    if (!data.success) throw new Error(data.error);
+    setDoctors(data.doctors);
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const bookLiveConsult = async () => {
-    const { fullName, dob, phone, gender, consultationDate, consultationTime, speciality } = formData;
+  useEffect(() => {
+    fetchDoctors();
+  }, [search, activeServiceTab]);
 
-    if (!fullName || !dob || !phone || !email || !gender || !consultationDate || !consultationTime || !speciality) {
-      alert("All fields are required.");
-      return;
-    }
+  return (
+    <div className={`min-h-screen pt-24 px-4 transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"}`}>
+      <h1 className={`text-3xl font-bold mb-6 text-center ${isDarkMode ? "text-cyan-400" : "text-cyan-600"}`}>
+        Explore Doctors & Services
+      </h1>
 
-    const newConsultation = {
-      full_name: fullName,
-      dob: format(new Date(dob), "yyyy-MM-dd"),
-      phone,
-      email,
-      gender: gender.toLowerCase(),
-      consultation_date: format(new Date(consultationDate), "yyyy-MM-dd"),
-      consultation_time: consultationTime,
-      speciality,
-      created_at: new Date(),
-    };
+      {/* Global Search */}
+      <div className="max-w-3xl mx-auto mb-6">
+        <input
+          type="text"
+          placeholder="Search services or doctors..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={`w-full p-3 rounded-xl border transition focus:ring-2 focus:ring-cyan-500 ${isDarkMode ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400" : "bg-white border-gray-300 text-black placeholder-gray-500"}`}
+        />
+      </div>
 
-    const { data, error } = await supabase.from("liveconsult").insert([newConsultation]).select().single();
-
-    if (error) {
-      console.error("Error booking consultation:", error.message);
-      alert("Booking failed. Please try again.");
-    } else {
-      alert("Live Consultation booked successfully!");
-      console.log("New Consultation:", data);
-      setFormData({
-        fullName: "",
-        dob: "",
-        phone: "",
-        email: "",
-        gender: "male",
-        consultationDate: "",
-        consultationTime: "",
-        speciality: "General Medicine",
-      });
-    }
-  };
-
-  const inputClasses = `w-full p-3 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-500 ${
-    isDarkMode 
-      ? "bg-gray-800 border-gray-600 text-white placeholder-gray-400" 
-      : "bg-white border-gray-300 text-black placeholder-gray-500"
-  }`;
-
-  const labelClasses = `block text-lg mb-2 ${
-    isDarkMode ? "text-gray-200" : "text-gray-700"
-  }`;
-
-  // ... previous imports and state management code remains same ...
-
-return (
-  <div className={`py-2 min-h-screen w-full pt-24 px-4 transition-all duration-300 
-    ${isDarkMode ? "bg-[#0A192F] text-white" : "bg-gray-50 text-gray-900"}`}>
-    <Card className={`max-w-6xl px-3 py-3 mx-auto shadow-xl ${
-      isDarkMode ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200"
-    }`}>
-      <CardHeader className="text-center">
-        <CardTitle className="text-3xl font-bold">Live Consultation Booking</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {/* PC: Side by side, Mobile: Stacked */}
-        <div className="flex flex-col md:flex-row md:gap-6">
-          {/* Left Side - Personal Information */}
-          <div className="flex-1 space-y-6">
-            <div className="space-y-4">
-              <h2 className={`text-xl font-semibold ${isDarkMode ? "text-cyan-400" : "text-blue-600"}`}>
-                Personal Information
-              </h2>
-              
-              {/* Full Name */}
-              <div className="form-group">
-                <label htmlFor="fullName" className={labelClasses}>Full Name</label>
-                <input
-                  id="fullName"
-                  type="text"
-                  name="fullName"
-                  placeholder="Enter your full name"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Date of Birth */}
-              <div className="form-group">
-                <label className={labelClasses}>Date of Birth</label>
-                <div className="relative">
-                  <SeamlessCalendar 
-                    onDateChange={handleDOBChange}
-                    maxDate={new Date()}
-                  />
-                </div>
-              </div>
-
-               {/* Date of Birth */}
-              <div className="form-group">
-                <label className={labelClasses}>Email</label>
-                <input
-                  id="email"
-                  type="text"
-                  name="email"
-                  placeholder="abc@gmail.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Phone Number */}
-              <div className="form-group">
-                <label htmlFor="phone" className={labelClasses}>Phone Number</label>
-                <input
-                  id="phone"
-                  type="tel"
-                  name="phone"
-                  placeholder="+91 1234567890"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Gender */}
-              <div className="form-group">
-                <label htmlFor="gender" className={labelClasses}>Gender</label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className={inputClasses}
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Divider for mobile view */}
-          <div className="my-6 md:hidden border-t border-gray-200 dark:border-gray-700"></div>
-
-          {/* Vertical divider for PC view */}
-          <div className="hidden md:block w-px bg-gray-200 dark:bg-gray-700"></div>
-
-          {/* Right Side - Consultation Details */}
-          <div className="flex-1 space-y-6">
-            <div className="space-y-4">
-              <h2 className={`text-xl font-semibold ${isDarkMode ? "text-cyan-400" : "text-blue-600"}`}>
-                Consultation Details
-              </h2>
-
-              {/* Consultation Date */}
-              <div className="form-group">
-                <label className={labelClasses}>Consultation Date</label>
-                <div className="relative">
-                  <SeamlessCalendar 
-                    onDateChange={handleConsultationDateChange}
-                    minDate={new Date()}
-                    maxDate={addDays(new Date(), 7)}
-                  />
-                </div>
-              </div>
-
-              {/* Consultation Time */}
-              <div className="form-group">
-                <label htmlFor="consultationTime" className={labelClasses}>
-                  Preferred Time (click on the clock icon)
-                </label>
-                <input
-                  id="consultationTime"
-                  type="time"
-                  name="consultationTime"
-                  value={formData.consultationTime}
-                  onChange={handleChange}
-                  className={inputClasses}
-                />
-              </div>
-
-              {/* Speciality */}
-              <div className="form-group">
-                <label htmlFor="speciality" className={labelClasses}>Speciality</label>
-                <select
-                  id="speciality"
-                  name="speciality"
-                  value={formData.speciality}
-                  onChange={handleChange}
-                  className={inputClasses}
-                >
-                  <option value="General Medicine">General Medicine</option>
-                  <option value="Pediatrics">Pediatrics</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Dermatology">Dermatology</option>
-                  <option value="Orthopedics">Orthopedics</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Submit Button - Full width at bottom */}
-        <div className="mt-8">
+      {/* Service Tabs */}
+      <div className="flex flex-wrap gap-2 justify-center mb-8">
+        {preselectedServices.map((service) => (
           <button
-            type="button"
-            onClick={bookLiveConsult}
-            className={`w-full py-4 rounded-lg text-white font-semibold transition-all duration-300 
-              ${isDarkMode 
-                ? "bg-cyan-600 hover:bg-cyan-700" 
-                : "bg-blue-600 hover:bg-blue-700"
-              } hover:shadow-lg transform hover:scale-[1.02]`}
+            key={service}
+            onClick={() => setActiveServiceTab(service)}
+            className={`px-4 py-2 rounded-full font-medium transition ${
+              activeServiceTab === service
+                ? "bg-cyan-500 text-white"
+                : isDarkMode
+                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
           >
-            Book Consultation
+            {service}
           </button>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-);
+        ))}
+      </div>
+
+      {/* Doctors List */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        {loading ? (
+          <p className="text-center col-span-full">Loading doctors...</p>
+        ) : doctors.length === 0 ? (
+          <p className="text-center col-span-full">No doctors found for this service.</p>
+        ) : (
+          doctors.map((doc) => (
+            <Card key={doc.id} className={`${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} shadow-md`}>
+              <CardHeader>
+                <CardTitle>{doc.doctors.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <p><strong>Service:</strong> {doc.service_name}</p>
+                <p><strong>Price:</strong> {doc.price === 0 ? "Free" : `₹${doc.price}`}</p>
+                <button
+                  onClick={() => setBookingDoctor(doc)}
+                  className="mt-2 w-full px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 transition"
+                >
+                  Book Now
+                </button>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Booking Modal */}
+      {bookingDoctor && (
+        <BookingModal
+          doctor={bookingDoctor}
+          onClose={() => setBookingDoctor(null)}
+        />
+      )}
+      <ConsultationsTable />
+
+
+    </div>
+  );
 }
