@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { supabase } from "@/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
+import Loader from "@/app/components/Loader";
 const daysOfWeek = [
   "Monday",
   "Tuesday",
@@ -143,6 +143,12 @@ const DoctorManageProfile = () => {
       setLoading(false);
     }
   };
+
+  if(loading) {
+    return (
+      <Loader/>
+    );
+  }
 
   return (
     <div

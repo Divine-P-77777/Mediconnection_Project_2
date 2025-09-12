@@ -29,7 +29,7 @@ export default function LiveConsultPopup({ consultId, onClose, onUpdate }) {
   const [newFiles, setNewFiles] = useState({ reports: [], bills: [], prescriptions: [] });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch files when popup opens
+  // Fetch files when popup opens
   useEffect(() => {
     if (!consultId) return;
     setLoading(true);
@@ -46,7 +46,7 @@ export default function LiveConsultPopup({ consultId, onClose, onUpdate }) {
     }));
   };
 
-  // ✅ Upload files to Cloudinary via API
+  //  Upload files to Cloudinary via API
   const uploadToCloudinary = async (filesArr, fileType) => {
     const uploadedUrls = [];
     for (const file of filesArr) {
@@ -65,7 +65,7 @@ export default function LiveConsultPopup({ consultId, onClose, onUpdate }) {
     return uploadedUrls;
   };
 
-  // ✅ Delete file from Supabase
+  //  Delete file from Supabase
   const handleDelete = async (fileType, url) => {
     setLoading(true);
     try {
@@ -89,7 +89,7 @@ export default function LiveConsultPopup({ consultId, onClose, onUpdate }) {
     }
   };
 
-  // ✅ Submit new files & update Supabase
+  //  Submit new files & update Supabase
   const handleSubmit = async () => {
     if (!consultId) return alert("Invalid consult!");
     setLoading(true);

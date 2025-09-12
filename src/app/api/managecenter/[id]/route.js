@@ -1,22 +1,28 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import {serviceSupabase} from "@/supabase/serviceClient"
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
 
 export async function PATCH(req, { params }) {
+
+  if (!params || !params.id) {
+    return NextResponse.json({ error: "Health center ID is required" }, { status: 400 });
+  }
+  return updateHealthCenter(req, params.id);
+}
+
+export async function PUT(req, { params }) {
+  if (!params || !params.id) {
+    return NextResponse.json({ error: "Health center ID is required" }, { status: 400 });
+  }
+  return updateHealthCenter(req, params.id);
+}
+
+// main update function
+async function updateHealthCenter(req, id) {
   try {
-    const { id } = params;
     const { approved } = await req.json();
 
-    if (!id) {
-      return NextResponse.json({ error: "Health center ID is required" }, { status: 400 });
-    }
-
-    // ✅ Just update the health_centers table
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await serviceSupabase
       .from("health_centers")
       .update({ approved: !!approved })
       .eq("id", id)
@@ -27,10 +33,7 @@ export async function PATCH(req, { params }) {
 
     return NextResponse.json({ data });
   } catch (err) {
-    console.error("PATCH failed:", err);
-    return NextResponse.json(
-      { error: err.message || "Server error" },
-      { status: 500 }
-    );
+    console.error("PATCH/PUT failed:", err);
+    return NextResponse.json({ error: err.message || "Server error" }, { status: 500 });
   }
 }

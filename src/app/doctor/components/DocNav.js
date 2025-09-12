@@ -5,35 +5,31 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
-import { toggleDarkMode } from "../../store/themeSlice";
+import { toggleDarkMode } from "../../../store/themeSlice";
 import { Sun, Moon } from "lucide-react";
-
-// 🔹 Import AuthContext hook
 import { useAuth } from "@/hooks/useAuth";
 
-const AdminNav = () => {
+const DocNav = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const dispatch = useDispatch();
   const pathname = usePathname();
   const router = useRouter();
 
-  // 🔹 Get auth state from context
-  const { session, user, signOut, role, isSuperAdmin } = useAuth();
+  const { session, signOut } = useAuth();
   const isLoggedIn = !!session;
 
-  // 🔹 Logout handler
   const handleLogout = async () => {
-    await signOut(); // calls supabase.auth.signOut()
+    await signOut();
   };
 
-  // 🔹 Nav items
+  // 🔹 Match with Doctor Home Page cards (Appointments, Patients, Reports, Careers, Privacy)
   const navItems = [
-    { name: "Home", path: "/admin" },
-    { name: "Dashboard", path: "/admin/dashboard" },
-    { name: "Privacy & Terms", path: "/admin/privacy" },
-    { name: "Manage Reports", path: "/admin/reports" },
-    { name: "Careers", path: "/admin/careers" },
+    { name: "Home", path: "/doctor" },
+    { name: "Appointments", path: "/doctor/appointments" },
+    { name: "Patients", path: "/doctor/patients" },
+    { name: "Reports", path: "/doctor/reports" },
+    { name: "My Profile", path: "/doctor/profile" },
     ...(isLoggedIn
       ? [{ name: "Logout", onClick: handleLogout }]
       : [{ name: "Login", path: "/login" }]),
@@ -41,45 +37,47 @@ const AdminNav = () => {
 
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-300  py-3 px-4 
-      ${isDarkMode ? "bg-[#0A192F] text-[#F8F8F8]" : "bg-cyan-200 text-[#0A192F]"}
-    `}
+      className={`fixed top-0 w-full z-50 transition-all duration-300 py-3 px-4
+      ${
+        isDarkMode
+          ? "bg-[#0A192F] text-white"
+          : "bg-gradient-to-r from-cyan-100 via-cyan-200 to-cyan-300 text-gray-900"
+      }`}
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link
-          href="/admin"
+          href="/doctor"
           className="flex items-center gap-2 hover:scale-105 transition-transform duration-300"
         >
           <Image
             src="/logo.png"
             alt="Logo"
-            width={60}
-            height={60}
-            className="rounded-xl border hover:shadow-lg hover:border-cyan-400 transition-all duration-300"
+            width={50}
+            height={50}
+            className="rounded-lg border hover:border-cyan-400 transition-all duration-300"
           />
-          <span className="text-xl font-bold hover:text-cyan-400 transition-colors duration-300">
-            Mediconnect
+          <span className="text-lg md:text-xl font-extrabold tracking-wide hover:text-cyan-500">
+            Mediconnection
           </span>
         </Link>
 
         {/* Desktop Navigation */}
         <div
-          className={`hidden md:flex items-center gap-2 p-2 rounded-full 
-          ${isDarkMode ? "bg-black" : "bg-white/30"}`}
+          className={`hidden md:flex items-center gap-2 p-2 rounded-full
+          ${isDarkMode ? "bg-black/30" : "bg-white/40 backdrop-blur-sm"}`}
         >
           {navItems.map((item) =>
             item.onClick ? (
               <button
                 key="logout"
                 onClick={item.onClick}
-                className={`px-4 py-2 rounded-full transition-all duration-300 
+                className={`px-4 py-2 rounded-full font-medium transition-all duration-300
                   ${
                     isDarkMode
                       ? "hover:bg-red-500/20 text-red-400"
-                      : "hover:bg-red-100 text-red-500"
-                  }
-                  hover:scale-105 hover:shadow-md`}
+                      : "hover:bg-red-100 text-red-600"
+                  } hover:scale-105`}
               >
                 {item.name}
               </button>
@@ -87,19 +85,19 @@ const AdminNav = () => {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`relative px-4 py-2 rounded-full transition-all duration-300 
+                className={`relative px-4 py-2 rounded-full font-medium transition-all duration-300
                   ${
                     pathname === item.path
                       ? isDarkMode
-                        ? "bg-cyan-500/20 text-cyan-400"
-                        : "bg-white text-[#1ba5e5]"
-                      : "hover:bg-white/10"
+                        ? "bg-cyan-600/20 text-cyan-400"
+                        : "bg-white text-cyan-600 shadow-md"
+                      : "hover:bg-cyan-100/40"
                   }
-                  hover:scale-105 hover:shadow-md`}
+                  hover:scale-105`}
               >
                 {item.name}
                 {pathname === item.path && (
-                  <span className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-cyan-400" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-cyan-500" />
                 )}
               </Link>
             )
@@ -107,22 +105,13 @@ const AdminNav = () => {
         </div>
 
         {/* Right side controls */}
-        <div className="flex justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
           {/* Dark Mode Toggle */}
-          <button
-            onClick={() => dispatch(toggleDarkMode())}
-            className=""
-          >
+          <button onClick={() => dispatch(toggleDarkMode())}>
             {isDarkMode ? (
-              <Sun
-                size={28}
-                className="text-cyan-100 hover:text-cyan-200 transition-colors"
-              />
+              <Sun size={26} className="text-cyan-100 hover:text-cyan-200" />
             ) : (
-              <Moon
-                size={28}
-                className="text-gray-900 hover:text-black transition-colors"
-              />
+              <Moon size={26} className="text-gray-800 hover:text-gray-900" />
             )}
           </button>
 
@@ -130,13 +119,13 @@ const AdminNav = () => {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className={`md:hidden p-2 rounded-full transition-all duration-300
-              ${isDarkMode ? "hover:bg-cyan-500/20" : "hover:bg-white/30"}`}
+              ${isDarkMode ? "hover:bg-cyan-500/20" : "hover:bg-cyan-100/50"}`}
           >
             <Image
               src={menuOpen ? "/close.svg" : "/menu.svg"}
               alt="Menu"
-              width={32}
-              height={32}
+              width={28}
+              height={28}
               className="hover:scale-110 transition-transform duration-300"
             />
           </button>
@@ -146,30 +135,28 @@ const AdminNav = () => {
       {/* Mobile Navigation */}
       {menuOpen && (
         <div
-          className={`absolute top-16 right-4 w-64 p-4 rounded-2xl shadow-xl transition-all duration-300 
-          border backdrop-blur-sm transform origin-top-right
+          className={`absolute top-16 right-4 w-64 p-4 rounded-2xl shadow-lg transition-all duration-300
+          border backdrop-blur-md
           ${
             isDarkMode
-              ? "bg-[#0A192F]/90 text-[#F8F8F8] border-cyan-500"
-              : "bg-white/90 text-[#0A192F] border-gray-900"
-          }
-        `}
+              ? "bg-[#0A192F]/95 text-white border-cyan-500"
+              : "bg-white/95 text-gray-900 border-cyan-400"
+          }`}
         >
           {navItems.map((item) =>
             item.onClick ? (
               <button
-                key="logout"
+                key="logout-mobile"
                 onClick={() => {
                   item.onClick();
                   setMenuOpen(false);
                 }}
-                className={`block w-full text-center px-4 py-3 my-2 rounded-xl transition-all duration-300 
+                className={`block w-full text-center px-4 py-3 my-2 rounded-xl font-medium transition-all duration-300
                   ${
                     isDarkMode
                       ? "hover:bg-red-500/20 text-red-400"
-                      : "hover:bg-red-100 text-red-500"
-                  }
-                  hover:scale-105 hover:shadow-md`}
+                      : "hover:bg-red-100 text-red-600"
+                  }`}
               >
                 {item.name}
               </button>
@@ -177,15 +164,14 @@ const AdminNav = () => {
               <Link
                 key={item.path}
                 href={item.path}
-                className={`block text-center px-4 py-3 my-2 rounded-xl transition-all duration-300 
+                className={`block text-center px-4 py-3 my-2 rounded-xl font-medium transition-all duration-300
                   ${
                     pathname === item.path
                       ? isDarkMode
-                        ? "bg-cyan-500/20 text-cyan-400"
-                        : "bg-[#1ba5e5]/10 text-[#1ba5e5]"
-                      : "hover:bg-cyan-500/10"
-                  }
-                  hover:scale-105 hover:shadow-md`}
+                        ? "bg-cyan-600/20 text-cyan-400"
+                        : "bg-cyan-100 text-cyan-700"
+                      : "hover:bg-cyan-100/50"
+                  }`}
                 onClick={() => setMenuOpen(false)}
               >
                 {item.name}
@@ -198,4 +184,4 @@ const AdminNav = () => {
   );
 };
 
-export default AdminNav;
+export default DocNav;

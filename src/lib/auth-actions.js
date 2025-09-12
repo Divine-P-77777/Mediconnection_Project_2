@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { supabaseClient } from '@/utils/supabaseClient';
 
-export async function login(formData) {  // ❌ Removed ": FormData"
+export async function login(formData) {  
   const supabase = createClient();
 
   const data = {

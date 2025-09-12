@@ -1,11 +1,7 @@
 // app/api/adminAccess/route.js
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-
-const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+import {serviceSupabase} from "@/supabase/serviceClient"
 
 export async function POST(req) {
   try {

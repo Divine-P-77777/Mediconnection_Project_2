@@ -13,7 +13,6 @@ import DoctorFoot from "./doctor/DoctorFoot";
 export default function RootLayout({ children }) {
   const pathname = usePathname();
 
-  // Determine which navbar and footer to render based on URL path
   const getNavAndFooter = () => {
     if (pathname.startsWith("/admin")) {
       return { Nav: AdminNav, Foot: AdminFoot };
@@ -22,7 +21,7 @@ export default function RootLayout({ children }) {
     } else if (pathname.startsWith("/doctor")) {
       return { Nav: DoctorNav, Foot: DoctorFoot };
     }
-    return { Nav: UserNav, Foot: UserFoot }; // Default: User Site
+    return { Nav: UserNav, Foot: UserFoot };
   };
 
   const { Nav, Foot } = getNavAndFooter();

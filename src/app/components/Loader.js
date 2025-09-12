@@ -1,54 +1,52 @@
 "use client";
-
-import React, { useEffect, useState } from "react";
-import { grid } from "ldrs";
+import Image from "next/image";
 import { useSelector } from "react-redux";
+import { motion } from "framer-motion";
 
-const Loader = () => {
-  const [message, setMessage] = useState("Loading...");
-
+export default function Loader() {
+  // Dark mode from Redux
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-  
-  useEffect(() => {
-    grid.register(); // Initialize the grid loader
-
-    // Show "We are willing to catch..." after 5 seconds
-    const messageTimeout1 = setTimeout(() => {
-      setMessage("We are willing to catch...");
-    }, 5000);
-
-    // Show "Server problem. Please try again!" after 10 seconds
-    const messageTimeout2 = setTimeout(() => {
-      setMessage("Server problem. Please try again!");
-    }, 10000);
-
-    return () => {
-      clearTimeout(messageTimeout1);
-      clearTimeout(messageTimeout2);
-    };
-  }, []);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-opacity-70 backdrop-blur-lg">
-      {/* Centered Square Container */}
-      <div className={`z-30 w-56 h-56 flex flex-col items-center justify-center ${isDarkMode?"bg-black backdrop-blur-lg":"bg-white backdrop-blur-lg"} shadow-md shadow-purple-300 p-6 rounded-3xl`}>
-        {/* Spinner */}
-        <l-grid
-          size="55"
-          stroke="4"
-          stroke-length="0.15"
-          bg-opacity="0.1"
-          speed="1.3"
-          color="purple"
-        ></l-grid>
+    <div
+      className={`flex flex-col items-center justify-center min-h-screen gap-6 transition-colors duration-300
+        ${isDarkMode ? "bg-[#0A192F] text-white" : "bg-gray-50 text-gray-900"}
+      `}
+    >
+      {/* Logo (static) */}
+      <Image
+        src="/logo.png" // replace with your logo path
+        alt="Mediconnect Logo"
+        width={100}
+        height={100}
+        className="rounded-xl"
+      />
 
-        {/* Dynamic Message */}
-        <p className={`mt-4 text-lg font-semibold text-gray-800 animate-pulse ${isDarkMode?"text-purple-200 backdrop-blur-lg":"text-purple-950"}`}>
-          {message}
-        </p>
+      {/* Title (static) */}
+      <h1 className="text-2xl font-bold tracking-wide">
+        Mediconnection
+      </h1>
+
+      {/* Animated Line Loader */}
+      <div
+        className={`relative w-[200px] h-1 rounded-full overflow-hidden ${
+          isDarkMode ? "bg-gray-700" : "bg-gray-300"
+        }`}
+      >
+        <motion.div
+          initial={{ x: "-100%" }}
+          animate={{ x: "100%" }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "loop",
+            duration: 1.2,
+            ease: "linear",
+          }}
+          className={`absolute top-0 left-0 h-full w-1/2 rounded-full ${
+            isDarkMode ? "bg-cyan-400" : "bg-blue-500"
+          }`}
+        />
       </div>
     </div>
   );
-};
-
-export default Loader;
+}

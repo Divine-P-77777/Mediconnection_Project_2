@@ -22,7 +22,6 @@ export default function ResetPasswordPage() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode)
   const { Success, errorToast } = useToast()
 
-  // ✅ Lenis setup
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -43,7 +42,6 @@ export default function ResetPasswordPage() {
     }
   }, [])
 
-  // ✅ Validate reset link
   useEffect(() => {
     supabase.auth.getUser().then(({ data, error }) => {
       if (error || !data.user) {
@@ -55,7 +53,6 @@ export default function ResetPasswordPage() {
     })
   }, [])
 
-  // ✅ Handle submit
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -73,7 +70,6 @@ export default function ResetPasswordPage() {
     }
   }
 
-  // ✅ Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -82,7 +78,6 @@ export default function ResetPasswordPage() {
     )
   }
 
-  // ✅ Error state (modified to use react-toastify)
   if (error) {
     // fire toast immediately when error exists
     errorToast(error)

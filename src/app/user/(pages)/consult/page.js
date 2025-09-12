@@ -86,31 +86,59 @@ const fetchDoctors = async () => {
       </div>
 
       {/* Doctors List */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-        {loading ? (
-          <p className="text-center col-span-full">Loading doctors...</p>
-        ) : doctors.length === 0 ? (
-          <p className="text-center col-span-full">No doctors found for this service.</p>
-        ) : (
-          doctors.map((doc) => (
-            <Card key={doc.id} className={`${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} shadow-md`}>
-              <CardHeader>
-                <CardTitle>{doc.doctors.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <p><strong>Service:</strong> {doc.service_name}</p>
-                <p><strong>Price:</strong> {doc.price === 0 ? "Free" : `₹${doc.price}`}</p>
-                <button
-                  onClick={() => setBookingDoctor(doc)}
-                  className="mt-2 w-full px-4 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 transition"
-                >
-                  Book Now
-                </button>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+  {/* Doctors List */}
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+  {loading ? (
+    <p className="text-center col-span-full">Loading doctors...</p>
+  ) : doctors.length === 0 ? (
+    <p className="text-center col-span-full">No doctors found for this service.</p>
+  ) : (
+    doctors.map((doc) => {
+      const doctor = doc.doctors ?? doc; // fallback if no relation nesting
+      return (
+        <Card
+          key={doctor.id}
+          className={`rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition border ${
+            isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          }`}
+        >
+          <CardHeader className="flex flex-col items-center text-center">
+   <img
+  src={doctor.profile || "https://via.placeholder.com/150?text=Doctor"}
+  alt="Doctor profile"
+  className="w-20 h-20 rounded-full object-cover border-2 border-cyan-500"
+/>
+
+            <CardTitle className="mt-3 text-lg font-semibold">
+              Dr. {doctor.name}
+            </CardTitle>
+            {doctor.specialization && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {doctor.specialization}
+              </p>
+            )}
+          </CardHeader>
+
+          <CardContent className="space-y-2 text-center">
+            <p>
+              <strong>Service:</strong> {doc.service_name}
+            </p>
+            <p>
+              <strong>Price:</strong>{" "}
+              {doc.price === 0 ? "Free" : `₹${doc.price}`}
+            </p>
+            <button
+              onClick={() => setBookingDoctor(doc)}
+              className="mt-3 w-full px-4 py-2 rounded-lg bg-cyan-500 text-white font-medium hover:bg-cyan-600 transition"
+            >
+              Book Now
+            </button>
+          </CardContent>
+        </Card>
+      );
+    })
+  )}
+</div>
 
       {/* Booking Modal */}
       {bookingDoctor && (

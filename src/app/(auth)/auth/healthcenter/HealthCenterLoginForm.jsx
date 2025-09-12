@@ -20,8 +20,7 @@ const HealthCenterLoginForm = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) return;
-      if (session?.user) {
+      if (!error && session?.user) {
         router.push('/healthcenter/dashboard');
       }
     };
@@ -34,24 +33,17 @@ const HealthCenterLoginForm = () => {
       const res = await fetch('/api/healthcenter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'login',
-          email: formData.email,
-          password: formData.password,
-        }),
+        body: JSON.stringify({ type: 'login', ...formData }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!data.user.approved) throw new Error('Your account is not approved yet.');
 
-      if (!data.user.approved) {
-        throw new Error('Your account is not approved yet.');
-      }
-
-      Success('Welcome back, Health Center!');
+      Success('✅ Welcome back, Health Center!');
       router.push('/healthcenter/dashboard');
     } catch (err) {
-      errorToast(`Login Failed: ${err.message}`);
+      errorToast(`❌ Login Failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -65,36 +57,70 @@ const HealthCenterLoginForm = () => {
       });
       if (error) throw error;
     } catch (err) {
-      errorToast(`Google login failed: ${err.message}`);
+      errorToast(`❌ Google login failed: ${err.message}`);
     }
   };
 
-  const baseinputClass = 'pl-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200';
+  const baseInput =
+    'pl-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200';
   const placeholderColor = isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500';
-  const inputBg = isDarkMode ? 'bg-gray-800 text-white border-gray-700 focus:ring-blue-500' : 'bg-white text-black border-gray-300 focus:ring-blue-400';
+  const inputBg = isDarkMode
+    ? 'bg-gray-800 text-white border-gray-700 focus:ring-cyan-400'
+    : 'bg-white text-black border-gray-300 focus:ring-cyan-600';
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className={`space-y-5 p-6 rounded-xl shadow-lg ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}>
-      <h2 className={`text-2xl font-semibold text-center ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Health Center Login</h2>
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className={`space-y-5 p-6 rounded-2xl shadow-xl max-w-md w-full mx-auto 
+        ${isDarkMode ? 'bg-gray-900' : 'bg-white'}`}
+    >
+      <h2
+        className={`text-2xl font-bold text-center 
+          ${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`}
+      >
+        Health Center Login
+      </h2>
 
+      {/* Email */}
       <div className="relative">
         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-        <input {...register('email', { required: 'Email required' })} type="email" placeholder="Email" className={`${baseinputClass} ${inputBg} ${placeholderColor}`} />
+        <input
+          {...register('email', { required: 'Email required' })}
+          type="email"
+          placeholder="Email"
+          className={`${baseInput} ${inputBg} ${placeholderColor}`}
+        />
         {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
       </div>
 
+      {/* Password */}
       <div className="relative">
         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-        <input {...register('password', { required: 'Password required' })} type="password" placeholder="Password" className={`${baseinputClass} ${inputBg} ${placeholderColor}`} />
+        <input
+          {...register('password', { required: 'Password required' })}
+          type="password"
+          placeholder="Password"
+          className={`${baseInput} ${inputBg} ${placeholderColor}`}
+        />
         {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
       </div>
 
-      <button type="submit" disabled={loading} className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg font-medium flex justify-center gap-2">
+      {/* Buttons */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-lg font-medium flex justify-center gap-2"
+      >
         {loading && <Loader2 className="animate-spin h-4 w-4" />} Login
       </button>
 
-      <button type="button" onClick={handleGoogleLogin} className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium flex justify-center">
-        Continue with Google
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        disabled={loading}
+        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium"
+      >
+        {loading ? 'Loading...' : 'Continue with Google'}
       </button>
     </form>
   );

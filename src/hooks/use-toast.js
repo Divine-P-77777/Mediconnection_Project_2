@@ -1,4 +1,4 @@
-// hooks/useToast.js
+// hooks/use-toast.js
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
