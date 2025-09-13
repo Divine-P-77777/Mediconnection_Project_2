@@ -51,17 +51,18 @@ pnpm install
 
 Create a .env.local file in the frontend directory:
 ``` bash
-NEXT_PUBLIC_SUPABASE_URL=*********
-NEXT_PUBLIC_SUPABASE_ANON_KEY=*********
+NEXT_PUBLIC_SUPABASE_URL=https://************.supabase.co
 
-CLOUD_NAME=*********
-CLOUDINARY_URL=*********
 
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=*********
-NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=*********
+NEXT_PUBLIC_SUPABASE_ANON_KEY=*****
+NEXT_PUBLIC_ZEGO_APP_ID=****************
+NEXT_PUBLIC_ZEGO_SERVER_SECRET=**************
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=***************
+NEXT_PUBLIC_CLOUDINARY_PRESET=**************
+NEXT_PUBLIC_SUPER_ADMINS=***********
+NEXT_PUBLIC_API_URL=http://localhost:3000
 
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=*********
-NEXT_PUBLIC_SUPER_ADMINS=your-super-admin-email@example.com
+
 
 ``` 
 
