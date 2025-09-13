@@ -7,6 +7,8 @@ import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
 import { supabase } from '@/supabase/client';
+import { FcGoogle } from "react-icons/fc"; 
+
 
 const LoginForm = () => {
   const router = useRouter();
@@ -19,13 +21,13 @@ const LoginForm = () => {
 
   const { register, handleSubmit, formState: { errors } } = useForm();
 
-  // Redirect if already logged in
+  // ✅ Redirect if already logged in
   useEffect(() => {
     const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (!error && session?.user) {
-          router.replace('/user'); // always redirect customer/user to /user
+          router.replace('/user'); // always redirect customers to /user
           return;
         }
       } catch (err) {
@@ -37,7 +39,7 @@ const LoginForm = () => {
     checkSession();
   }, [router]);
 
-  // Email/password login
+  // ✅ Email/password login
   const onSubmit = async (formData) => {
     try {
       setLoading(true);
@@ -61,7 +63,7 @@ const LoginForm = () => {
       }
 
       Success('✅ Login successful!');
-      router.push('/user'); // redirect to /user
+      router.push('/user');
     } catch (err) {
       errorToast(`Login Failed: ${err.message}`);
     } finally {
@@ -69,13 +71,13 @@ const LoginForm = () => {
     }
   };
 
-  // Google login
+  // ✅ Google login
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/user` }, // redirect to /user
+        options: { redirectTo: `${window.location.origin}/user` },
       });
       if (error) throw error;
     } catch (err) {
@@ -162,24 +164,22 @@ const LoginForm = () => {
       </div>
 
       {/* Google Login */}
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        disabled={loading}
-        className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors"
-      >
-        <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
-        Continue with Google
-      </button>
-
-      {/* Forgot Password */}
-      <div className="text-sm text-center mt-3">
-        <a
-          href="/auth/forgot-password"
-          className="underline hover:text-cyan-500 transition-colors"
+       <button
+          onClick={handleGoogleLogin}
+          className="flex items-center justify-center gap-2 w-full py-2 border rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition"
         >
-          Forgot Password?
-        </a>
+          <FcGoogle className="w-5 h-5" />
+          <span>Continue with Google</span>
+        </button>
+
+      {/* Extra logins for other roles */}
+      <div className="text-sm text-center mt-6 space-y-1">
+        <p className="text-gray-500">Not a customer? Login as:</p>
+        <div className="flex justify-center gap-4 font-medium">
+          <a href="/auth/doctor" className="underline hover:text-cyan-500">Doctor</a>
+          <a href="/auth/healthcenter" className="underline hover:text-cyan-500">Health Center</a>
+          <a href="/auth/admin" className="underline hover:text-cyan-500">Admin</a>
+        </div>
       </div>
     </form>
   );

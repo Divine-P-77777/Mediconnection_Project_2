@@ -2,89 +2,70 @@
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Mail, Lock, User, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
 
 const SignUpForm = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { Success, errorToast } = useToast();
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm();
+  const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-const onSubmit = async (data) => {
-  try {
-    setLoading(true);
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
 
-    const res = await fetch("/api/user-register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "signup",
-        email: data.email,
-        password: data.password,
-        username: data.username,
-      }),
-    });
+      const res = await fetch("/api/user-register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "signup",
+          email: data.email,
+          password: data.password,
+          username: data.username,
+        }),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Signup failed");
 
-    if (!res.ok) throw new Error(result.error || "Signup failed");
+      Success("🎉 Account Created Successfully!");
+      reset();
+    } catch (error) {
+      errorToast(`❌ Signup Failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-   Success(
-      "🎉 Account Created",
-      
-    );
-
-    reset();
-  } catch (error) {
-    console.log(error)
-    errorToast(
-     
-      `❌ Signup Failed: ${error.message}`
-      
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const baseinputClass =
-    'pl-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200';
+  const baseInput = 'pl-10 pr-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200';
   const placeholderColor = isDarkMode ? 'placeholder-gray-400' : 'placeholder-gray-500';
   const labelColor = isDarkMode ? 'text-gray-200' : 'text-gray-700';
   const inputBg = isDarkMode
-    ? 'bg-gray-800 text-white border-gray-700 focus:ring-blue-500'
-    : 'bg-white text-black border-gray-300 focus:ring-blue-400';
-  const formBg = isDarkMode ? 'bg-gray-900' : 'bg-white';
-  const headingColor = isDarkMode ? 'text-white' : 'text-gray-800';
+    ? 'bg-gray-800 text-white border-gray-700 focus:ring-cyan-500'
+    : 'bg-gray-50 text-gray-900 border-gray-300 focus:ring-cyan-400';
+  const formBg = isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900';
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={`space-y-5 ${formBg} p-6 rounded-xl shadow-lg max-w-md w-full mx-auto`}
+      className={`space-y-5 ${formBg} p-6 rounded-xl shadow-lg max-w-md w-full mx-auto transition-colors`}
     >
-      <h2 className={`text-2xl font-semibold text-center ${headingColor}`}>
+      <h2 className={`text-2xl font-semibold text-center`}>
         Create Your Account
       </h2>
 
       {/* Username */}
       <div className="space-y-1">
-        <label htmlFor="username" className={`text-sm font-medium ${labelColor}`}>
-          Username
-        </label>
+        <label className={`text-sm font-medium ${labelColor}`}>Username</label>
         <div className="relative">
           <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <input
-            id="username"
             placeholder="Choose a username"
-            className={`${baseinputClass} ${inputBg} ${placeholderColor}`}
+            className={`${baseInput} ${inputBg} ${placeholderColor}`}
             {...register('username', {
               required: 'Username is required',
               pattern: {
@@ -99,16 +80,13 @@ const onSubmit = async (data) => {
 
       {/* Email */}
       <div className="space-y-1">
-        <label htmlFor="email" className={`text-sm font-medium ${labelColor}`}>
-          Email
-        </label>
+        <label className={`text-sm font-medium ${labelColor}`}>Email</label>
         <div className="relative">
           <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <input
-            id="email"
             type="email"
             placeholder="you@example.com"
-            className={`${baseinputClass} ${inputBg} ${placeholderColor}`}
+            className={`${baseInput} ${inputBg} ${placeholderColor}`}
             {...register('email', {
               required: 'Email is required',
               pattern: {
@@ -123,34 +101,36 @@ const onSubmit = async (data) => {
 
       {/* Password */}
       <div className="space-y-1">
-        <label htmlFor="password" className={`text-sm font-medium ${labelColor}`}>
-          Password
-        </label>
+        <label className={`text-sm font-medium ${labelColor}`}>Password</label>
         <div className="relative">
           <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
           <input
-            id="password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             placeholder="Create a password"
-            className={`${baseinputClass} ${inputBg} ${placeholderColor}`}
+            className={`${baseInput} ${inputBg} ${placeholderColor}`}
             {...register('password', {
               required: 'Password is required',
-              minLength: {
-                value: 8,
-                message: 'Minimum 8 characters required',
-              },
+              minLength: { value: 8, message: 'Minimum 8 characters required' },
             })}
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(prev => !prev)}
+            className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
         </div>
         {errors.password && <p className="text-xs text-red-500">{errors.password.message}</p>}
       </div>
 
+      {/* Submit */}
       <button
         type="submit"
-        className="w-full mt-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 font-medium"
         disabled={loading}
+        className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg py-2 font-medium disabled:opacity-50"
       >
-        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Create Account
       </button>
 

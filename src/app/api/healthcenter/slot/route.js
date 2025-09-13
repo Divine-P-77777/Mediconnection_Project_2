@@ -1,28 +1,26 @@
 import { NextResponse } from "next/server";
 import { serviceSupabase } from "@/supabase/serviceClient";
 
-// GET availability slots for a health center
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
     const health_center_id = searchParams.get("health_center_id");
 
     if (!health_center_id) {
-      return NextResponse.json({ success: false, error: "Missing health_center_id" }, { status: 400 });
+      return NextResponse.json([], { status: 200 });
     }
 
     const { data, error } = await serviceSupabase
       .from("health_center_availability")
-      .select("*")
-      .eq("health_center_id", health_center_id)
-      .order("created_at", { ascending: false });
+      .select("day_of_week, slot_time, status")
+      .eq("health_center_id", health_center_id);
 
     if (error) throw error;
 
-    return NextResponse.json({ success: true, slots: data });
+    return NextResponse.json(data || []); // 👈 return plain array
   } catch (err) {
-    console.error("Slots fetch error:", err);
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
+    console.error("Slots fetch error:", err.message);
+    return NextResponse.json([], { status: 200 }); // keep frontend safe
   }
 }
 

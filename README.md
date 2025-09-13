@@ -1,36 +1,127 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🏥 Mediconnect
 
-## Getting Started
+Mediconnection is a healthcare workflow platform built with **Next.js**, **Supabase**, and **Cloudinary**.  
+It streamlines health center registration, admin approval, doctor management, and patient consultations with secure role-based access.
 
-First, run the development server:
+This project was bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and uses **Next.js** for frontend and API routes.
+
+---
+
+## 🚀 Features
+
+- Health center onboarding & admin approval workflow  
+- Secure role-based authentication (Super Admin, Health Center, Doctor, User)  
+- Real-time dashboards powered by Supabase  
+- Doctor management and consultation scheduling  
+- Document & report uploads with Cloudinary  
+- Responsive UI built with Next.js and TailwindCSS  
+
+---
+
+## 🛠️ Tech Stack
+
+- **Next.js (JavaScript)** – Frontend & API Routes  
+- **Supabase** – Authentication, Database, RLS Policies  
+- **Cloudinary** – Media & Document Storage  
+- **Tailwind CSS** – Modern UI Styling  
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/Divine-P-77777/Mediconnection_Project_2.git .
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2️⃣ Install Dependencies
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
 
-## Learn More
+### 3️⃣ Configure Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Create a .env.local file in the frontend directory:
+``` bash
+NEXT_PUBLIC_SUPABASE_URL=*********
+NEXT_PUBLIC_SUPABASE_ANON_KEY=*********
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+CLOUD_NAME=*********
+CLOUDINARY_URL=*********
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=*********
+NEXT_PUBLIC_GOOGLE_CLIENT_SECRET=*********
 
-## Deploy on Vercel
+NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=*********
+NEXT_PUBLIC_SUPER_ADMINS=your-super-admin-email@example.com
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+``` 
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+For backend/admin usage, create a .env file:
+
+``` bash
+SUPABASE_SERVICE_ROLE_KEY=**********
+
+
+CLOUDINARY_API_KEY=**********
+CLOUDINARY_API_SECRET=**********
+
+SUPABASE_URL=https://**********.supabase.co
+
+CASHFREE_CLIENT_ID=**********
+CASHFREE_CLIENT_SECRET=**********
+
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+
+
+```
+
+Important: Never commit your .env or .env.local files. Keep keys private.
+
+
+# Backend Setup (Supabase)
+
+The database schema and all required tables are provided in the SQL folder at the root of the repository.
+To set up your backend:
+
+1. Log in to Supabase
+ and create a new project.
+
+2. Open the SQL editor in Supabase and run the .sql files from the SQL folder.
+
+3. Configure RLS policies and roles as per your project requirements.
+
+4. Add your Supabase URL and keys to the .env.local and .env files as shown above.
+
+
+
+## Authentication & Roles
+
+Super Admin – Approves health centers
+
+Health Center – Manages doctors & patients
+
+Doctor – Handles consultations
+
+User/Patient – Books appointments, downloads reports
+
+🌐 Live Demo
+
+👉 Visit Mediconnection.vercel.app
+
+
+
+📜 License
+
+This project is licensed under the MIT License.
+You’re free to use, modify, and distribute it with proper attribution.

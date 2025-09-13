@@ -41,7 +41,7 @@ export default function UserHome() {
         }`}
       >
         <h1 className="text-4xl font-bold">
-          Welcome {user?.email || 'Guest'} to <span className="text-[#00A8E8]">MediConnection</span>
+          Welcome {user?.username  || 'Guest'} to <span className="text-[#00A8E8]">MediConnection</span>
         </h1>
         <p className="mt-2 text-lg">Your trusted healthcare partner, anytime, anywhere.</p>
         <div className="mt-6 flex justify-center gap-4">
