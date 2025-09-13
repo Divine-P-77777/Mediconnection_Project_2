@@ -7,6 +7,7 @@ import { persistor, store } from '@/store/store';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { AuthProvider } from '@/hooks/useAuth';
+import GlobalLoaderWrapper from './components/GlobalLoaderWrapper';
 
 export function Provider({ children }) {
   return (
@@ -23,7 +24,9 @@ export function Provider({ children }) {
             draggable
             theme="light"
           />
+          <GlobalLoaderWrapper>
           {children}
+          </GlobalLoaderWrapper>
         </AuthProvider>
       </PersistGate>
     </ReduxProvider>

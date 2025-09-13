@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/supabase/client";
 import { format } from "date-fns";
 import { Dialog } from "@headlessui/react";
+import { useAuth } from "@/hooks/useAuth";
+import { useSelector } from "react-redux";
+
+import { useToast } from "@/hooks/use-toast";
+import { Loader } from 'lucide-react';
 
 export default function ConsultationsTable() {
   const [consults, setConsults] = useState([]);
@@ -11,33 +15,36 @@ export default function ConsultationsTable() {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [selectedConsult, setSelectedConsult] = useState(null);
+  const { user } = useAuth();
+  const { errorToast, Success } = useToast();
+  const pageSize = 10;
 
-  const pageSize = 5;
+  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
   // Fetch consultations
   const fetchConsults = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("liveconsult")
-        .select("*, doctors(name)")
-        .order("created_at", { ascending: false })
-        .range((page - 1) * pageSize, page * pageSize - 1);
+const res = await fetch(
+  `/api/liveconsult/history?page=${page}&q=${search}&pageSize=${pageSize}`,
+  {
+    headers: {
+      "x-user-id": user?.id, 
+    },
+  }
+);
 
-      if (search) {
-        query = query.ilike("full_name", `%${search}%`);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      setConsults(data || []);
+      if (!res.ok) throw new Error("Failed to fetch consultations");
+      const data = await res.json();
+      setConsults(data);
     } catch (err) {
-      console.error("Fetch error:", err.message);
+      console.error(err);
+      setConsults([]);
+      errorToast("Error fetching consultations");
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, user?.id]);
 
   // Initial & reactive fetch
   useEffect(() => {
@@ -46,7 +53,10 @@ export default function ConsultationsTable() {
 
   // Re-fetch after booking (listen to custom event)
   useEffect(() => {
-    const handleRefresh = () => fetchConsults();
+    const handleRefresh = () => {
+      fetchConsults();
+      Success("Consultations list refreshed");
+    };
     window.addEventListener("consult-booked", handleRefresh);
     return () => window.removeEventListener("consult-booked", handleRefresh);
   }, [fetchConsults]);
@@ -54,13 +64,11 @@ export default function ConsultationsTable() {
   // Parse consultation time slot "09:00 PM - 11:00 PM"
   function canJoinConsult(c) {
     if (c.status !== "approved" || !c.consultation_time) return false;
-
     try {
       const [startTimeStr, endTimeStr] = c.consultation_time.split(" - ");
       const startDateTime = new Date(`${c.consultation_date} ${startTimeStr}`);
       const endDateTime = new Date(`${c.consultation_date} ${endTimeStr}`);
       const now = new Date();
-
       return now >= startDateTime && now <= endDateTime;
     } catch (err) {
       console.error("Time parse error:", err);
@@ -69,7 +77,7 @@ export default function ConsultationsTable() {
   }
 
   return (
-    <div className="mt-16 max-w-6xl mx-auto">
+    <div className="py-16 max-w-6xl mx-auto px-4">
       <h2 className="text-2xl font-semibold mb-4">Recent Consultations</h2>
 
       {/* Search */}
@@ -79,14 +87,22 @@ export default function ConsultationsTable() {
           placeholder="Search by patient name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full p-2 border rounded-lg"
+          className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-cyan-500 ${
+            isDarkMode
+              ? "bg-gray-800 text-white border-gray-700 placeholder-gray-400"
+              : "bg-white border-gray-300"
+          }`}
         />
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border rounded-lg">
-          <thead className="bg-gray-200">
+      <div className="overflow-x-auto shadow-md rounded-lg">
+        <table
+          className={`w-full border-collapse ${
+            isDarkMode ? "text-gray-200" : "text-gray-800"
+          }`}
+        >
+          <thead className={`${isDarkMode ? "bg-gray-800" : "bg-cyan-100"}`}>
             <tr>
               <th className="p-3 text-left">Date</th>
               <th className="p-3 text-left">Patient</th>
@@ -99,8 +115,8 @@ export default function ConsultationsTable() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="text-center p-4">
-                  Loading...
+                <td colSpan="6" className="text-center p-6 ">
+                  <Loader className="w-6 h-6 animate-spin mx-auto" color="cyan" />
                 </td>
               </tr>
             ) : consults.length === 0 ? (
@@ -111,7 +127,12 @@ export default function ConsultationsTable() {
               </tr>
             ) : (
               consults.map((c) => (
-                <tr key={c.id} className="border-b">
+                <tr
+                  key={c.id}
+                  className={`border-b ${
+                    isDarkMode ? "border-gray-700 hover:bg-black" : "border-gray-200 hover:bg-cyan-50"
+                  }  transition`}
+                >
                   <td className="p-3">
                     {format(new Date(c.consultation_date), "dd MMM yyyy")} <br />
                     <span className="text-sm text-gray-500">{c.consultation_time}</span>
@@ -136,7 +157,7 @@ export default function ConsultationsTable() {
                   <td className="p-3 text-center">
                     <button
                       onClick={() => setSelectedConsult(c)}
-                      className="px-3 py-1 bg-cyan-500 text-white rounded-md hover:bg-cyan-600"
+                      className="px-4 py-1 bg-cyan-500 text-white rounded-md hover:bg-cyan-600 transition-colors"
                     >
                       View
                     </button>
@@ -144,7 +165,7 @@ export default function ConsultationsTable() {
                   <td className="p-3 text-center">
                     <button
                       disabled={!canJoinConsult(c)}
-                      className={`px-3 py-1 rounded-md ${
+                      className={`px-4 py-1 rounded-md transition-colors ${
                         canJoinConsult(c)
                           ? "bg-green-500 text-white hover:bg-green-600"
                           : "bg-gray-300 text-gray-600 cursor-not-allowed"
@@ -162,18 +183,18 @@ export default function ConsultationsTable() {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center mt-4 gap-2">
+      <div className={`flex justify-center mt-6 gap-2 ${isDarkMode ? "text-white" : "text-gray-800"}`}>
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className={`px-4 py-2 border rounded-lg ${isDarkMode ? "bg-gray-800 hover:bg-black  text-white" : "bg-white text-gray-800  hover:bg-cyan-100"} disabled:opacity-50`}
           disabled={page === 1}
         >
           Prev
         </button>
-        <span className="px-3 py-1">{page}</span>
+        <span    className={`px-4 py-2 border rounded-full ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-gray-800"}  disabled:opacity-50`}>{page}</span>
         <button
           onClick={() => setPage((p) => p + 1)}
-          className="px-3 py-1 border rounded"
+           className={`px-4 py-2 border rounded-lg ${isDarkMode ? "bg-gray-800 hover:bg-black  text-white" : "bg-white text-gray-800  hover:bg-cyan-100"} disabled:opacity-50`}
         >
           Next
         </button>
@@ -186,30 +207,36 @@ export default function ConsultationsTable() {
           onClose={() => setSelectedConsult(null)}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
         >
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full">
-            <h3 className="text-lg font-bold mb-2">Consultation Details</h3>
-            <p>
-              <strong>Patient:</strong> {selectedConsult.full_name}
-            </p>
-            <p>
-              <strong>DOB:</strong> {selectedConsult.dob}
-            </p>
-            <p>
-              <strong>Email:</strong> {selectedConsult.email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {selectedConsult.phone}
-            </p>
-            <p>
-              <strong>Speciality:</strong> {selectedConsult.speciality}
-            </p>
-            <p>
-              <strong>Status:</strong> {selectedConsult.status}
-            </p>
-            <div className="flex justify-end mt-4">
+          <div
+            className={`rounded-lg p-6 max-w-lg w-full ${
+              isDarkMode ? "bg-gray-800 text-white" : "bg-white"
+            }`}
+          >
+            <h3 className="text-lg font-bold mb-4">Consultation Details</h3>
+            <div className="space-y-1 text-sm">
+              <p>
+                <strong>Patient:</strong> {selectedConsult.full_name}
+              </p>
+              <p>
+                <strong>DOB:</strong> {selectedConsult.dob}
+              </p>
+              <p>
+                <strong>Email:</strong> {selectedConsult.email}
+              </p>
+              <p>
+                <strong>Phone:</strong> {selectedConsult.phone}
+              </p>
+              <p>
+                <strong>Speciality:</strong> {selectedConsult.speciality}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedConsult.status}
+              </p>
+            </div>
+            <div className="flex justify-end mt-6">
               <button
                 onClick={() => setSelectedConsult(null)}
-                className="px-4 py-2 bg-gray-300 rounded-lg"
+                className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600"
               >
                 Close
               </button>

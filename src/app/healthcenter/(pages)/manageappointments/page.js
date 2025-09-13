@@ -3,144 +3,229 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabase/client";
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useSelector } from "react-redux";
+import { Loader2 } from "lucide-react";
 import Popup from "./Popup";
+
+const ROWS_PER_PAGE = 10;
 
 export default function ManageAppointments() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [healthCenterId, setHealthCenterId] = useState(null);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch health center id for logged-in user
+  const { Success, errorToast } = useToast();
+  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
+
+  // Fetch health center id
   useEffect(() => {
     const fetchHealthCenterId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) return setLoading(false);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user?.id) return setLoading(false);
 
-      // You might need to fetch health_center_id from your health_centers table:
-      // If the logged-in user IS the health center, use user.id directly.
-      // If not, fetch health center associated with user.
-      const { data: center } = await supabase
-        .from("health_centers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+        const { data: center, error } = await supabase
+          .from("health_centers")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+        if (error) throw error;
 
-      setHealthCenterId(center?.id || null);
+        setHealthCenterId(center?.id || null);
+      } catch (err) {
+        errorToast(err.message);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchHealthCenterId();
   }, []);
 
-  // Fetch appointments for this health center
+  // Fetch appointments
   const fetchAppointments = async () => {
     if (!healthCenterId) return setLoading(false);
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("appointments")
-      .select("*")
-      .eq("center_id", healthCenterId)
-      .order("date", { ascending: true })
-      .order("time", { ascending: true });
-    setLoading(false);
-    if (error) return console.error(error.message);
-    setAppointments(data || []);
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("appointments")
+        .select("*")
+        .eq("center_id", healthCenterId)
+        .order("date", { ascending: false }) // recent date first
+        .order("time", { ascending: false }); // recent time first
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (err) {
+      errorToast(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!healthCenterId) return;
     fetchAppointments();
-    // eslint-disable-next-line
   }, [healthCenterId]);
 
-  // Update appointment status
-  const updateStatus = async (id, status) => {
-    const { error } = await supabase
-      .from("appointments")
-      .update({ status })
-      .eq("id", id);
-    if (error) return alert("Failed to update status");
-    fetchAppointments();
+  // Update status
+  const handleStatusChange = async (id, status) => {
+    try {
+      const { error } = await supabase
+        .from("appointments")
+        .update({ status })
+        .eq("id", id);
+      if (error) throw error;
+      Success(`✅ Status updated to ${status}`);
+      fetchAppointments();
+    } catch (err) {
+      errorToast(err.message);
+    }
   };
 
+  // Pagination calculations
+  const totalPages = Math.ceil(appointments.length / ROWS_PER_PAGE);
+  const paginatedAppointments = appointments.slice(
+    (currentPage - 1) * ROWS_PER_PAGE,
+    currentPage * ROWS_PER_PAGE
+  );
+
   return (
-    <div className="w-full min-h-screen p-6">
-      <h1 className="text-2xl font-bold text-center mb-6">Manage Appointments</h1>
+    <div
+      className={`w-full min-h-screen py-20 px-6 transition-colors ${
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
+      }`}
+    >
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Manage Appointments
+        </h1>
 
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>Appointments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-10">Loading...</div>
-          ) : appointments.length === 0 ? (
-            <div className="text-center py-10">No appointments found.</div>
-          ) : (
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>User Name</TableCell>
-                  <TableCell>Phone</TableCell>
-                  <TableCell>Gender</TableCell>
-                  <TableCell>DOB</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Time</TableCell>
-                  <TableCell>Purpose</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Actions</TableCell>
-                  <TableCell>Upload Docs</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {appointments.map((app) => (
-                  <TableRow key={app.id}>
-                    <TableCell>{app.user_name}</TableCell>
-                    <TableCell>{app.phone}</TableCell>
-                    <TableCell>{app.gender}</TableCell>
-                    <TableCell>{app.dob ? format(new Date(app.dob), "dd/MM/yyyy") : "-"}</TableCell>
-                    <TableCell>{format(new Date(app.date), "dd/MM/yyyy")}</TableCell>
-                    <TableCell>{app.time}</TableCell>
-                    <TableCell>{app.purpose}</TableCell>
-                    <TableCell>{app.status}</TableCell>
-                    <TableCell className="space-x-2">
-                      {["pending", "confirmed", "completed", "cancelled"]
-                        .filter((s) => s !== app.status)
-                        .map((s) => (
-                          <Button
-                            key={s}
-                            size="sm"
-                            onClick={() => updateStatus(app.id, s)}
-                          >
-                            {s}
-                          </Button>
-                        ))}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        onClick={() => setSelectedAppointment(app)}
-                      >
-                        Upload
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <Card className={`shadow-xl ${isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white"}`}>
+          <CardHeader>
+            <CardTitle className="text-cyan-600">Appointments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex justify-center py-10">
+                <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+              </div>
+            ) : appointments.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">No appointments found.</div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <Table className={isDarkMode ? "bg-gray-800 text-white" : "bg-white"}>
+                    <TableHead className={isDarkMode ? "bg-gray-700 text-white" : "bg-gray-100"}>
+                      <TableRow>
+                        <TableCell>User Name</TableCell>
+                        <TableCell>Phone</TableCell>
+                        <TableCell>Gender</TableCell>
+                        <TableCell>DOB</TableCell>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Time</TableCell>
+                        <TableCell>Purpose</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell>Upload Docs</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {paginatedAppointments.map((app) => (
+                        <TableRow
+                          key={app.id}
+                          className={`transition-colors ${
+                            isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                          }`}
+                        >
+                          <TableCell>{app.user_name}</TableCell>
+                          <TableCell>{app.phone}</TableCell>
+                          <TableCell>{app.gender}</TableCell>
+                          <TableCell>{app.dob ? format(new Date(app.dob), "dd/MM/yyyy") : "-"}</TableCell>
+                          <TableCell>{format(new Date(app.date), "dd/MM/yyyy")}</TableCell>
+                          <TableCell>{app.time}</TableCell>
+                          <TableCell>{app.purpose}</TableCell>
+                          <TableCell>
+                            <select
+                              value={app.status}
+                              onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                              className={`border rounded px-2 py-1 text-sm w-full ${
+                                isDarkMode
+                                  ? "bg-gray-700 border-gray-600 text-white"
+                                  : "bg-white border-gray-300 text-gray-900"
+                              }`}
+                            >
+                              {["pending", "confirmed", "completed", "cancelled"].map((s) => (
+                                <option key={s} value={s}>
+                                  {s.charAt(0).toUpperCase() + s.slice(1)}
+                                </option>
+                              ))}
+                            </select>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                              onClick={() => setSelectedAppointment(app)}
+                            >
+                              Upload
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
 
-          {selectedAppointment && (
-            <Popup
-              appointmentId={selectedAppointment.id}
-              onClose={() => setSelectedAppointment(null)}
-              onUpdate={fetchAppointments}
-            />
-          )}
-        </CardContent>
-      </Card>
+                {/* Pagination */}
+                <div className="flex justify-between items-center mt-4">
+                  <Button
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage((prev) => prev - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage((prev) => prev + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {selectedAppointment && (
+              <Popup
+                appointmentId={selectedAppointment.id}
+                onClose={() => setSelectedAppointment(null)}
+                onUpdate={fetchAppointments}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
+import  Loader from "@/app/components/Loader";
+import { useToast } from "@/hooks/use-toast";
 
 const daysOfWeek = [
   "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
@@ -170,9 +172,7 @@ const HealthCenterManageProfile = () => {
 
   if (initLoading) {
     return (
-      <div className={`p-4 rounded-md ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
-        <div className="py-8 text-center">Loading...</div>
-      </div>
+     <Loader/>
     );
   }
 

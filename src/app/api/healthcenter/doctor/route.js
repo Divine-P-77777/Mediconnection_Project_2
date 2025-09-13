@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
-// ✅ GET doctors for a health center
+import {serviceSupabase} from "@/supabase/serviceClient"
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -16,7 +9,7 @@ export async function GET(req) {
       throw new Error("Missing health_center_id");
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("doctors")
       .select("*")
       .eq("health_center_id", health_center_id);

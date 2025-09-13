@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import {Loader} from "lucide-react";
 
 const HealthCenterServicesManage = () => {
     const isDarkMode = useSelector((state) => state.theme.isDarkMode);
@@ -123,15 +125,15 @@ const HealthCenterServicesManage = () => {
 
     if (initLoading) {
         return (
-            <div className={`p-4 rounded-md ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
-                <div className="py-8 text-center">Loading...</div>
-            </div>
+            <section className={`p-4 rounded-md ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md flex justify-center items-center min-h-[200px]`}>
+           <Loader className="w-8 h-8 animate-spin" color="cyan" />
+           </section>
         );
     }
 
     if (!healthCenterId) {
         return (
-            <div className={`p-4 rounded-md ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
+            <div className={`p-4  ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
                 <div className="py-8 text-center text-red-600">No health center found for your account.</div>
                 {errorMsg && <div className="mt-2 text-red-500">{errorMsg}</div>}
             </div>
@@ -139,7 +141,7 @@ const HealthCenterServicesManage = () => {
     }
 
     return (
-        <div className={`p-4 rounded-md ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
+        <div className={`p-4  ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"} shadow-md`}>
             <h2 className="text-lg font-semibold mb-4">Manage Services</h2>
             {errorMsg && <div className="mb-4 text-red-500">{errorMsg}</div>}
             <div className="flex flex-col md:flex-row gap-4 mb-6">

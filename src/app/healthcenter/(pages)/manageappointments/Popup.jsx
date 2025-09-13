@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 // ✅ Fetch directly from Supabase
 async function fetchFiles(appointmentId) {
@@ -24,6 +26,7 @@ async function fetchFiles(appointmentId) {
 }
 
 export default function Popup({ appointmentId, onClose, onUpdate }) {
+  const { toast } = useToast();
   const [files, setFiles] = useState({ reports: [], bills: [], prescriptions: [] });
   const [newFiles, setNewFiles] = useState({ reports: [], bills: [], prescriptions: [] });
   const [loading, setLoading] = useState(false);
@@ -76,9 +79,10 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
         ...prev,
         [fileType]: prev[fileType].filter((u) => u !== url),
       }));
+      toast({ description: "File deleted successfully", variant: "success" });
       if (onUpdate) onUpdate();
     } catch (err) {
-      alert("Delete failed: " + err.message);
+      toast({ description: `Delete failed: ${err.message}`, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -86,7 +90,7 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
 
   // Submit new files
   const handleSubmit = async () => {
-    if (!appointmentId) return alert("Invalid appointment!");
+    if (!appointmentId) return toast({ description: "Invalid appointment!", variant: "destructive" });
     setLoading(true);
     try {
       for (const type of ["reports", "bills", "prescriptions"]) {
@@ -98,11 +102,11 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
           }));
         }
       }
-      alert("Documents uploaded successfully!");
+      toast({ description: "Documents uploaded successfully!", variant: "success" });
       if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
-      alert("Upload failed: " + err.message);
+      toast({ description: `Upload failed: ${err.message}`, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -112,18 +116,23 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
   const renderFileList = (fileType) => (
     <div className="flex flex-wrap gap-2 mt-2">
       {files[fileType]?.length === 0 ? (
-        <span className="text-xs text-gray-400">No files</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">No files</span>
       ) : (
         files[fileType].map((url) => (
           <div
             key={url}
-            className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded"
+            className="flex items-center gap-1 bg-cyan-100 dark:bg-cyan-700/40 px-2 py-1 rounded-md"
           >
             <span className="truncate max-w-[90px] text-xs">{url.split("/").pop()}</span>
             <Button size="xs" variant="outline" onClick={() => window.open(url, "_blank")}>
               View
             </Button>
-            <Button size="xs" variant="destructive" onClick={() => handleDelete(fileType, url)}>
+            <Button
+              size="xs"
+              variant="destructive"
+              onClick={() => handleDelete(fileType, url)}
+              disabled={loading}
+            >
               Delete
             </Button>
           </div>
@@ -133,34 +142,52 @@ export default function Popup({ appointmentId, onClose, onUpdate }) {
   );
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-lg space-y-4">
-        <h2 className="text-lg font-bold">Upload/View Documents</h2>
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-lg space-y-4 shadow-xl">
+        <h2 className="text-lg font-bold text-cyan-600 dark:text-cyan-400">Upload/View Documents</h2>
 
         <div>
-          <label className="block mb-1">Reports (PDF)</label>
-          <input type="file" multiple accept="application/pdf" onChange={(e) => handleFiles(e, "reports")} />
+          <label className="block mb-1 font-medium">Reports (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            className="dark:text-gray-200"
+            onChange={(e) => handleFiles(e, "reports")}
+          />
           {renderFileList("reports")}
         </div>
 
         <div>
-          <label className="block mb-1">Bills (PDF)</label>
-          <input type="file" multiple accept="application/pdf" onChange={(e) => handleFiles(e, "bills")} />
+          <label className="block mb-1 font-medium">Bills (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            className="dark:text-gray-200"
+            onChange={(e) => handleFiles(e, "bills")}
+          />
           {renderFileList("bills")}
         </div>
 
         <div>
-          <label className="block mb-1">Prescriptions (PDF)</label>
-          <input type="file" multiple accept="application/pdf" onChange={(e) => handleFiles(e, "prescriptions")} />
+          <label className="block mb-1 font-medium">Prescriptions (PDF)</label>
+          <input
+            type="file"
+            multiple
+            accept="application/pdf"
+            className="dark:text-gray-200"
+            onChange={(e) => handleFiles(e, "prescriptions")}
+          />
           {renderFileList("prescriptions")}
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button onClick={onClose} variant="secondary">
+          <Button onClick={onClose} variant="secondary" disabled={loading}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Uploading..." : "Upload"}
+            {loading ? <Loader2 className="animate-spin w-4 h-4" /> : "Upload"}
           </Button>
         </div>
       </div>

@@ -13,14 +13,12 @@ const Page = () => {
     <div className={`w-screen min-h-screen flex flex-col transition-all duration-300 relative
       ${isDarkMode ? "bg-[#0A192F] text-white" : "bg-gray-100 text-black"}`}>
 
-      {/* 🌟 Navbar */}
       <nav className={`w-full py-4 px-6 fixed top-0 flex justify-between items-center shadow-md z-50 
         ${isDarkMode ? "bg-[#091624] text-white" : "bg-[#1ba5e5] text-black"}`}>
         <h1 className="text-2xl font-bold">Mediconnect</h1>
         <div className="flex items-center gap-6">
           <Link href="/about" className="text-lg font-semibold hover:underline">About Us</Link>
 
-          {/* Dark Mode Toggle */}
           <button
             onClick={() => dispatch(toggleDarkMode())}
             className="rounded-full transition-all duration-300 focus:outline-none"
@@ -65,7 +63,6 @@ const Page = () => {
         </div>
       </div>
 
-      {/* 🌟 Footer */}
       <footer className={`w-full py-4  absolute bottom-0 mt-10 text-center shadow-md 
         ${isDarkMode ? "bg-[#091624] text-white" : "bg-[#1ba5e5] text-black"}`}>
         <p className="text-sm">&copy; {new Date().getFullYear()} Mediconnect. All Rights Reserved.</p>

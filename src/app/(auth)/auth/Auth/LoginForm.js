@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Loader2, Eye, EyeOff} from 'lucide-react';
+import { Mail, Lock, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
 import { supabase } from '@/supabase/client';
@@ -11,29 +11,28 @@ import { supabase } from '@/supabase/client';
 const LoginForm = () => {
   const router = useRouter();
   const { Success, errorToast } = useToast();
-
   const isDarkMode = useSelector((state) => state.theme?.isDarkMode);
+
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
   // Redirect if already logged in
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (!error && session?.user) {
-        if (session.user.user_metadata?.role === 'user') {
-          router.replace('/user');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!error && session?.user) {
+          router.replace('/user'); // always redirect customer/user to /user
           return;
         }
+      } catch (err) {
+        console.error(err.message);
+      } finally {
+        setCheckingSession(false);
       }
-      setCheckingSession(false);
     };
     checkSession();
   }, [router]);
@@ -61,8 +60,8 @@ const LoginForm = () => {
         return;
       }
 
-      Success('Welcome back!');
-      router.push('/user');
+      Success('✅ Login successful!');
+      router.push('/user'); // redirect to /user
     } catch (err) {
       errorToast(`Login Failed: ${err.message}`);
     } finally {
@@ -76,9 +75,7 @@ const LoginForm = () => {
       setLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/`, // redirect after login
-        },
+        options: { redirectTo: `${window.location.origin}/user` }, // redirect to /user
       });
       if (error) throw error;
     } catch (err) {
@@ -90,7 +87,7 @@ const LoginForm = () => {
   if (checkingSession) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
-        <Loader2 className="h-6 w-6 animate-spin" />
+        <Loader2 className="h-6 w-6 animate-spin text-cyan-500" />
       </div>
     );
   }
@@ -98,14 +95,14 @@ const LoginForm = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className={`space-y-5 p-6 rounded-xl shadow-lg transition-colors ${
+      className={`max-w-md mx-auto p-6 rounded-xl shadow-lg transition-colors ${
         isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
       }`}
     >
-      <h2 className="text-2xl font-bold text-center">Customer Login</h2>
+      <h2 className="text-2xl font-bold text-center mb-4">Customer Login</h2>
 
       {/* Email */}
-      <div className="relative">
+      <div className="relative mb-4">
         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <input
           {...register('email', {
@@ -117,19 +114,27 @@ const LoginForm = () => {
           })}
           type="email"
           placeholder="Email"
-          className={`pl-10 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50'}`}
+          className={`w-full pl-10 pr-3 py-2 rounded-lg border focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition ${
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+              : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
+          }`}
         />
         {errors.email && <p className="text-sm text-red-500 mt-1">{errors.email.message}</p>}
       </div>
 
       {/* Password */}
-      <div className="relative">
+      <div className="relative mb-4">
         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <input
           {...register('password', { required: 'Password is required' })}
           type={showPassword ? 'text' : 'password'}
           placeholder="Password"
-          className={`pl-10 pr-10 ${isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-50'}`}
+          className={`w-full pl-10 pr-10 py-2 rounded-lg border focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 transition ${
+            isDarkMode
+              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400'
+              : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-500'
+          }`}
         />
         <button
           type="button"
@@ -144,33 +149,35 @@ const LoginForm = () => {
       {/* Submit */}
       <button
         type="submit"
-        className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg py-2 font-medium disabled:opacity-50"
         disabled={loading}
+        className="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg py-2 font-medium disabled:opacity-50"
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Login
       </button>
 
       {/* OR separator */}
-      <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center justify-center gap-2 text-sm text-gray-500 my-3">
         <span>or</span>
       </div>
 
       {/* Google Login */}
-<button
-  type="button"
-  onClick={handleGoogleLogin}
-  className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 font-medium hover:bg-gray-100 disabled:opacity-50"
-  disabled={loading}
->
-  <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
-  Continue with Google
-</button>
-
+      <button
+        type="button"
+        onClick={handleGoogleLogin}
+        disabled={loading}
+        className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 font-medium hover:bg-gray-100 disabled:opacity-50 transition-colors"
+      >
+        <img src="/google-logo.svg" alt="Google" className="h-5 w-5" />
+        Continue with Google
+      </button>
 
       {/* Forgot Password */}
       <div className="text-sm text-center mt-3">
-        <a href="/auth/forgot-password" className="underline hover:text-blue-500">
+        <a
+          href="/auth/forgot-password"
+          className="underline hover:text-cyan-500 transition-colors"
+        >
           Forgot Password?
         </a>
       </div>
