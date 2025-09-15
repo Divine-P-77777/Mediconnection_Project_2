@@ -1,40 +1,75 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import ClientWrapper from "./components/ClientWrapper";
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import { Provider } from "./Provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   metadataBase: new URL("https://mediconnection.vercel.app"),
-  title: "Mediconnection",
-  description: "Let's connect with nearest health center .",
+  title: "Mediconnection – Connect with Nearest Health Centers",
+  description:
+    "Mediconnection helps you find, book, and connect with nearby health centers instantly. Book appointments, consult doctors online, and manage your health records easily.",
+  keywords: [
+    "Mediconnection",
+    "nearest health center",
+    "doctor consultation online",
+    "book health appointment",
+    "download medical reports",
+    "healthcare platform",
+    "Mediconnection India",
+    "health center booking",
+    "health consultation",
+    "doctor appointment online",
+    "medical reports download",
+    "health center dashboard",
+    "Mediconnect",
+    "telemedicine",
+  ],
   icons: {
     icon: "/cube.gif",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
   },
-   verification: {
+  verification: {
     google: "TYc7oU50kCRvacQe4ygPnBN_v_-VT4Usuvd9xzw11VM",
   },
   openGraph: {
-    title: "Mediconnections",
-    description: "Check out and connect with nearest health center !",
+    title: "Mediconnection – Connect with Nearest Health Centers",
+    description:
+      "Search and connect with your nearest health center. Book slots, consult doctors, and download your medical reports easily.",
     url: "https://mediconnection.vercel.app",
     type: "website",
+    siteName: "Mediconnection",
     images: [
       {
         url: "/logo.png",
-        width: 800,
-        height: 600,
-        alt: "MediConnection Logo",
+        width: 1200,
+        height: 630,
+        alt: "Mediconnection Logo",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MediConnection Logo",
-    description: "Check out and connect with nearest health center !",
+    title: "Mediconnection – Connect with Nearest Health Centers",
+    description:
+      "Book appointments, consult doctors online, and download your health reports instantly with Mediconnection.",
     images: ["/logo.png"],
+  },
+  alternates: {
+    canonical: "https://mediconnection.vercel.app",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
   },
 };
 
@@ -44,29 +79,43 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="icon" href="/logo.png" type="image/png" />
         <link rel="manifest" href="/manifest.json" />
+        <meta name="keywords" content={metadata.keywords.join(", ")} />
 
-        {/* SEO Meta Tags */}
-        <meta name="title" content="Dynamic FD" />
-        <meta name="description" content="Welcome to the Dynamic FD website." />
-    <meta name="google-site-verification" content="TYc7oU50kCRvacQe4ygPnBN_v_-VT4Usuvd9xzw11VM" />
-        {/* Open Graph (Facebook, LinkedIn) */}
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="https://Mediconnection.vercel.app" />
-        <meta property="og:title" content="Dynamic FD" />
-        <meta property="og:description" content="Check out our achievements and journey!" />
-        <meta property="og:image" content="/logo.png" />
+        {/* Canonical */}
+        <link rel="canonical" href="https://mediconnection.vercel.app" />
 
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Dynamic FD" />
-        <meta name="twitter:description" content="Check out our achievements and journey!" />
-        <meta name="twitter:image" content="/logo.png" />
-        <script src="https://sdk.cashfree.com/js/v3/cashfree.js" async></script>
+        {/* Robots */}
+        <meta name="robots" content="index, follow" />
+
+        {/* Structured Data (JSON-LD) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Mediconnection",
+              url: "https://mediconnection.vercel.app",
+              logo: "https://mediconnection.vercel.app/logo.png",
+              sameAs: [
+                "https://twitter.com/yourhandle",
+                "https://linkedin.com/company/yourcompany",
+              ],
+              description:
+                "Mediconnection helps you find, book, and connect with nearby health centers instantly. Book appointments, consult doctors online, and manage your health records easily.",
+            }),
+          }}
+        />
+
+        {/* Cashfree JS */}
+        <script
+          src="https://sdk.cashfree.com/js/v3/cashfree.js"
+          async
+        ></script>
       </head>
-      <body className={`${inter.className}  `}>
+      <body className={`${inter.className}`}>
         <ClientWrapper>
           <Provider>{children}</Provider>
-          {/* <SpeedInsights /> */}
         </ClientWrapper>
       </body>
     </html>
