@@ -27,12 +27,12 @@ const DocNav = () => {
   const navItems = [
     { name: "Home", path: "/doctor" },
     { name: "Appointments", path: "/doctor/appointments" },
-    { name: "Patients", path: "/doctor/patients" },
-    { name: "Reports", path: "/doctor/reports" },
+    { name: "Availability", path: "/doctor/availability" },
+    { name: "Manage Service", path: "/doctor/manageservice" },
     { name: "My Profile", path: "/doctor/profile" },
     ...(isLoggedIn
       ? [{ name: "Logout", onClick: handleLogout }]
-      : [{ name: "Login", path: "/login" }]),
+      : [{ name: "Login", path: "/auth/doctor" }]),
   ];
 
   return (

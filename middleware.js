@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
-export function middleware(req: NextRequest) {
+export function middleware(req) {
   const host = req.headers.get('host') || ''
   
   // Strip port if localhost
@@ -24,4 +23,5 @@ export function middleware(req: NextRequest) {
   }
 
   return NextResponse.next()
+
 }

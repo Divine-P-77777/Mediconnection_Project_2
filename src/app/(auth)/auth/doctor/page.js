@@ -31,7 +31,7 @@ export default function DoctorLogin() {
       }
 
       Success('✅ Login successful!');
-      router.push('/doctor/dashboard');
+      router.push('/doctor');
     } catch (err) {
       errorToast('❌ ' + err.message);
     } finally {
@@ -46,7 +46,7 @@ export default function DoctorLogin() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/doctor/dashboard`,
+          redirectTo: `${window.location.origin}/doctor`,
         },
       });
       if (error) throw error;

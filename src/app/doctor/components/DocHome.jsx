@@ -75,12 +75,7 @@ const DoctorHomePage = () => {
 
             {/* Links Section */}
             <div className="grid gap-5 mt-12 sm:grid-cols-2 md:grid-cols-3 w-full max-w-4xl">
-              <Link
-                href="/doctor/dashboard"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Dashboard
-              </Link>
+              
               <Link
                 href="/doctor/appointments"
                 className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
@@ -88,13 +83,13 @@ const DoctorHomePage = () => {
                 Appointments
               </Link>
               <Link
-                href="/doctor/patients"
+                href="/doctor/availability"
                 className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
               >
-                Patients
+                Manage Availability
               </Link>
               <Link
-                href="/doctor/manageprofile"
+                href="/doctor/profile"
                 className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
               >
                 Manage Profile
@@ -133,39 +128,39 @@ const DoctorHomePage = () => {
                 {
                   title: "Seamless Consultations",
                   desc: "Conduct video or in-person consultations with patients easily.",
-                  img: "/images/consultation.svg",
+                  img: "/images/consultation.png",
                 },
                 {
                   title: "Upload Prescriptions",
                   desc: "Quickly upload and share prescriptions with patients.",
-                  img: "/images/prescription.svg",
+                  img: "/images/prescription.png",
                 },
                 {
                   title: "Receive Payments",
                   desc: "Get paid seamlessly through integrated payment gateways.",
-                  img: "/images/payment.svg",
+                  img: "/images/payment.png",
                 },
                 {
                   title: "Manage Patients",
                   desc: "Track medical history and maintain patient records securely.",
-                  img: "/images/patients.svg",
+                  img: "/images/patient.png",
                 },
                 {
                   title: "Manage Services",
                   desc: "List your medical services and control availability.",
-                  img: "/images/services.svg",
+                  img: "/images/services.png",
                 },
                 {
                   title: "Profile & Reputation",
                   desc: "Build trust by keeping your profile updated.",
-                  img: "/images/profile.svg",
+                  img: "/images/profile.png",
                 },
               ].map((item, idx) => (
                 <div
                   key={idx}
                   className={`rounded-2xl  ${isDarkMode ? "bg-gray-900" : "bg-white"} border border-cyan-300 shadow-md hover:shadow-lg transition p-6 text-center flex flex-col items-center`}
                 >
-                  <img src={item.img} alt={item.title} className="h-20 mb-4" />
+                  <img src={item.img} alt={item.title} className="h-40 mb-4" />
                   <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {item.desc}

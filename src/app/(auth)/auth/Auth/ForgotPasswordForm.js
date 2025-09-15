@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-
+import { useSelector } from 'react-redux';
 
 export default function ForgotPasswordForm({
   className = '',
@@ -21,7 +21,8 @@ export default function ForgotPasswordForm({
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { forgotPassword } = useAuth();
-  const { toast } = useToast();
+  const { errorToast, Success } = useToast();
+  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
   const {
     register,
@@ -34,21 +35,26 @@ export default function ForgotPasswordForm({
     try {
       setLoading(true);
       await forgotPassword(data.email);
-      toast.success('Password reset instructions have been sent to your email.');
+      Success('Password reset instructions have been sent to your email.');
       setIsOpen(false);
       reset();
     } catch (error) {
-      toast.error(error.message || 'Failed to send reset instructions');
+      errorToast(error.message || 'Failed to send reset instructions');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className={`flex flex-${direction} gap-2 items-start ${className}`}>
+    <div
+      className={`flex flex-${direction} gap-2 items-start ${className}`}
+    >
+      {/* Toggle button */}
       <Button
         variant="ghost"
-        className="px-4 py-1 rounded-xl text-sm dark:text-gray-300"
+        className={`px-4 py-1 rounded-xl text-sm ${
+          isDarkMode ? 'text-gray-300 hover:bg-gray-800' : 'text-gray-700 hover:bg-gray-100'
+        }`}
         onClick={() => setIsOpen((prev) => !prev)}
       >
         Forgot password?
@@ -57,22 +63,36 @@ export default function ForgotPasswordForm({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -10 }}
+            initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
+            exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.3 }}
             className="w-full mt-2"
           >
             <form
               onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4 border border-gray-300 dark:border-gray-700 p-4 rounded-xl shadow-sm bg-white dark:bg-gray-900"
+              className={`space-y-4 border p-4 rounded-xl shadow-sm ${
+                isDarkMode
+                  ? 'bg-gray-900 border-gray-700'
+                  : 'bg-white border-gray-200'
+              }`}
             >
+              {/* Email field */}
               <div className="space-y-2">
-                <label htmlFor="reset-email" className="sr-only">
+                <label
+                  htmlFor="reset-email"
+                  className={`block text-sm font-medium ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-700'
+                  }`}
+                >
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <Mail
+                    className={`absolute left-3 top-3 h-4 w-4 ${
+                      isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                    }`}
+                  />
                   <Input
                     {...register('email', {
                       required: 'Email is required',
@@ -86,7 +106,11 @@ export default function ForgotPasswordForm({
                     defaultValue={email}
                     readOnly={isEmailReadOnly}
                     placeholder="Enter your email"
-                    className="pl-10 dark:bg-gray-800 dark:text-gray-100"
+                    className={`pl-10 focus:ring-2 focus:ring-offset-1 ${
+                      isDarkMode
+                        ? 'bg-gray-800 text-gray-100 border-gray-700 focus:ring-blue-500 focus:border-blue-500'
+                        : 'bg-white text-gray-900 border-gray-300 focus:ring-blue-600 focus:border-blue-600'
+                    }`}
                   />
                 </div>
                 {errors.email && (
@@ -94,15 +118,21 @@ export default function ForgotPasswordForm({
                 )}
               </div>
 
-              <div className="flex justify-between items-center gap-2">
+              {/* Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="submit"
-                  className="w-full"
+                  className={`w-full ${isDarkMode ? ' text-white bg-black' : 'bg-blue-100 text-blue-700'} ${
+                    loading ? 'opacity-80' : ''
+                  }`}
                   disabled={loading}
                 >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {loading && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                   {submitText}
                 </Button>
+
                 <Button
                   type="button"
                   variant="outline"
@@ -110,10 +140,13 @@ export default function ForgotPasswordForm({
                     setIsOpen(false);
                     reset();
                   }}
-                  className="text-sm dark:border-gray-600"
+                  className={`w-full sm:w-auto text-sm ${
+                    isDarkMode
+                      ? 'border-gray-600 text-gray-300 hover:bg-gray-800'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+                  }`}
                 >
                   <X className="h-4 w-4 mr-1" />
-                  {cancelText}
                 </Button>
               </div>
             </form>
