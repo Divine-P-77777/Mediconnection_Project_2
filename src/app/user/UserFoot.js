@@ -74,10 +74,11 @@ const Footer = () => {
         <div>
           <h3 className="text-lg font-semibold mb-3">Legal</h3>
           <ul className="space-y-2 text-sm">
-            <li><Link href="/user/terms" className="hover:underline">Terms of Service</Link></li>
-            <li><Link href="/user/privacy" className="hover:underline">Privacy Policy</Link></li>
-            <li><Link href="/user/payment" className="hover:underline">Payment Policy</Link></li>
-            <li><Link href="/user/refund" className="hover:underline">Refund Policy</Link></li>
+            <li><Link href="/terms" className="hover:underline">Terms of Service</Link></li>
+            <li><Link href="/privacy" className="hover:underline">Privacy Policy</Link></li>
+            <li><Link href="/payment" className="hover:underline">Payment Policy</Link></li>
+            <li><Link href="/refund" className="hover:underline">Refund Policy</Link></li>
+            <li><Link href="/cancellation" className="hover:underline">Cancellation</Link></li>
           </ul>
         </div>
       </div>

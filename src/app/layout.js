@@ -1,6 +1,5 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import ClientWrapper from "./components/ClientWrapper";
 import { Provider } from "./Provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -108,15 +107,10 @@ export default function RootLayout({ children }) {
         />
 
         {/* Cashfree JS */}
-        <script
-          src="https://sdk.cashfree.com/js/v3/cashfree.js"
-          async
-        ></script>
+     <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
       </head>
       <body className={`${inter.className}`}>
-        <ClientWrapper>
           <Provider>{children}</Provider>
-        </ClientWrapper>
       </body>
     </html>
   );

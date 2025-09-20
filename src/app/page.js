@@ -51,6 +51,6 @@ export default async function Page() {
   const target = roleRedirects[profile.role] ?? "/user";
   redirect(target);
 
-  // You won't see this because redirect() throws, but it's here for completeness
+
   return <Loader />;
 }

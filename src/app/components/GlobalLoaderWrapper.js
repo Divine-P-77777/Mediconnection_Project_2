@@ -1,30 +1,28 @@
+// /app/components/GlobalLoaderWrapper.jsx
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Loader from "./Loader";
 
 export default function GlobalLoaderWrapper({ children }) {
-  const router = useRouter();
+  const pathname = usePathname();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const start = () => setLoading(true);
-    const end = () => setLoading(false);
+    setLoading(true);
 
-    router.events?.on("routeChangeStart", start);
-    router.events?.on("routeChangeComplete", end);
-    router.events?.on("routeChangeError", end);
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 600); 
 
-    return () => {
-      router.events?.off("routeChangeStart", start);
-      router.events?.off("routeChangeComplete", end);
-      router.events?.off("routeChangeError", end);
-    };
-  }, [router]);
+    return () => clearTimeout(timeout);
+  }, [pathname]);
 
   return (
     <>
-      {loading && <Loader  />}
+      {loading && (
+          <Loader />
+      )}
       {children}
     </>
   );
