@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/supabase/client";
 
-export async function GET(req) {
+export async function GET (req) {
   const { searchParams } = new URL(req.url);
   const service = searchParams.get("service");
   const search = searchParams.get("search");
@@ -9,7 +9,7 @@ export async function GET(req) {
   try {
     let query = supabase
       .from("doctor_services")
-      .select(`id, doctor_id, service_name, price, doctors(name, account_number, id)`);
+      .select(`id, doctor_id, service_name, price, doctors(name, account_number, id, profile ,specialization)`);
 
     if (search) {
       query = query.ilike("service_name", `%${search}%`);

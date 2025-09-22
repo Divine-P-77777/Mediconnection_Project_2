@@ -1,14 +1,14 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Dialog } from "@headlessui/react";
 import { useAuth } from "@/hooks/useAuth";
 import axios from "axios";
 import { load } from "@cashfreepayments/cashfree-js";
-
-
+import { useSelector } from "react-redux";
 
 export default function BookingModal({ doctor, onClose }) {
+  const isDarkMode = useSelector((state) => state.theme.isDarkMode);
+
   const [availability, setAvailability] = useState([]);
   const [selectedDay, setSelectedDay] = useState("");
   const [selectedSlot, setSelectedSlot] = useState("");
@@ -23,20 +23,25 @@ export default function BookingModal({ doctor, onClose }) {
   const [cashfree, setCashfree] = useState(null);
   const [orderId, setOrderId] = useState("");
 
-  // Load Cashfree SDK on mount
+  // Load Cashfree SDK
   useEffect(() => {
     async function initSDK() {
-      const cf = await load({ mode: "sandbox" }); // change to "production" in prod
+      const cf = await load({ mode: "sandbox" }); // switch to "production" later
       setCashfree(cf);
     }
     initSDK();
   }, []);
 
-  // Helper: next date for weekday
+  // Helper: get next date for weekday
   function getNextDateForDay(dayName) {
     const daysMap = {
-      sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-      thursday: 4, friday: 5, saturday: 6,
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wednesday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
     };
     const today = new Date();
     const todayDay = today.getDay();
@@ -48,7 +53,8 @@ export default function BookingModal({ doctor, onClose }) {
     nextDate.setDate(today.getDate() + daysUntil);
     return nextDate;
   }
-  // Fetch doctor availability
+
+  // Fetch availability
   const fetchAvailability = async () => {
     try {
       const res = await fetch(`/api/doctor/availability/${doctor.doctor_id}`);
@@ -64,7 +70,9 @@ export default function BookingModal({ doctor, onClose }) {
         };
       });
 
-      processed.sort((a, b) => new Date(a.actual_date) - new Date(b.actual_date));
+      processed.sort(
+        (a, b) => new Date(a.actual_date) - new Date(b.actual_date)
+      );
       setAvailability(processed);
     } catch (err) {
       console.error("Error fetching availability:", err);
@@ -87,7 +95,17 @@ export default function BookingModal({ doctor, onClose }) {
     const userId = user?.id;
     const doctorId = doctor?.doctor_id;
 
-    if (!userId || !doctorId || !fullName || !dob || !phone || !gender || !email || !selectedDay || !selectedSlot) {
+    if (
+      !userId ||
+      !doctorId ||
+      !fullName ||
+      !dob ||
+      !phone ||
+      !gender ||
+      !email ||
+      !selectedDay ||
+      !selectedSlot
+    ) {
       return alert("All fields and slot selection are required");
     }
 
@@ -95,69 +113,85 @@ export default function BookingModal({ doctor, onClose }) {
     if (isNaN(phoneNumber)) return alert("Phone number must be valid");
 
     try {
-      // 1️⃣ Get payment session if doctor.price > 0
+      // 1️⃣ If doctor has price → initiate payment
       if (doctor.price > 0) {
-        const sessionRes = await axios.post("/api/payment/order", {
-          doctorId: doctor?.doctor_id,
+        const sessionRes = await axios.post("/api/consultation/payment/order", {
           amount: doctor.price,
-          date: selectedDay, // send actual consultation date
-          customer: { name: fullName, email, phone: phone }
+          customer_name: fullName,
+          customer_email: email,
+          customer_phone: phone,
         });
 
-
-        if (!sessionRes.data.payment_session_id) throw new Error("Failed to create session");
+        if (!sessionRes.data.payment_session_id)
+          throw new Error("Failed to create session");
 
         setOrderId(sessionRes.data.order_id);
 
+        if (!cashfree) throw new Error("Payment SDK not loaded");
+
         const checkoutOptions = {
           paymentSessionId: sessionRes.data.payment_session_id,
-          redirectTarget: "_modal", // with _model it stays on same page
+          redirectTarget: "_modal", // stay inside modal
         };
 
         cashfree.checkout(checkoutOptions).then(async (result) => {
-          console.log("Payment initiated:", result);
-
           if (result.error) {
             alert("Payment failed ❌");
             return;
           }
 
           // ✅ Verify payment
-          const verifyRes = await axios.post("/api/payment/verify", { orderId: sessionRes.data.order_id });
+          const verifyRes = await axios.post("/api/consultation/payment/verify", {
+            orderId: sessionRes.data.order_id,
+          });
           if (verifyRes.data?.order_status === "PAID") {
-            await createBooking({ fullName, dob, phoneNumber, gender, email, userId, doctorId });
+            await createBooking({
+              fullName,
+              dob,
+              phoneNumber,
+              gender,
+              email,
+              userId,
+              doctorId,
+            });
           } else {
             alert("Payment not completed!");
           }
         });
-
       } else {
         // Free consultation
-        await createBooking({ fullName, dob, phoneNumber, gender, email, userId, doctorId });
+        await createBooking({
+          fullName,
+          dob,
+          phoneNumber,
+          gender,
+          email,
+          userId,
+          doctorId,
+        });
       }
     } catch (err) {
       console.error(err);
       alert("Booking failed: " + err.message);
     }
   };
+
   async function createBooking(data) {
     const payload = {
       userId: data.userId,
       doctorId: data.doctorId,
       fullName: data.fullName,
       dob: data.dob,
-
-      phone: data.phoneNumber,  // ✅ matches DB column name
+      phone: data.phoneNumber,
       gender: data.gender,
       email: data.email,
       consultationDate: selectedDay,
       consultationTime: selectedSlot,
-
-      speciality: doctor.service_name || doctor.specialization || "General",
+      speciality:
+        doctor.service_name || doctor.specialization || "General",
       orderId,
+      amount: doctor.price,
     };
-
-    console.log("Booking payload:", payload); // debugging
 
     const res = await fetch("/api/liveconsult", {
       method: "POST",
@@ -176,7 +210,10 @@ export default function BookingModal({ doctor, onClose }) {
     <Dialog open={true} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center overflow-auto p-4">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg max-w-md w-full p-6 min-h-[80vh] overflow-y-auto space-y-6">
+        <div
+          className={`rounded-2xl shadow-lg max-w-md w-full p-6 min-h-[80vh] overflow-y-auto space-y-6
+            ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}
+        >
           <Dialog.Title className="text-xl font-bold mb-4">
             Book Appointment with {doctor?.doctors?.name}
           </Dialog.Title>
@@ -189,15 +226,20 @@ export default function BookingModal({ doctor, onClose }) {
                   {field === "fullName"
                     ? "Full Name"
                     : field === "dob"
-                      ? "Date of Birth"
-                      : field.charAt(0).toUpperCase() + field.slice(1)}
+                    ? "Date of Birth"
+                    : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
                   type={field === "dob" ? "date" : "text"}
                   name={field}
                   value={form[field]}
                   onChange={handleChange}
-                  className="w-full p-2 rounded-lg border bg-gray-50 dark:bg-gray-700 dark:text-white"
+                  className={`w-full p-2 rounded-lg border
+                    ${
+                      isDarkMode
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-50 text-black"
+                    }`}
                 />
               </div>
             ))}
@@ -209,7 +251,12 @@ export default function BookingModal({ doctor, onClose }) {
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
-                className="w-full p-2 rounded-lg border bg-gray-50 dark:bg-gray-700 dark:text-white"
+                className={`w-full p-2 rounded-lg border
+                  ${
+                    isDarkMode
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-50 text-black"
+                  }`}
               >
                 <option value="male">Male</option>
                 <option value="female">Female</option>
@@ -225,7 +272,12 @@ export default function BookingModal({ doctor, onClose }) {
               <select
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(e.target.value)}
-                className="w-full p-2 rounded bg-gray-800 text-white"
+                className={`w-full p-2 rounded
+                  ${
+                    isDarkMode
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-50 text-black"
+                  }`}
               >
                 <option value="">-- Select a day --</option>
                 {availability.map((d) => (
@@ -245,7 +297,12 @@ export default function BookingModal({ doctor, onClose }) {
                 <select
                   value={selectedSlot}
                   onChange={(e) => setSelectedSlot(e.target.value)}
-                  className="w-full p-2 rounded bg-gray-800 text-white"
+                  className={`w-full p-2 rounded
+                    ${
+                      isDarkMode
+                        ? "bg-gray-700 text-white"
+                        : "bg-gray-50 text-black"
+                    }`}
                 >
                   <option value="">-- Select a slot --</option>
                   {availability
@@ -265,7 +322,13 @@ export default function BookingModal({ doctor, onClose }) {
             <button
               onClick={handleBooking}
               disabled={!selectedDay || !selectedSlot}
-              className="w-full px-4 py-2 rounded-lg bg-cyan-500 text-white font-medium hover:bg-cyan-600 disabled:bg-gray-400 transition-colors duration-200"
+              className={`w-full px-4 py-2 rounded-lg font-medium transition-colors duration-200
+                disabled:bg-gray-400
+                ${
+                  isDarkMode
+                    ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                    : "bg-cyan-500 hover:bg-cyan-600 text-white"
+                }`}
             >
               {doctor.price > 0
                 ? `Pay & Book (₹${doctor.price})`
@@ -274,7 +337,12 @@ export default function BookingModal({ doctor, onClose }) {
 
             <button
               onClick={onClose}
-              className="w-full px-4 py-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-black dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
+              className={`w-full px-4 py-2 rounded-lg transition-colors duration-200
+                ${
+                  isDarkMode
+                    ? "bg-gray-700 text-white hover:bg-gray-600"
+                    : "bg-gray-200 text-black hover:bg-gray-300"
+                }`}
             >
               Cancel
             </button>
