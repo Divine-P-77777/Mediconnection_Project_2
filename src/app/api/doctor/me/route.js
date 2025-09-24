@@ -30,13 +30,15 @@ export async function GET(req) {
 export async function PATCH(req) {
   try {
     const body = await req.json();
-    const { userId, name, specialization, contact, profile, account_number } = body;
+    // Removed account_number
+    const { userId, name, specialization, contact, profile } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "User ID required" }, { status: 400 });
     }
 
-    const updates = { name, specialization, contact, profile, account_number };
+    // Removed account_number
+    const updates = { name, specialization, contact, profile };
 
     const { data, error } = await supabase
       .from("doctors")
@@ -52,3 +54,4 @@ export async function PATCH(req) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

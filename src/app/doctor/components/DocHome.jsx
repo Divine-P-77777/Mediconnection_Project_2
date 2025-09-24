@@ -63,14 +63,7 @@ const DoctorHomePage = () => {
                 place.
               </p>
 
-              {!data?.account_number && (
-                <button
-                  onClick={() => setShowAccountPopup(true)}
-                  className="mt-3 px-5 py-2 rounded-lg bg-cyan-500 text-white hover:bg-cyan-600 shadow-md transition"
-                >
-                  Set Account Number
-                </button>
-              )}
+     
             </div>
 
             {/* Links Section */}
@@ -93,6 +86,12 @@ const DoctorHomePage = () => {
                 className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
               >
                 Manage Profile
+              </Link>
+              <Link
+                href="/doctor/manageaccount"
+                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
+              >
+                Account Details
               </Link>
               <Link
                 href="/doctor/manageservice"
@@ -155,6 +154,7 @@ const DoctorHomePage = () => {
                   desc: "Build trust by keeping your profile updated.",
                   img: "/images/profile.png",
                 },
+                
               ].map((item, idx) => (
                 <div
                   key={idx}

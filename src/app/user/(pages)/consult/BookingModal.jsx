@@ -26,7 +26,7 @@ export default function BookingModal({ doctor, onClose }) {
   // Load Cashfree SDK
   useEffect(() => {
     async function initSDK() {
-      const cf = await load({ mode: "sandbox" }); // switch to "production" later
+      const cf = await load({ mode: "production" }); // switch to "production" later
       setCashfree(cf);
     }
     initSDK();

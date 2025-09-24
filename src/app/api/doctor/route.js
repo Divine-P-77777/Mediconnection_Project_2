@@ -9,7 +9,7 @@ export async function GET (req) {
   try {
     let query = supabase
       .from("doctor_services")
-      .select(`id, doctor_id, service_name, price, doctors(name, account_number, id, profile ,specialization)`);
+      .select(`id, doctor_id, service_name, price, doctors(name, id, profile ,specialization)`);
 
     if (search) {
       query = query.ilike("service_name", `%${search}%`);
