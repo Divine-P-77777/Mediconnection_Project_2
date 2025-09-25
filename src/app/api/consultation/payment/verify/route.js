@@ -15,8 +15,8 @@ export async function POST(req) {
 
 
     const cashfree = new Cashfree(
-      process.env.CASHFREE_MODE === "production" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
-      process.env.CASHFREE_CLIENT_ID,
+      CFEnvironment.PRODUCTION, // we can  keep SANDBOX for dev
+      process.env.CASHFREE_CLIENT_ID, 
       process.env.CASHFREE_CLIENT_SECRET
     );
 
