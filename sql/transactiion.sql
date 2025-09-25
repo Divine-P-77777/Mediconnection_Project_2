@@ -1,20 +1,3 @@
-CREATE TABLE public.payouts_history (
-    id bigserial PRIMARY KEY,
-    payment_liveconsult_id bigint NOT NULL,
-    transfer_id text NOT NULL,
-    status text NOT NULL DEFAULT 'pending',
-    response jsonb,
-    created_at timestamp without time zone DEFAULT now(),
-    CONSTRAINT payouts_history_payment_fkey
-        FOREIGN KEY (payment_liveconsult_id)
-        REFERENCES public.payment_liveconsult (id)
-        ON DELETE CASCADE
-);
-
-
-
-
-
 CREATE OR REPLACE FUNCTION get_pending_payouts()
 RETURNS TABLE (
   payment_id bigint,
@@ -27,7 +10,7 @@ RETURNS TABLE (
   phone numeric
 ) AS $$
   SELECT pl.id,
-         pl.amount,
+         (pl.amount * 0.8) AS amount,  -- doctor share
          lc.doctor_id,
          ad.account_number,
          ad.ifsc_code,
@@ -44,5 +27,3 @@ RETURNS TABLE (
       WHERE ph.payment_liveconsult_id = pl.id
     );
 $$ LANGUAGE sql STABLE;
-
-

@@ -60,3 +60,54 @@
  In Appointment also mention governement and private filter and also set the price per healthcenter which gonna set by the healthcente , by default its free
 
  Also same from the doctors site for consultation 
+
+
+
+Payment  WorkFlow
+Patient → Cashfree PG → Merchant Balance → Settlement → Merchant Bank
+                                                       ↓
+                                                  Payout API (80%)
+                                                  Doctor Bank
+
+
+
+                                                  Flow of Money in Cashfree
+1. PG Settlement Balance (Customer → Merchant)
+
+When a patient pays (₹100), Cashfree collects it.
+
+This goes into your PG Settlement Balance.
+
+After the settlement cycle (T+1 or T+2 working days), Cashfree automatically credits this to your merchant bank account (the account you registered while onboarding).
+
+⚠️ You cannot control or reroute this money into the payout wallet. It always flows to your bank account.
+
+2. Payout Wallet (Merchant → Doctor)
+
+To pay doctors/vendors, you use Cashfree Payouts.
+
+Cashfree deducts payouts directly from your Payout Wallet balance, not from PG settlement.
+
+This means:
+
+Even if you receive money from patients, you must top up the payout wallet (via NEFT/IMPS/UPI from your merchant bank account).
+
+Then, when you call the /requestTransfer API, the money comes out of that wallet and goes to the doctor’s bank/UPI.
+
+3. No Auto-Link
+
+PG Settlement and Payout Wallet are separate buckets.
+
+PG Settlement → always goes to your bank account.
+
+Payout Wallet → needs manual recharge from your side.
+
+🔹 So, in your case:
+
+Patient pays ₹100.
+
+Cashfree will settle ₹100 – fees to your merchant bank account in 2 days.
+
+If you want to pay the doctor ₹80 instantly, you must keep at least ₹80 in your payout wallet.
+
+Later, when Cashfree settles money to your bank account, that replenishes your main funds, and you can top-up the payout wallet again.

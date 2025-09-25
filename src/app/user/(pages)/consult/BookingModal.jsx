@@ -113,7 +113,7 @@ export default function BookingModal({ doctor, onClose }) {
     if (isNaN(phoneNumber)) return alert("Phone number must be valid");
 
     try {
-      // 1️⃣ If doctor has price → initiate payment
+      // 1️ If doctor has price → initiate payment
       if (doctor.price > 0) {
         const sessionRes = await axios.post("/api/consultation/payment/order", {
           amount: doctor.price,
@@ -143,7 +143,12 @@ export default function BookingModal({ doctor, onClose }) {
           // ✅ Verify payment
           const verifyRes = await axios.post("/api/consultation/payment/verify", {
             orderId: sessionRes.data.order_id,
+            liveconsultId: doctor.id,   // use the consultation row id (not doctor_id!)
+            amount: doctor.price,
+            paymentMethod: "CASHFREE",
           });
+
+
           if (verifyRes.data?.order_status === "PAID") {
             await createBooking({
               fullName,
@@ -203,6 +208,7 @@ export default function BookingModal({ doctor, onClose }) {
     if (!result.success) throw new Error(result.error);
 
     alert("Booking confirmed ✅");
+    window.location.href = "/user/consult/booking";
     onClose();
   }
 
@@ -226,8 +232,8 @@ export default function BookingModal({ doctor, onClose }) {
                   {field === "fullName"
                     ? "Full Name"
                     : field === "dob"
-                    ? "Date of Birth"
-                    : field.charAt(0).toUpperCase() + field.slice(1)}
+                      ? "Date of Birth"
+                      : field.charAt(0).toUpperCase() + field.slice(1)}
                 </label>
                 <input
                   type={field === "dob" ? "date" : "text"}
@@ -235,10 +241,9 @@ export default function BookingModal({ doctor, onClose }) {
                   value={form[field]}
                   onChange={handleChange}
                   className={`w-full p-2 rounded-lg border
-                    ${
-                      isDarkMode
-                        ? "bg-gray-700 text-white"
-                        : "bg-gray-50 text-black"
+                    ${isDarkMode
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-50 text-black"
                     }`}
                 />
               </div>
@@ -252,10 +257,9 @@ export default function BookingModal({ doctor, onClose }) {
                 value={form.gender}
                 onChange={handleChange}
                 className={`w-full p-2 rounded-lg border
-                  ${
-                    isDarkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-50 text-black"
+                  ${isDarkMode
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-50 text-black"
                   }`}
               >
                 <option value="male">Male</option>
@@ -273,10 +277,9 @@ export default function BookingModal({ doctor, onClose }) {
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(e.target.value)}
                 className={`w-full p-2 rounded
-                  ${
-                    isDarkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-50 text-black"
+                  ${isDarkMode
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-50 text-black"
                   }`}
               >
                 <option value="">-- Select a day --</option>
@@ -298,10 +301,9 @@ export default function BookingModal({ doctor, onClose }) {
                   value={selectedSlot}
                   onChange={(e) => setSelectedSlot(e.target.value)}
                   className={`w-full p-2 rounded
-                    ${
-                      isDarkMode
-                        ? "bg-gray-700 text-white"
-                        : "bg-gray-50 text-black"
+                    ${isDarkMode
+                      ? "bg-gray-700 text-white"
+                      : "bg-gray-50 text-black"
                     }`}
                 >
                   <option value="">-- Select a slot --</option>
@@ -324,10 +326,9 @@ export default function BookingModal({ doctor, onClose }) {
               disabled={!selectedDay || !selectedSlot}
               className={`w-full px-4 py-2 rounded-lg font-medium transition-colors duration-200
                 disabled:bg-gray-400
-                ${
-                  isDarkMode
-                    ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                    : "bg-cyan-500 hover:bg-cyan-600 text-white"
+                ${isDarkMode
+                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                  : "bg-cyan-500 hover:bg-cyan-600 text-white"
                 }`}
             >
               {doctor.price > 0
@@ -338,10 +339,9 @@ export default function BookingModal({ doctor, onClose }) {
             <button
               onClick={onClose}
               className={`w-full px-4 py-2 rounded-lg transition-colors duration-200
-                ${
-                  isDarkMode
-                    ? "bg-gray-700 text-white hover:bg-gray-600"
-                    : "bg-gray-200 text-black hover:bg-gray-300"
+                ${isDarkMode
+                  ? "bg-gray-700 text-white hover:bg-gray-600"
+                  : "bg-gray-200 text-black hover:bg-gray-300"
                 }`}
             >
               Cancel
