@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { serviceSupabase } from "@/supabase/serviceClient";
 
-// Create new live consultation booking + payment record
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -16,10 +15,6 @@ export async function POST(req) {
       consultationDate,
       consultationTime,
       speciality,
-      orderId, // optional, can be payment gateway order ID
-      paymentStatus = "pending", // default
-      paymentMethod = null, // optional
-      amount = null, // optional
     } = body;
 
     // Validate required fields
@@ -41,7 +36,7 @@ export async function POST(req) {
       );
     }
 
-    // Step 1: Insert into liveconsult
+    // Insert into liveconsult only
     const { data: consult, error: consultError } = await serviceSupabase
       .from("liveconsult")
       .insert([
@@ -72,31 +67,9 @@ export async function POST(req) {
       );
     }
 
-    // Step 2: Insert into payment_liveconsult (referencing the liveconsult row)
-    const { data: payment, error: paymentError } = await serviceSupabase
-      .from("payment_liveconsult")
-      .insert([
-        {
-          liveconsult_id: consult.id, // foreign key reference
-          order_id: orderId || null,
-          status: paymentStatus,
-          payment_method: paymentMethod,
-          amount,
-        },
-      ])
-      .select()
-      .single();
-
-    if (paymentError) {
-      return NextResponse.json(
-        { success: false, error: paymentError.message },
-        { status: 500 }
-      );
-    }
-
     return NextResponse.json({
       success: true,
-      data: { consult, payment },
+      data: consult,
     });
   } catch (err) {
     return NextResponse.json(
@@ -106,7 +79,7 @@ export async function POST(req) {
   }
 }
 
-// Update prescriptions/reports/bills/payment/status
+// Update prescriptions/reports/bills/status
 export async function PATCH(req) {
   try {
     const body = await req.json();
@@ -117,8 +90,6 @@ export async function PATCH(req) {
       prescriptions,
       status,
       meetUrl,
-      paymentStatus,
-      paymentId,
     } = body;
 
     if (!id)
@@ -127,7 +98,7 @@ export async function PATCH(req) {
         { status: 400 }
       );
 
-    // Step 1: Update liveconsult record
+    // Update liveconsult record
     const { data: consult, error: consultError } = await serviceSupabase
       .from("liveconsult")
       .update({
@@ -148,30 +119,7 @@ export async function PATCH(req) {
       );
     }
 
-    let payment = null;
-
-    // Step 2: Optionally update payment record
-    if (paymentId || paymentStatus) {
-      const { data, error } = await serviceSupabase
-        .from("payment_liveconsult")
-        .update({
-          ...(paymentStatus && { status: paymentStatus }),
-        })
-        .eq(paymentId ? "id" : "liveconsult_id", paymentId || id)
-        .select()
-        .single();
-
-      if (error) {
-        return NextResponse.json(
-          { success: false, error: error.message },
-          { status: 500 }
-        );
-      }
-
-      payment = data;
-    }
-
-    return NextResponse.json({ success: true, data: { consult, payment } });
+    return NextResponse.json({ success: true, data: consult });
   } catch (err) {
     return NextResponse.json(
       { success: false, error: err.message },

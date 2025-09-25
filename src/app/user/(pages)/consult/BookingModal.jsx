@@ -26,7 +26,9 @@ export default function BookingModal({ doctor, onClose }) {
   // Load Cashfree SDK
   useEffect(() => {
     async function initSDK() {
-      const cf = await load({ mode: "production" }); // switch to "production" later
+      const cf = await load({
+        mode: process.env.CASHFREE_MODE === "production" ? "production" : "sandbox",
+      });
       setCashfree(cf);
     }
     initSDK();
@@ -143,7 +145,8 @@ export default function BookingModal({ doctor, onClose }) {
           // ✅ Verify payment
           const verifyRes = await axios.post("/api/consultation/payment/verify", {
             orderId: sessionRes.data.order_id,
-            liveconsultId: doctor.id,   // use the consultation row id (not doctor_id!)
+            doctorId: doctor?.doctor_id,   // use the consultation row id (not doctor_id!)
+
             amount: doctor.price,
             paymentMethod: "CASHFREE",
           });
@@ -192,8 +195,7 @@ export default function BookingModal({ doctor, onClose }) {
       email: data.email,
       consultationDate: selectedDay,
       consultationTime: selectedSlot,
-      speciality:
-        doctor.service_name || doctor.specialization || "General",
+      speciality: doctor.service_name || doctor.specialization || "General",
       orderId,
       amount: doctor.price,
     };
@@ -207,8 +209,8 @@ export default function BookingModal({ doctor, onClose }) {
     const result = await res.json();
     if (!result.success) throw new Error(result.error);
 
-    alert("Booking confirmed ✅");
-    window.location.href = "/user/consult/booking";
+    alert("Booking confirmed ");
+    window.location.href = "/user/consult";
     onClose();
   }
 

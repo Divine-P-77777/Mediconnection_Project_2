@@ -7,7 +7,7 @@ export async function POST(req) {
 
     // ✅ Initialize Cashfree correctly
     const cashfree = new Cashfree(
-      CFEnvironment.PRODUCTION, // change to PRODUCTION later
+      process.env.CASHFREE_MODE === "production" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       process.env.CASHFREE_CLIENT_ID,
       process.env.CASHFREE_CLIENT_SECRET
     );

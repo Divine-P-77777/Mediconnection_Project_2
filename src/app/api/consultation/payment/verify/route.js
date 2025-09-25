@@ -2,56 +2,75 @@ import { NextResponse } from "next/server";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
 import { serviceSupabase } from "@/supabase/serviceClient";
 
-// 🔹 Verify order and log into DB
 export async function POST(req) {
   try {
-    const { orderId, liveconsultId, amount, paymentMethod } = await req.json();
+    const { orderId, doctorId, amount, paymentMethod } = await req.json();
 
-    if (!orderId || !liveconsultId || !amount) {
+    if (!orderId ||  !doctorId || !amount) {
       return NextResponse.json(
-        { success: false, error: "Missing orderId, liveconsultId, or amount" },
+        { success: false, error: "Missing orderId,  doctorId, or amount" },
         { status: 400 }
       );
     }
 
+
     const cashfree = new Cashfree(
-      CFEnvironment.PRODUCTION, // change to PRODUCTION later
+      process.env.CASHFREE_MODE === "production" ? CFEnvironment.PRODUCTION : CFEnvironment.SANDBOX,
       process.env.CASHFREE_CLIENT_ID,
       process.env.CASHFREE_CLIENT_SECRET
     );
 
-    // 🔹 Verify payment status
     const response = await cashfree.PGOrderFetchPayments(orderId);
     const paymentData = response.data?.[0];
 
-    if (paymentData?.payment_status === "SUCCESS") {
-      // ✅ Insert record into payment_liveconsult
-      const { data, error } = await serviceSupabase
-        .from("payment_liveconsult")
-        .insert([
-          {
-            liveconsult_id: liveconsultId,
-            order_id: orderId,
-            status: "success",
-            payment_method: paymentMethod || paymentData.payment_method,
-            amount,
-          },
-        ])
-        .select()
-        .single();
+    if (!paymentData) {
+      return NextResponse.json(
+        { success: false, order_status: "NOT_FOUND" },
+        { status: 404 }
+      );
+    }
 
-      if (error) throw new Error(error.message);
+    if (paymentData.payment_status === "SUCCESS") {
+      const { data: existing } = await serviceSupabase
+        .from("payment_liveconsult")
+        .select("id")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (!existing) {
+        const { data, error } = await serviceSupabase
+          .from("payment_liveconsult")
+          .insert([
+            {
+              doctor_id: doctorId,
+              order_id: orderId,
+              status: "success",
+              payment_method: paymentMethod || paymentData.payment_method,
+              amount: Number(amount),
+            },
+          ])
+          .select()
+          .single();
+
+        if (error) throw new Error(error.message);
+
+        return NextResponse.json({
+          success: true,
+          order_status: "PAID",
+          payment: data,
+        });
+      }
 
       return NextResponse.json({
         success: true,
-        status: "paid",
-        payment: data,
+        order_status: "PAID",
+        payment: existing,
       });
     }
 
     return NextResponse.json({
       success: false,
-      status: paymentData?.payment_status || "UNKNOWN",
+      order_status: paymentData.payment_status || "FAILED",
     });
   } catch (error) {
     console.error("Verify error:", error.response?.data || error.message);
