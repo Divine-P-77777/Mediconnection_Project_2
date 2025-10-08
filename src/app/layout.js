@@ -85,6 +85,7 @@ export default function RootLayout({ children }) {
 
         {/* Robots */}
         <meta name="robots" content="index, follow" />
+        <meta name="google-site-verification" content="CylSRxdRveVgo_GfP8_5zbixOgwQ2FOlZaIfcdpzfzA" />
 
         {/* Structured Data (JSON-LD) */}
         <script
