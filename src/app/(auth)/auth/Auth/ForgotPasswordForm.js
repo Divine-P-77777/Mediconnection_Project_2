@@ -7,7 +7,7 @@ import { Mail, Loader2, X } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/input';    
 import { useSelector } from 'react-redux';
 
 export default function ForgotPasswordForm({
