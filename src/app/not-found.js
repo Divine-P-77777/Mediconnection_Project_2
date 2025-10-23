@@ -1,4 +1,3 @@
-// app/not-found.jsx
 "use client";
 
 import React from "react";

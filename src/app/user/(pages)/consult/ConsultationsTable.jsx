@@ -47,9 +47,11 @@ export default function ConsultationsTable() {
   }, [page, search, user?.id]);
 
   // Initial & reactive fetch
-  useEffect(() => {
+ useEffect(() => {
+  if (user?.id) {
     fetchConsults();
-  }, [fetchConsults]);
+  }
+}, [fetchConsults, user?.id]);
 
   // Re-fetch after booking (listen to custom event)
   useEffect(() => {
