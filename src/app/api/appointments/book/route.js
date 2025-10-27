@@ -17,7 +17,6 @@ export async function POST(req) {
       dob,
     } = body;
 
-    // ✅ Basic field validation
     if (
       !center_id ||
       !user_id ||
@@ -36,7 +35,6 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Optional slot availability check (recommended)
     const { data: existing, error: existErr } = await serviceSupabase
       .from("appointments")
       .select("id")
@@ -53,7 +51,6 @@ export async function POST(req) {
       );
     }
 
-    // ✅ Insert new appointment
     const { data, error } = await serviceSupabase
       .from("appointments")
       .insert([
@@ -70,14 +67,14 @@ export async function POST(req) {
           dob,
         },
       ])
-  .select("id") // 👈 add this to return the inserted row
+      .select("id")
       .single();
 
     if (error) throw error;
 
     return NextResponse.json({
       success: true,
-  appointment_id: data.id,
+      appointment_id: data.id, // ✅ fixed
     });
   } catch (err) {
     console.error("Appointment booking error:", err.message);

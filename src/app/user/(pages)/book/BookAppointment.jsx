@@ -324,9 +324,9 @@ function BookAppointment() {
         )}
 
         {/* Step 3 */}
-        {/* Step 3 */}
 {step === 3 && selectedCenter && (
   <>
+    {/* 📅 Date Selection */}
     <Calendar
       selectedCenter={selectedCenter}
       selectedDate={appointmentDate}
@@ -335,9 +335,11 @@ function BookAppointment() {
       availableDaysOfWeek={availableDaysOfWeek}
     />
 
-    {/* Time Slots */}
+    {/* 🕒 Time Slots */}
     <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
-      <CardHeader><CardTitle>Select Time Slot</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Select Time Slot</CardTitle>
+      </CardHeader>
       <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {slotsForDate.length > 0 ? (
           slotsForDate.map((time) => (
@@ -357,15 +359,17 @@ function BookAppointment() {
           ))
         ) : (
           <div className="col-span-full text-center text-red-400">
-            No slots for this day
+            No slots available for this date.
           </div>
         )}
       </CardContent>
     </Card>
 
-    {/* Purpose of Visit */}
+    {/* 🩺 Purpose of Visit */}
     <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
-      <CardHeader><CardTitle>Purpose of Visit</CardTitle></CardHeader>
+      <CardHeader>
+        <CardTitle>Purpose of Visit</CardTitle>
+      </CardHeader>
       <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {activePurposes.length > 0 ? (
           selectedCenter.purposes
@@ -375,7 +379,7 @@ function BookAppointment() {
                 key={p.service_name}
                 onClick={() => {
                   setSelectedPurpose(p.service_name);
-                  setSelectedPrice(p.price || 0); // store price
+                  setSelectedPrice(Number(p.price) || 0);
                 }}
                 className={`${
                   selectedPurpose === p.service_name
@@ -395,13 +399,13 @@ function BookAppointment() {
             ))
         ) : (
           <div className="col-span-full text-center text-red-400">
-            No services for this center
+            No services available at this center.
           </div>
         )}
       </CardContent>
     </Card>
 
-    {/* Final Button */}
+    {/* ✅ Final Action Button */}
     <Button
       className="w-full mt-6 bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-lg"
       disabled={
@@ -412,17 +416,29 @@ function BookAppointment() {
         isSubmitting
       }
       onClick={handleSubmit(async (data) => {
-        if (selectedPrice > 0) {
-          // 🔹 Payment flow
-          await startPaymentFlow(data, selectedPrice);
-        } else {
-          // 🔹 Free booking flow
-          await bookAppointment(data);
+        try {
+          // Step 1️⃣ - Always create the appointment first
+          const appointmentRes = await bookAppointment(data);
+
+          // Step 2️⃣ - Only start payment flow if price > 0
+          if (selectedPrice > 0 && appointmentRes?.appointment_id) {
+            await startPaymentFlow({
+              appointment_id: appointmentRes.appointment_id,
+              amount: selectedPrice,
+              customer_id: user?.id,
+              customer_name: data.fullName,
+              customer_email: user?.email,
+              customer_phone: data.phone,
+            });
+          }
+        } catch (err) {
+          console.error("Booking or payment failed:", err);
+          errorToast("Something went wrong: " + err.message);
         }
       })}
     >
       {isSubmitting ? (
-        <Loader />
+        <Loader className="animate-spin" />
       ) : selectedPrice > 0 ? (
         `Pay ₹${selectedPrice} & Confirm`
       ) : (
@@ -430,15 +446,19 @@ function BookAppointment() {
       )}
     </Button>
 
-    {/* Free booking note */}
-    {selectedPrice === 0 && selectedPurpose && (
+    {/* 🟢 Booking Info */}
+    {selectedPurpose && selectedPrice === 0 && (
       <div className="text-green-400 text-center mt-3">
-        ✅ Free Booking
+        ✅ This appointment is free of charge.
       </div>
     )}
-    {error && <div className="text-red-400 text-center mt-4">{error}</div>}
+
+    {error && (
+      <div className="text-red-400 text-center mt-4">{error}</div>
+    )}
   </>
 )}
+
 
       </div>
     </div>
