@@ -8,9 +8,8 @@ import Calendar from "./Calender";
 import SeamlessCalendar from "@/components/ui/SeamlessCalendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast"; 
-// import Loader from "@/app/components/Loader"; // loader
-import { Loader } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { Loader } from "lucide-react";
 
 function BookAppointment() {
   const isDarkMode = useSelector((s) => s.theme.isDarkMode);
@@ -23,11 +22,11 @@ function BookAppointment() {
   const [appointmentDate, setAppointmentDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
+  const [selectedPrice, setSelectedPrice] = useState(0);
   const [loadingCenters, setLoadingCenters] = useState(false);
   const [pincode, setPincode] = useState("");
   const [error, setError] = useState("");
 
-  // Personal info form
   const {
     control,
     handleSubmit,
@@ -44,7 +43,7 @@ function BookAppointment() {
 
   const personalInfo = watch();
 
-  // API call — health centers
+  // 🔍 Search health centers
   const searchCenters = async (pin) => {
     if (!pin || pin.length !== 6) return;
     setLoadingCenters(true);
@@ -73,10 +72,11 @@ function BookAppointment() {
     else errorToast("Pincode not found in your profile.");
   };
 
-  // Availability & Purposes
+  // Availability and purpose lists
   const availabilityList = Array.isArray(selectedCenter?.availability)
     ? selectedCenter.availability
     : [];
+
   const purposesList = Array.isArray(selectedCenter?.purposes)
     ? selectedCenter.purposes
     : [];
@@ -88,12 +88,12 @@ function BookAppointment() {
   const slotsForDate = appointmentDate
     ? (() => {
         const dayOfWeek = format(appointmentDate, "EEEE");
-        const found = availabilityList.find(
-          (a) => a.day_of_week === dayOfWeek
-        );
+        const found = availabilityList.find((a) => a.day_of_week === dayOfWeek);
         return found && found.status === "available"
           ? (found.slot_time || [])
-              .flatMap((s) => s.split(",").map((val) => val.trim()).filter(Boolean))
+              .flatMap((s) =>
+                s.split(",").map((val) => val.trim()).filter(Boolean)
+              )
           : [];
       })()
     : [];
@@ -102,15 +102,16 @@ function BookAppointment() {
     .filter((p) => p.status === "active")
     .map((p) => p.service_name);
 
-  // Appointment booking
+  // 🧾 Appointment booking (creates appointment and triggers payment only if price > 0)
   const bookAppointment = async (data) => {
     setError("");
+
     if (!selectedCenter || !appointmentDate || !selectedTime || !selectedPurpose) {
       errorToast("Please complete all selections.");
       return;
     }
 
-    const body = {
+    const appointmentPayload = {
       center_id: selectedCenter.id,
       user_id: user?.id,
       center_name: selectedCenter.name,
@@ -127,23 +128,77 @@ function BookAppointment() {
       const res = await fetch("/api/appointments/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        body: JSON.stringify(appointmentPayload),
       });
+
       const json = await res.json();
-      if (!json.success) throw new Error(json.error || "Failed to book.");
+      if (!json.success) throw new Error(json.error || "Failed to book appointment.");
+
+      const appointmentId = json.appointment_id;
       Success("Appointment booked successfully!");
-      setTimeout(() => window.location.reload(), 1000);
+
+      // 💳 Only start payment flow if paid service
+      if (selectedPrice > 0) {
+        await startPaymentFlow({
+          appointment_id: appointmentId,
+          amount: selectedPrice,
+          customer_id: user?.id,
+          customer_name: data.fullName,
+          customer_email: user?.email,
+          customer_phone: data.phone,
+        });
+      } else {
+        Success("Free appointment booked successfully!");
+      }
     } catch (err) {
       errorToast("Booking failed: " + err.message);
       setError("Booking failed: " + err.message);
     }
   };
 
-  // Dark mode styles
+  // 💰 Payment order creation
+  const startPaymentFlow = async (paymentData) => {
+    try {
+      const res = await fetch("/api/appointments/payment/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(paymentData),
+      });
+
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Payment order failed.");
+
+      const { payment_session_id } = json;
+      if (!payment_session_id) throw new Error("Payment session missing.");
+
+      if (typeof window !== "undefined" && window.Cashfree) {
+        const cashfree = new window.Cashfree({ mode: "sandbox" });
+        cashfree.checkout({
+          paymentSessionId: payment_session_id,
+          redirectTarget: "_self",
+        });
+      } else {
+        errorToast("Cashfree SDK not loaded.");
+      }
+    } catch (err) {
+      console.error("Payment error:", err);
+      errorToast("Payment failed: " + err.message);
+    }
+  };
+
+  // Styling
   const inputClass = `w-full p-3 rounded-lg border focus:outline-none ${
-    isDarkMode ? "bg-[#112240] border-gray-600 text-white" : "bg-white border-gray-300 text-black"
+    isDarkMode
+      ? "bg-[#112240] border-gray-600 text-white"
+      : "bg-white border-gray-300 text-black"
   }`;
-  const cardClass = `${isDarkMode ? "bg-[#0A192F] text-white border border-gray-700" : "bg-white text-black"}`;
+  const cardClass = `${
+    isDarkMode
+      ? "bg-[#0A192F] text-white border border-gray-700"
+      : "bg-white text-black"
+  }`;
+
+
 
   return (
     <div
@@ -269,55 +324,122 @@ function BookAppointment() {
         )}
 
         {/* Step 3 */}
-        {step === 3 && selectedCenter && (
-          <>
-            <Calendar
-              selectedCenter={selectedCenter}
-              selectedDate={appointmentDate}
-              handleDateSelect={setAppointmentDate}
-              isDarkMode={isDarkMode}
-              availableDaysOfWeek={availableDaysOfWeek}
-            />
-            <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
-              <CardHeader><CardTitle>Select Time Slot</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {slotsForDate.length > 0 ? (
-                  slotsForDate.map((time) => (
-                    <Button key={time} onClick={() => setSelectedTime(time)}
-                      className={`${selectedTime === time ? "bg-cyan-500 text-white" : isDarkMode ? "bg-[#112240] text-white border" : "bg-white border"}`}>
-                      {time}
-                    </Button>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center text-red-400">No slots for this day</div>
-                )}
-              </CardContent>
-            </Card>
-            <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
-              <CardHeader><CardTitle>Purpose of Visit</CardTitle></CardHeader>
-              <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {activePurposes.length > 0 ? (
-                  activePurposes.map((service) => (
-                    <Button key={service} onClick={() => setSelectedPurpose(service)}
-                      className={`${selectedPurpose === service ? "bg-cyan-500 text-white" : isDarkMode ? "bg-[#112240] text-white border" : "bg-white border"}`}>
-                      {service}
-                    </Button>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center text-red-400">No services for this center</div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Step 3 */}
+{step === 3 && selectedCenter && (
+  <>
+    <Calendar
+      selectedCenter={selectedCenter}
+      selectedDate={appointmentDate}
+      handleDateSelect={setAppointmentDate}
+      isDarkMode={isDarkMode}
+      availableDaysOfWeek={availableDaysOfWeek}
+    />
+
+    {/* Time Slots */}
+    <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
+      <CardHeader><CardTitle>Select Time Slot</CardTitle></CardHeader>
+      <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {slotsForDate.length > 0 ? (
+          slotsForDate.map((time) => (
             <Button
-              className="w-full mt-6 bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-lg"
-              disabled={!selectedCenter || !appointmentDate || !selectedTime || !selectedPurpose || isSubmitting}
-              onClick={handleSubmit(bookAppointment)}
+              key={time}
+              onClick={() => setSelectedTime(time)}
+              className={`${
+                selectedTime === time
+                  ? "bg-cyan-500 text-white"
+                  : isDarkMode
+                  ? "bg-[#112240] text-white border"
+                  : "bg-white border"
+              }`}
             >
-              {isSubmitting ? <Loader /> : "Confirm Booking"}
+              {time}
             </Button>
-            {error && <div className="text-red-400 text-center mt-4">{error}</div>}
-          </>
+          ))
+        ) : (
+          <div className="col-span-full text-center text-red-400">
+            No slots for this day
+          </div>
         )}
+      </CardContent>
+    </Card>
+
+    {/* Purpose of Visit */}
+    <Card className={`p-6 shadow-lg mt-6 ${cardClass}`}>
+      <CardHeader><CardTitle>Purpose of Visit</CardTitle></CardHeader>
+      <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {activePurposes.length > 0 ? (
+          selectedCenter.purposes
+            .filter((p) => p.status === "active")
+            .map((p) => (
+              <Button
+                key={p.service_name}
+                onClick={() => {
+                  setSelectedPurpose(p.service_name);
+                  setSelectedPrice(p.price || 0); // store price
+                }}
+                className={`${
+                  selectedPurpose === p.service_name
+                    ? "bg-cyan-500 text-white"
+                    : isDarkMode
+                    ? "bg-[#112240] text-white border"
+                    : "bg-white border"
+                }`}
+              >
+                {p.service_name}
+                {p.price > 0 && (
+                  <span className="ml-2 text-sm text-gray-400">
+                    ₹{p.price}
+                  </span>
+                )}
+              </Button>
+            ))
+        ) : (
+          <div className="col-span-full text-center text-red-400">
+            No services for this center
+          </div>
+        )}
+      </CardContent>
+    </Card>
+
+    {/* Final Button */}
+    <Button
+      className="w-full mt-6 bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-lg"
+      disabled={
+        !selectedCenter ||
+        !appointmentDate ||
+        !selectedTime ||
+        !selectedPurpose ||
+        isSubmitting
+      }
+      onClick={handleSubmit(async (data) => {
+        if (selectedPrice > 0) {
+          // 🔹 Payment flow
+          await startPaymentFlow(data, selectedPrice);
+        } else {
+          // 🔹 Free booking flow
+          await bookAppointment(data);
+        }
+      })}
+    >
+      {isSubmitting ? (
+        <Loader />
+      ) : selectedPrice > 0 ? (
+        `Pay ₹${selectedPrice} & Confirm`
+      ) : (
+        "Book Appointment (Free)"
+      )}
+    </Button>
+
+    {/* Free booking note */}
+    {selectedPrice === 0 && selectedPurpose && (
+      <div className="text-green-400 text-center mt-3">
+        ✅ Free Booking
+      </div>
+    )}
+    {error && <div className="text-red-400 text-center mt-4">{error}</div>}
+  </>
+)}
+
       </div>
     </div>
   );

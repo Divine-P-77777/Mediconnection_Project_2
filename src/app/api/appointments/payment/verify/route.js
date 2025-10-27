@@ -1,6 +1,6 @@
-// app/api/payment/verify/route.js
 import { NextResponse } from "next/server";
 import { Cashfree, CFEnvironment } from "cashfree-pg";
+import { serviceSupabase } from "@/supabase/serviceClient";
 
 export async function POST(req) {
   try {
@@ -13,20 +13,47 @@ export async function POST(req) {
       );
     }
 
-    // 🟡 Init Cashfree SDK
     const cashfree = new Cashfree(
-      CFEnvironment.SANDBOX, // change to PRODUCTION later
+      CFEnvironment.SANDBOX,
       process.env.CASHFREE_CLIENT_ID,
       process.env.CASHFREE_CLIENT_SECRET
     );
 
-    // 🔍 Verify order
     const response = await cashfree.PGOrderFetchPayments(order_id);
+    const paymentData = response.data?.[0];
 
-    const paymentData = response.data?.[0]; // first payment linked with this order
+    if (!paymentData) {
+      throw new Error("No payment record found for this order.");
+    }
 
-    if (paymentData?.payment_status === "SUCCESS") {
-      // ✅ Redirect to bookings page
+    const paymentStatus = paymentData.payment_status?.toLowerCase();
+
+    // 🔄 Update payment_appointments
+    const { data: paymentRow } = await serviceSupabase
+      .from("payment_appointments")
+      .select("appointment_id")
+      .eq("order_id", order_id)
+      .single();
+
+    if (paymentRow) {
+      await serviceSupabase
+        .from("payment_appointments")
+        .update({
+          status: paymentStatus === "success" ? "success" : "failed",
+          response: paymentData,
+        })
+        .eq("order_id", order_id);
+
+      // ✅ Update appointment status if payment successful
+      if (paymentStatus === "success") {
+        await serviceSupabase
+          .from("appointments")
+          .update({ status: "confirmed" })
+          .eq("id", paymentRow.appointment_id);
+      }
+    }
+
+    if (paymentStatus === "success") {
       return NextResponse.redirect(
         new URL("/user/book/mybooking", process.env.NEXT_PUBLIC_BASE_URL)
       );
@@ -35,11 +62,10 @@ export async function POST(req) {
     return NextResponse.json({
       success: false,
       message: "Payment not successful",
-      status: paymentData?.payment_status || "UNKNOWN",
+      status: paymentStatus || "unknown",
     });
   } catch (error) {
     console.error("Verification error:", error.response?.data || error.message);
-
     return NextResponse.json(
       {
         success: false,
