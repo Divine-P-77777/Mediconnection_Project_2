@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { format, isValid } from "date-fns";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
+import { useRouter } from "next/navigation"; 
 
 function BookAppointment() {
   const isDarkMode = useSelector((s) => s.theme.isDarkMode);
@@ -27,6 +29,8 @@ function BookAppointment() {
   const [pincode, setPincode] = useState("");
   const [error, setError] = useState("");
 
+  const router = useRouter();
+  
   const {
     control,
     handleSubmit,
@@ -42,6 +46,12 @@ function BookAppointment() {
   });
 
   const personalInfo = watch();
+
+  useEffect(() => {
+    if (!user) {
+      router.push("/auth");
+    }
+  }, [user, router]); 
 
   // 🔍 Search health centers
   const searchCenters = async (pin) => {

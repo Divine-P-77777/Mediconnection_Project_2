@@ -2,17 +2,32 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/supabase/client";
 import { useSelector } from "react-redux";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function DownloadCenter() {
   const [appointments, setAppointments] = useState([]);
   const [consultations, setConsultations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [popupData, setPopupData] = useState(null);
-
+  
+  
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-
+  
   const [appPage, setAppPage] = useState(1);
   const [conPage, setConPage] = useState(1);
+  const router = useRouter();
+  const { user } = useAuth();
+
+
+  
+  //  redirect to auth if not logged in
+      useEffect(() => {
+          if (!user) {
+            router.push("/auth");
+          }
+        }, [user, router]); 
+    
+  
   const limit = 10;
 
   useEffect(() => {

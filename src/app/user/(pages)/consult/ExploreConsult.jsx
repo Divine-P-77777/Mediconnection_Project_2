@@ -5,6 +5,10 @@ import { useSelector } from "react-redux";
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import BookingModal from "./BookingModal";
 import ConsultationsTable from "./ConsultationsTable";
+import { useRouter } from "next/navigation"; 
+import { useAuth } from "@/hooks/useAuth";
+
+
 const preselectedServices = [
   "General Medicine",
   "Pediatrics",
@@ -21,6 +25,19 @@ export default function ExploreConsult() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookingDoctor, setBookingDoctor] = useState(null);
+    const router = useRouter();
+      const { user } = useAuth();
+    
+
+
+
+//  redirect to auth if not logged in
+    useEffect(() => {
+        if (!user) {
+          router.push("/auth");
+        }
+      }, [user, router]); 
+  
 
   // Fetch doctors offering selected service
 const fetchDoctors = async () => {
