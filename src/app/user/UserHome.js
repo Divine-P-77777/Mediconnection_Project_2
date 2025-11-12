@@ -1,24 +1,50 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSelector } from 'react-redux';
-import { Carousel, CarouselItem } from '@/components/ui/carousel';
-import { FaCalendarCheck, FaVideo, FaFileDownload, FaHospital, FaUserMd, FaHandshake } from 'react-icons/fa';
-import Link from 'next/link';
-import { useAuth } from '@/hooks/useAuth';
+import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  CalendarCheck,
+  Video,
+  FileDown,
+  Hospital,
+  Stethoscope,
+  Handshake,
+  User,
+  HeartPulse,
+  ShieldCheck,
+  FileText,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Carousel, CarouselItem } from "@/components/ui/carousel";
 
 const features = [
-  { icon: <FaCalendarCheck size={30} />, title: 'Book a Slot', link: '/user/book', description: 'Schedule an appointment with top doctors.' },
-  { icon: <FaVideo size={30} />, title: 'Live Consultation', link: '/user/consult', description: 'Get instant medical advice via video call.' },
-  { icon: <FaFileDownload size={30} />, title: 'Download Reports', link: '/user/download', description: 'Access and download your medical reports anytime.' },
+  {
+    icon: <CalendarCheck size={30} />,
+    title: "Book a Slot",
+    link: "/user/book",
+    description: "Schedule an appointment with top doctors near you.",
+  },
+  {
+    icon: <Video size={30} />,
+    title: "Live Consultation",
+    link: "/user/consult",
+    description: "Get instant video advice from trusted specialists.",
+  },
+  {
+    icon: <FileDown size={30} />,
+    title: "Download Reports",
+    link: "/user/download",
+    description: "Access and download your health records anytime.",
+  },
 ];
 
 const testimonials = [
-  { name: 'Nitesh Bhagat', feedback: 'Excellent service, very professional doctors!' },
-  { name: 'Rashmika Agarwal', feedback: 'Quick and easy appointments, highly recommend.' },
-  { name: 'Emily Sharma', feedback: 'The live consultation was smooth and very helpful.' },
+  { name: "Nitesh Bhagat", feedback: "Excellent service, very professional doctors!" },
+  { name: "Rashmika Agarwal", feedback: "Quick and easy appointments, highly recommend." },
+  { name: "Emily Sharma", feedback: "The live consultation was smooth and very helpful." },
 ];
 
 export default function UserHome() {
@@ -28,76 +54,85 @@ export default function UserHome() {
   return (
     <motion.div
       className={`w-full flex-1 flex flex-col transition-all duration-300 pt-20 ${
-        isDarkMode ? 'bg-[#0A192F] text-white' : 'bg-white text-black'
+        isDarkMode ? "bg-[#0A192F] text-white" : "bg-white text-gray-900"
       }`}
     >
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
+      {/* 🌿 Hero Section */}
+      <motion.section
+        initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6 }}
         className={`text-center py-16 px-4 bg-gradient-to-r ${
-          isDarkMode ? 'from-[#091624] to-[#0A192F]' : 'from-blue-50 to-white'
+          isDarkMode ? "from-[#091624] to-[#0A192F]" : "from-blue-50 to-cyan-50"
         }`}
       >
         <h1 className="text-4xl font-bold">
-          Welcome {user?.username  || 'Guest'} to <span className="text-[#00A8E8]">MediConnection</span>
+          Welcome {user?.username || ""} to{" "}
+          <span className="text-[#00A8E8]">MediConnection</span>
         </h1>
-        <p className="mt-2 text-lg">Your trusted healthcare partner, anytime, anywhere.</p>
+        <p className="mt-2 text-lg opacity-90">
+          Your trusted healthcare partner, anywhere, anytime.
+        </p>
         <div className="mt-6 flex justify-center gap-4">
           <Link href="/user/book">
-            <Button className="bg-[#00A8E8] text-white px-6 py-3 hover:bg-[#0077B6] transition-all duration-300">
+            <Button className="bg-[#00A8E8] text-white px-6 py-3 hover:bg-[#0077B6] transition-all duration-300 rounded-xl">
               Book Appointment
             </Button>
           </Link>
           <Link href="/user/consult">
-            <Button className="bg-[#0077B6] text-white px-6 py-3 hover:bg-[#00A8E8] transition-all duration-300">
+            <Button className="bg-[#0077B6] text-white px-6 py-3 hover:bg-[#00A8E8] transition-all duration-300 rounded-xl">
               Live Consult
             </Button>
           </Link>
         </div>
-      </motion.div>
+      </motion.section>
 
-      {/* Feature Highlights */}
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-6 my-12">
-          {features.map((feature, index) => (
+      {/* 💊 Features */}
+      <section className="container mx-auto px-4 my-12">
+        <div className="grid md:grid-cols-3 gap-6">
+          {features.map((feature, i) => (
             <motion.div
-              key={index}
+              key={i}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
+              transition={{ delay: i * 0.15 }}
               whileHover={{ scale: 1.05 }}
             >
               <Link href={feature.link}>
                 <Card
-                  className={`p-6 h-[220px] text-center shadow-md hover:shadow-lg transition-all duration-300 ${
-                    isDarkMode
-                      ? 'shadow-cyan-400 bg-[#0F2137]'
-                      : 'shadow-gray-300 bg-gray-50'
-                  } rounded-xl`}
+                  className={`p-6 h-[220px] text-center shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
+                    isDarkMode ? "bg-[#0F2137] border-cyan-700" : "bg-gray-50 border-gray-200"
+                  }`}
                 >
                   <CardHeader>
-                    <div className="flex justify-center text-[#00A8E8] mb-4">{feature.icon}</div>
-                    <CardTitle className="text-lg font-bold">{feature.title}</CardTitle>
+                    <div className="flex justify-center text-[#00A8E8] mb-4">
+                      {feature.icon}
+                    </div>
+                    <CardTitle className="text-lg font-semibold">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm">{feature.description}</p>
+                    <p className="text-sm opacity-80">{feature.description}</p>
                   </CardContent>
                 </Card>
               </Link>
             </motion.div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Upcoming Appointments */}
-      <div className="container mx-auto px-4">
+      {/* 🩺 Upcoming Appointments */}
+      <section className="container mx-auto px-4">
         <div className="my-12">
-          <h2 className="text-2xl font-semibold mb-4">Upcoming Appointments</h2>
-          <Card className="p-6 shadow-lg rounded-xl border border-gray-200">
+          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+            <CalendarCheck className="text-[#00A8E8]" /> Upcoming Appointments
+          </h2>
+          <Card
+            className={`p-6 rounded-xl ${
+              isDarkMode ? "bg-[#0F2137] border-cyan-700" : "bg-white border-gray-200"
+            }`}
+          >
             <CardContent className="flex flex-col items-center justify-center">
-              <p>No upcoming appointments</p>
+              <p className="opacity-80">No upcoming appointments.</p>
               <Link href="/user/book">
                 <Button className="mt-4 bg-[#00A8E8] text-white hover:bg-[#0077B6]">
                   Book Now
@@ -106,84 +141,121 @@ export default function UserHome() {
             </CardContent>
           </Card>
         </div>
-      </div>
+      </section>
 
-      {/* Testimonials */}
-      <div className="container mx-auto px-4">
-        <div className="my-12">
-          <h2 className="text-2xl font-semibold mb-4">What Our Users Say</h2>
-          <Carousel>
-            {testimonials.map((testimonial, index) => (
-              <CarouselItem
-                key={index}
-                className={`text-center p-6 my-2 rounded-xl transition-all duration-300 ${
-                  isDarkMode ? 'bg-gray-800 text-white' : 'bg-gray-100 text-black'
-                }`}
-              >
-                <p className="italic text-lg">"{testimonial.feedback}"</p>
-                <p className="mt-2 font-semibold">- {testimonial.name}</p>
-              </CarouselItem>
-            ))}
-          </Carousel>
-        </div>
-      </div>
-
-      {/* Trusted Health Centers */}
-      <div className="container mx-auto px-4 my-16">
+      {/* 💬 Testimonials */}
+      <section className="container mx-auto px-4 my-12">
         <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-          <FaHospital className="text-[#00A8E8]" /> Trusted Health Centers
+          <HeartPulse className="text-[#00A8E8]" /> What Our Users Say
         </h2>
-        <p className="mb-6 text-sm">
-          All our listed health centers are carefully approved by the MediConnection technical team for authenticity and reliability.
+        <Carousel>
+          {testimonials.map((t, i) => (
+            <CarouselItem
+              key={i}
+              className={`text-center p-6 my-2 rounded-xl transition-all duration-300 shadow-md ${
+                isDarkMode ? "bg-[#0F2137] text-white" : "bg-gray-100 text-black"
+              }`}
+            >
+              <p className="italic text-lg opacity-90">"{t.feedback}"</p>
+              <p className="mt-2 font-semibold">— {t.name}</p>
+            </CarouselItem>
+          ))}
+        </Carousel>
+      </section>
+
+      {/* 🏥 Trusted Health Centers */}
+      <section className="container mx-auto px-4 my-16">
+        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+          <Hospital className="text-[#00A8E8]" /> Trusted Health Centers
+        </h2>
+        <p className="mb-6 text-sm opacity-80">
+          All our listed health centers are verified by the MediConnection quality team.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="p-6 shadow-md rounded-xl"><p>📍 Apollo Hospitals</p></Card>
-          <Card className="p-6 shadow-md rounded-xl"><p>📍 Fortis Healthcare</p></Card>
-          <Card className="p-6 shadow-md rounded-xl"><p>📍 AIIMS Delhi</p></Card>
+          {["Apollo Hospitals", "Fortis Healthcare", "AIIMS Delhi"].map((center, i) => (
+            <Card
+              key={i}
+              className={`p-6 shadow-md rounded-xl ${
+                isDarkMode ? "bg-[#0F2137]" : "bg-gray-50"
+              }`}
+            >
+              <p className="flex items-center gap-2">
+                <ShieldCheck className="text-[#00A8E8]" /> {center}
+              </p>
+            </Card>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Trusted Doctors */}
-      <div className="container mx-auto px-4 my-16">
+      {/* 👨‍⚕️ Trusted Doctors */}
+      <section className="container mx-auto px-4 my-16">
         <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-          <FaUserMd className="text-[#00A8E8]" /> Trusted Doctors
+          <User className="text-[#00A8E8]" /> Trusted Doctors
         </h2>
-        <p className="mb-6 text-sm">
-          Consult with highly qualified doctors approved and verified by their associated health centers.
+        <p className="mb-6 text-sm opacity-80">
+          Consult with qualified and verified doctors from our partner hospitals.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
-          <Card className="p-6 shadow-md rounded-xl"><p>Dr. Meera Kapoor — Cardiologist</p></Card>
-          <Card className="p-6 shadow-md rounded-xl"><p> Dr. Raj Singh — Neurologist</p></Card>
-          <Card className="p-6 shadow-md rounded-xl"><p> Dr. Amit Verma — Orthopedic</p></Card>
+          {[
+            "Dr. Meera Kapoor — Cardiologist",
+            "Dr. Raj Singh — Neurologist",
+            "Dr. Amit Verma — Orthopedic",
+          ].map((doctor, i) => (
+            <Card
+              key={i}
+              className={`p-6 shadow-md rounded-xl ${
+                isDarkMode ? "bg-[#0F2137]" : "bg-gray-50"
+              }`}
+            >
+              <p className="flex items-center gap-2">
+                <Stethoscope className="text-[#00A8E8]" /> {doctor}
+              </p>
+            </Card>
+          ))}
         </div>
-      </div>
+      </section>
 
-      {/* Why Choose Us */}
-      <div className={`py-16 px-6 text-center ${isDarkMode ? 'bg-[#0F2137]' : 'bg-blue-50'}`}>
-        <h2 className="text-3xl font-bold mb-6">Why Choose <span className="text-[#00A8E8]">MediConnection?</span></h2>
+      {/* 💙 Why Choose Us */}
+      <section className={`py-16 px-6 text-center ${isDarkMode ? "bg-[#0F2137]" : "bg-blue-50"}`}>
+        <h2 className="text-3xl font-bold mb-10">
+          Why Choose <span className="text-[#00A8E8]">MediConnection</span>?
+        </h2>
         <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-          <Card className="p-6 shadow-md rounded-xl flex flex-col items-center">
-            <FaHandshake className="text-[#00A8E8] text-3xl mb-3" />
-            <p className="font-semibold">Seamless Connection</p>
-            <p className="text-sm mt-2">Easily connect with doctors and health centers in just a few clicks.</p>
-          </Card>
-          <Card className="p-6 shadow-md rounded-xl flex flex-col items-center">
-            <FaCalendarCheck className="text-[#00A8E8] text-3xl mb-3" />
-            <p className="font-semibold">Instant Booking</p>
-            <p className="text-sm mt-2">Book appointments anytime with real-time availability.</p>
-          </Card>
-          <Card className="p-6 shadow-md rounded-xl flex flex-col items-center">
-            <FaFileDownload className="text-[#00A8E8] text-3xl mb-3" />
-            <p className="font-semibold">Digital Reports</p>
-            <p className="text-sm mt-2">Download your bills, prescriptions, and reports on the go.</p>
-          </Card>
-          <Card className="p-6 shadow-md rounded-xl flex flex-col items-center">
-            <FaUserMd className="text-[#00A8E8] text-3xl mb-3" />
-            <p className="font-semibold">Verified Doctors</p>
-            <p className="text-sm mt-2">Only approved and trusted doctors are listed on MediConnection.</p>
-          </Card>
+          {[
+            {
+              icon: <Handshake className="text-[#00A8E8]" size={32} />,
+              title: "Seamless Connection",
+              desc: "Connect with doctors and health centers in seconds.",
+            },
+            {
+              icon: <CalendarCheck className="text-[#00A8E8]" size={32} />,
+              title: "Instant Booking",
+              desc: "Book appointments with real-time availability.",
+            },
+            {
+              icon: <FileText className="text-[#00A8E8]" size={32} />,
+              title: "Digital Reports",
+              desc: "Download prescriptions and medical records easily.",
+            },
+            {
+              icon: <User className="text-[#00A8E8]" size={32} />,
+              title: "Verified Doctors",
+              desc: "Only trusted, qualified doctors are listed.",
+            },
+          ].map((item, i) => (
+            <Card
+              key={i}
+              className={`p-6 shadow-md rounded-xl flex flex-col items-center ${
+                isDarkMode ? "bg-[#0F2137]" : "bg-white"
+              }`}
+            >
+              {item.icon}
+              <p className="font-semibold mt-3">{item.title}</p>
+              <p className="text-sm mt-2 opacity-80">{item.desc}</p>
+            </Card>
+          ))}
         </div>
-      </div>
+      </section>
     </motion.div>
   );
 }
