@@ -182,7 +182,7 @@ const Navbar = () => {
                 }}
                 className="w-full flex items-center justify-center gap-2 border border-red-500 bg-white text-red-500 px-4 py-2 rounded-lg mt-2 font-medium hover:bg-red-500 hover:text-white transition-all duration-300"
               >
-                <LogOut size={18} /> Logout
+                <LogOut size={18} /> Logout 
               </button>
             ) : (
               <Link
@@ -223,3 +223,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+ 

@@ -4,7 +4,7 @@ import { supabase } from "@/supabase/client";
 import { useSelector } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-
+import DocumentsModal from "./DocumentsModal";
 
 export default function DownloadCenter() {
   const [appointments, setAppointments] = useState([]);
@@ -170,88 +170,12 @@ export default function DownloadCenter() {
 
       {/* Popup Modal */}
       {popupData && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 p-2">
-          <div
-            className={`rounded-lg p-5 max-w-md w-full max-h-[80vh] overflow-y-auto shadow-lg ${
-              isDarkMode ? "bg-gray-800 text-gray-100" : "bg-white text-gray-800"
-            }`}
-          >
-            <h3 className="text-lg font-semibold mb-4">Documents</h3>
-            <ul className="space-y-3 text-sm">
-              {popupData.reports?.length > 0 && (
-                <li>
-                  <strong>Reports:</strong>
-                  <ul className="pl-4 list-disc space-y-1">
-                    {popupData.reports.map((r, i) => (
-                      <li key={i}>
-                        <a
-                          href={r}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Report {i + 1}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              )}
-              {popupData.bills?.length > 0 && (
-                <li>
-                  <strong>Bills:</strong>
-                  <ul className="pl-4 list-disc space-y-1">
-                    {popupData.bills.map((b, i) => (
-                      <li key={i}>
-                        <a
-                          href={b}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Bill {i + 1}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              )}
-              {popupData.prescriptions?.length > 0 && (
-                <li>
-                  <strong>Prescriptions:</strong>
-                  <ul className="pl-4 list-disc space-y-1">
-                    {popupData.prescriptions.map((p, i) => (
-                      <li key={i}>
-                        <a
-                          href={p}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Prescription {i + 1}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              )}
-              {!popupData.reports?.length &&
-                !popupData.bills?.length &&
-                !popupData.prescriptions?.length && (
-                  <p className="text-gray-500 dark:text-gray-400">No documents available</p>
-                )}
-            </ul>
+        <DocumentsModal
+  data={popupData}
+  isDarkMode={isDarkMode}
+  onClose={() => setPopupData(null)}
+/>
 
-            <div className="mt-6 text-right">
-              <button
-                onClick={() => setPopupData(null)}
-                className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 dark:bg-gray-700 dark:hover:bg-gray-600 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

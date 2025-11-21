@@ -11,7 +11,6 @@ import GlobalLoaderWrapper from './components/GlobalLoaderWrapper';
 import { useServerStatus } from "@/hooks/useServerStatus";
 import ServerDown from "@/components/common/ServerDown";
 
-// 🧠 Step 1: Inner wrapper that can access Redux state
 const InnerApp = ({ children }) => {
   const serverDown = useServerStatus();
 

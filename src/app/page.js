@@ -19,7 +19,7 @@ export default async function Page() {
 
   // 2. If no session → redirect
   if (sessionError || !session) {
-    console.error("Session error:", sessionError?.message);
+    console.error("Session error:", sessionError ?? "No session available");
     redirect("/user");
   }
 
