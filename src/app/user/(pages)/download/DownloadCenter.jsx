@@ -152,7 +152,7 @@ export default function DownloadCenter() {
     );
   };
 
-  if (loading) return <p className="p-4">Loading...</p>;
+  if (loading) return <p className={`p-4 min-h-screen ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}>Loading...</p>;
 
   return (
     <div className={`p-4 pt-30 space-y-8 ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900"}`}>

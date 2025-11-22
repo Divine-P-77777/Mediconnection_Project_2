@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import BookingModal from "./BookingModal";
 import ConsultationsTable from "./ConsultationsTable";
-import { useRouter } from "next/navigation"; 
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-
+import DoctorList from "./DoctorList";
 
 const preselectedServices = [
   "General Medicine",
@@ -25,40 +24,40 @@ export default function ExploreConsult() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookingDoctor, setBookingDoctor] = useState(null);
-    const router = useRouter();
-      const { user } = useAuth();
-    
+  const router = useRouter();
+  const { user } = useAuth();
 
 
 
-//  redirect to auth if not logged in
-    useEffect(() => {
-        if (!user) {
-          router.push("/auth");
-        }
-      }, [user, router]); 
-  
+
+  //  redirect to auth if not logged in
+  useEffect(() => {
+    if (!user) {
+      router.push("/auth");
+    }
+  }, [user, router]);
+
 
   // Fetch doctors offering selected service
-const fetchDoctors = async () => {
-  try {
-    setLoading(true);
-    const url = new URL("/api/doctor", window.location.origin);
-    if (search) url.searchParams.set("search", search);
-    else url.searchParams.set("service", activeServiceTab);
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true);
+      const url = new URL("/api/doctor", window.location.origin);
+      if (search) url.searchParams.set("search", search);
+      else url.searchParams.set("service", activeServiceTab);
 
-    const res = await fetch(url);
-    const data = await res.json();
+      const res = await fetch(url);
+      const data = await res.json();
 
-    if (!data.success) throw new Error(data.error);
-    setDoctors(data.doctors);
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      if (!data.success) throw new Error(data.error);
+      setDoctors(data.doctors);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchDoctors();
@@ -87,13 +86,12 @@ const fetchDoctors = async () => {
           <button
             key={service}
             onClick={() => setActiveServiceTab(service)}
-            className={`px-4 py-2 rounded-full font-medium transition ${
-              activeServiceTab === service
+            className={`px-4 py-2 rounded-full font-medium transition ${activeServiceTab === service
                 ? "bg-cyan-500 text-white"
                 : isDarkMode
-                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-            }`}
+                  ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              }`}
           >
             {service}
           </button>
@@ -101,59 +99,12 @@ const fetchDoctors = async () => {
       </div>
 
       {/* Doctors List */}
-  {/* Doctors List */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-  {loading ? (
-    <p className="text-center col-span-full">Loading doctors...</p>
-  ) : doctors.length === 0 ? (
-    <p className="text-center col-span-full">No doctors found for this service.</p>
-  ) : (
-    doctors.map((doc) => {
-      const doctor = doc.doctors ?? doc; // fallback if no relation nesting
-      return (
-        <Card
-          key={doctor.id}
-          className={`rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition border ${
-            isDarkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
-          }`}
-        >
-          <CardHeader className="flex flex-col items-center text-center">
-   <img
-  src={doctor.profile || "https://via.placeholder.com/150?text=Doctor"}
-  alt="Doctor profile"
-  className="w-20 h-20 rounded-full object-cover border-2 border-cyan-500"
-/>
-
-            <CardTitle className="mt-3 text-lg font-semibold">
-              Dr. {doctor.name}
-            </CardTitle>
-            {doctor.specialization && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {doctor.specialization}
-              </p>
-            )}
-          </CardHeader>
-
-          <CardContent className="space-y-2 text-center">
-            <p>
-              <strong>Service:</strong> {doc.service_name}
-            </p>
-            <p>
-              <strong>Price:</strong>{" "}
-              {doc.price === 0 ? "Free" : `₹${doc.price}`}
-            </p>
-            <button
-              onClick={() => setBookingDoctor(doc)}
-              className="mt-3 w-full px-4 py-2 rounded-lg bg-cyan-500 text-white font-medium hover:bg-cyan-600 transition"
-            >
-              Book Now
-            </button>
-          </CardContent>
-        </Card>
-      );
-    })
-  )}
-</div>
+      <DoctorList
+        doctors={doctors}
+        loading={loading}
+        isDarkMode={isDarkMode}
+        setBookingDoctor={setBookingDoctor}
+      />
 
       {/* Booking Modal */}
       {bookingDoctor && (
