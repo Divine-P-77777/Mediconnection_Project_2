@@ -15,29 +15,33 @@ import {
   HeartPulse,
   ShieldCheck,
   FileText,
+  ArrowRightCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselItem } from "@/components/ui/carousel";
 
-const features = [
+const featureCards = [
   {
-    icon: <CalendarCheck size={30} />,
     title: "Book a Slot",
+    desc: "Search by pincode, pick a date, and book at a nearby health center in seconds.",
     link: "/user/book",
-    description: "Schedule an appointment with top doctors near you.",
+    img: "https://img.freepik.com/premium-vector/book-doctor-appointment-card-template_151150-11155.jpg",
+    icon: <CalendarCheck size={28} className="text-[#00A8E8]" />,
   },
   {
-    icon: <Video size={30} />,
     title: "Live Consultation",
+    desc: "High-quality video consults with certified doctors from the comfort of your home.",
     link: "/user/consult",
-    description: "Get instant video advice from trusted specialists.",
+    img: "https://www.shutterstock.com/image-vector/online-doctor-appointment-booking-system-600nw-2655423645.jpg",
+    icon: <Video size={28} className="text-[#00A8E8]" />,
   },
   {
-    icon: <FileDown size={30} />,
     title: "Download Reports",
+    desc: "Access prescriptions, lab reports and bills — securely stored and downloadable.",
     link: "/user/download",
-    description: "Access and download your health records anytime.",
+    img: "https://static.vecteezy.com/system/resources/previews/005/642/611/non_2x/illustration-graphic-cartoon-character-of-doctor-s-prescription-vector.jpg",
+    icon: <FileDown size={28} className="text-[#00A8E8]" />,
   },
 ];
 
@@ -47,71 +51,94 @@ const testimonials = [
   { name: "Emily Sharma", feedback: "The live consultation was smooth and very helpful." },
 ];
 
+const trustedCenters = [
+  { name: "City Health Clinic", subtitle: "Multi-speciality", img: "https://thumbs.dreamstime.com/b/hospital-building-modern-parking-lot-59693686.jpg" },
+  { name: "Downtown Medical Center", subtitle: "General & Emergency", img: "https://thearchitectsdiary.com/wp-content/uploads/2025/05/hospital-building-design-2-1.jpg" },
+  { name: "Green Valley Labs", subtitle: "Diagnostics", img: "https://vdbg.com/wp-content/uploads/2024/10/shutterstock_2142668957.jpg" },
+];
+
+const doctors = [
+  { name: "Dr. Meera Kapoor", role: "Cardiologist", img: "https://static.vecteezy.com/system/resources/previews/006/837/801/non_2x/female-portrait-medical-doctor-profile-flat-design-free-vector.jpg" },
+  { name: "Dr. Raj Singh", role: "Neurologist", img: "https://img.freepik.com/premium-vector/doctor-profile-with-medical-service-icon_617655-48.jpg" },
+  { name: "Dr. Amit Verma", role: "Orthopedic", img: "https://img.pikbest.com/png-images/20241019/doctor-logo-vector-icon-illustration_10974092.png!sw800" },
+];
+
 export default function UserHome() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const { user } = useAuth();
 
+  const pageBg = isDarkMode ? "bg-[#071226] text-white" : "bg-white text-gray-900";
+  const cardBg = isDarkMode ? "bg-[#0F2137] border border-gray-700" : "bg-white border border-gray-200";
+
   return (
-    <motion.div
-      className={`w-full flex-1 flex flex-col transition-all duration-300 pt-20 ${
-        isDarkMode ? "bg-[#0A192F] text-white" : "bg-white text-gray-900"
-      }`}
-    >
-      {/* 🌿 Hero Section */}
+    <motion.div className={`w-full min-h-screen transition-colors duration-300 ${pageBg} pt-20`}>
+      {/* HERO */}
       <motion.section
-        initial={{ opacity: 0, y: -30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className={`text-center py-16 px-4 bg-gradient-to-r ${
-          isDarkMode ? "from-[#091624] to-[#0A192F]" : "from-blue-50 to-cyan-50"
-        }`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="relative w-full h-[72vh] flex items-center justify-center overflow-hidden"
       >
-        <h1 className="text-4xl font-bold">
-          Welcome {user?.username || ""} to{" "}
-          <span className="text-[#00A8E8]">MediConnection</span>
-        </h1>
-        <p className="mt-2 text-lg opacity-90">
-          Your trusted healthcare partner, anywhere, anytime.
-        </p>
-        <div className="mt-6 flex justify-center gap-4">
-          <Link href="/user/book">
-            <Button className="bg-[#00A8E8] text-white px-6 py-3 hover:bg-[#0077B6] transition-all duration-300 rounded-xl">
-              Book Appointment
-            </Button>
-          </Link>
-          <Link href="/user/consult">
-            <Button className="bg-[#0077B6] text-white px-6 py-3 hover:bg-[#00A8E8] transition-all duration-300 rounded-xl">
-              Live Consult
-            </Button>
-          </Link>
+        {/* background image
+        <img
+          src="https://images.unsplash.com/photo-1581093588401-0b1c8a0a9b63?w=1980&q=80&auto=format"
+          alt="Healthcare banner"
+          className="absolute inset-0 w-full h-full object-cover opacity-70"
+        /> */}
+        <div className={`absolute inset-0 ${isDarkMode ? "bg-black/50" : "bg-white/30"} backdrop-blur-sm`}></div>
+
+        <div className="relative z-10 max-w-4xl text-center px-6">
+          <motion.h1
+            initial={{ y: -16, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-3xl md:text-5xl font-extrabold leading-tight"
+          >
+            Your Health — <span className="text-[#00A8E8]">One Tap Away</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-3 text-lg md:text-xl max-w-2xl mx-auto opacity-90"
+          >
+            Book appointments, consult specialists live, and securely download your medical documents — all in one place.
+          </motion.p>
+
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-8 flex gap-4 justify-center">
+            <Link href="/user/book">
+              <Button className="rounded-xl px-6 py-3 bg-[#00A8E8] hover:bg-[#0196d7] text-white">
+                Book Appointment
+              </Button>
+            </Link>
+            <Link href="/user/consult">
+              <Button className="rounded-xl px-6 py-3 border-black border bg-white text-[#0077B6] hover:opacity-90">
+                Live Consult
+              </Button>
+            </Link>
+          </motion.div>
         </div>
       </motion.section>
 
-      {/* 💊 Features */}
-      <section className="container mx-auto px-4 my-12">
-        <div className="grid md:grid-cols-3 gap-6">
-          {features.map((feature, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.15 }}
-              whileHover={{ scale: 1.05 }}
-            >
-              <Link href={feature.link}>
-                <Card
-                  className={`p-6 h-[220px] text-center shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl ${
-                    isDarkMode ? "bg-[#0F2137] border-cyan-700" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <CardHeader>
-                    <div className="flex justify-center text-[#00A8E8] mb-4">
-                      {feature.icon}
-                    </div>
-                    <CardTitle className="text-lg font-semibold">{feature.title}</CardTitle>
+      {/* FEATURE CARDS */}
+      <section className="container mx-auto px-4 lg:px-16 mt-12">
+        <h2 className="text-2xl md:text-3xl font-semibold text-center mb-8">Quick Actions</h2>
+        <div className="grid md:grid-cols-3 gap-8">
+          {featureCards.map((f, idx) => (
+            <motion.div key={idx} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 * idx }}>
+              <Link href={f.link}>
+                <Card className={`overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl cursor-pointer ${cardBg}`}>
+                  <div className="w-full h-44 overflow-hidden">
+                    <img src={f.img} alt={f.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <CardHeader className="flex items-center gap-3 pt-4 px-4">
+                    <div className="p-2 rounded-md bg-white/10">{f.icon}</div>
+                    <CardTitle className="text-lg font-semibold">{f.title}</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-sm opacity-80">{feature.description}</p>
+                  <CardContent className="px-4 pb-6">
+                    <p className="text-sm opacity-90">{f.desc}</p>
+                    <div className="mt-4 flex justify-end">
+                      <ArrowRightCircle className="text-[#00A8E8]" />
+                    </div>
                   </CardContent>
                 </Card>
               </Link>
@@ -120,142 +147,129 @@ export default function UserHome() {
         </div>
       </section>
 
-      {/* 🩺 Upcoming Appointments */}
-      <section className="container mx-auto px-4">
-        <div className="my-12">
-          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-            <CalendarCheck className="text-[#00A8E8]" /> Upcoming Appointments
-          </h2>
-          <Card
-            className={`p-6 rounded-xl ${
-              isDarkMode ? "bg-[#0F2137] border-cyan-700" : "bg-white border-gray-200"
-            }`}
-          >
-            <CardContent className="flex flex-col items-center justify-center">
-              <p className="opacity-80">No upcoming appointments.</p>
-              <Link href="/user/book">
-                <Button className="mt-4 bg-[#00A8E8] text-white hover:bg-[#0077B6]">
-                  Book Now
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      {/* UPCOMING APPOINTMENTS */}
+      <section className="container mx-auto px-4 lg:px-16 mt-14">
+        <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+          <CalendarCheck className="text-[#00A8E8]" /> Upcoming Appointments
+        </h3>
+
+        <Card className={`${cardBg} rounded-xl p-6`}>
+          <CardContent>
+            {/* Example content - replace with real data */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <p className="font-semibold">No upcoming appointments</p>
+                <p className="text-sm opacity-80 mt-1">Book a slot with a specialist near you.</p>
+              </div>
+              <div>
+                <Link href="/user/book">
+                  <Button className="bg-[#00A8E8] text-white rounded-lg">Book Now</Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
-      {/* 💬 Testimonials */}
-      <section className="container mx-auto px-4 my-12">
-        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+      {/* TESTIMONIALS CAROUSEL */}
+      <section className="container mx-auto px-4 lg:px-16 mt-14">
+        <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           <HeartPulse className="text-[#00A8E8]" /> What Our Users Say
-        </h2>
+        </h3>
+
         <Carousel>
           {testimonials.map((t, i) => (
-            <CarouselItem
-              key={i}
-              className={`text-center p-6 my-2 rounded-xl transition-all duration-300 shadow-md ${
-                isDarkMode ? "bg-[#0F2137] text-white" : "bg-gray-100 text-black"
-              }`}
-            >
-              <p className="italic text-lg opacity-90">"{t.feedback}"</p>
-              <p className="mt-2 font-semibold">— {t.name}</p>
+            <CarouselItem key={i} className={`p-6 rounded-xl text-center ${isDarkMode ? "bg-[#0F2137]" : "bg-white"} shadow-md`}>
+              <p className="italic">"{t.feedback}"</p>
+              <p className="mt-3 font-semibold">— {t.name}</p>
             </CarouselItem>
           ))}
         </Carousel>
       </section>
 
-      {/* 🏥 Trusted Health Centers */}
-      <section className="container mx-auto px-4 my-16">
-        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-          <Hospital className="text-[#00A8E8]" /> Trusted Health Centers
-        </h2>
-        <p className="mb-6 text-sm opacity-80">
-          All our listed health centers are verified by the MediConnection quality team.
-        </p>
+      {/* TRUSTED CENTERS */}
+      <section className="container mx-auto px-4 lg:px-16 mt-14">
+        <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
+          <Hospital className="text-[#00A8E8]" /> Find Health Centers Nearby you
+        </h3>
+
         <div className="grid md:grid-cols-3 gap-6">
-          {["Apollo Hospitals", "Fortis Healthcare", "AIIMS Delhi"].map((center, i) => (
-            <Card
-              key={i}
-              className={`p-6 shadow-md rounded-xl ${
-                isDarkMode ? "bg-[#0F2137]" : "bg-gray-50"
-              }`}
-            >
-              <p className="flex items-center gap-2">
-                <ShieldCheck className="text-[#00A8E8]" /> {center}
-              </p>
+          {trustedCenters.map((c, i) => (
+            <Card key={i} className={`rounded-xl overflow-hidden ${cardBg}`}>
+              <img src={c.img} alt={c.name} className="w-full h-36 object-cover" />
+              <CardContent className="p-4">
+                <p className="font-semibold">{c.name}</p>
+                <p className="text-sm opacity-80">{c.subtitle}</p>
+                <div className="mt-4 flex gap-2">
+                  <Button className="text-sm bg-[#00A8E8] text-white rounded-lg">View</Button>
+                </div>
+              </CardContent>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* 👨‍⚕️ Trusted Doctors */}
-      <section className="container mx-auto px-4 my-16">
-        <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+      {/* TRUSTED DOCTORS */}
+      <section className="container mx-auto px-4 lg:px-16 mt-14">
+        <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
           <User className="text-[#00A8E8]" /> Trusted Doctors
-        </h2>
-        <p className="mb-6 text-sm opacity-80">
-          Consult with qualified and verified doctors from our partner hospitals.
-        </p>
+        </h3>
+
         <div className="grid md:grid-cols-3 gap-6">
-          {[
-            "Dr. Meera Kapoor — Cardiologist",
-            "Dr. Raj Singh — Neurologist",
-            "Dr. Amit Verma — Orthopedic",
-          ].map((doctor, i) => (
-            <Card
-              key={i}
-              className={`p-6 shadow-md rounded-xl ${
-                isDarkMode ? "bg-[#0F2137]" : "bg-gray-50"
-              }`}
-            >
-              <p className="flex items-center gap-2">
-                <Stethoscope className="text-[#00A8E8]" /> {doctor}
-              </p>
+          {doctors.map((d, i) => (
+            <Card key={i} className={`rounded-xl flex items-center gap-4 p-4 ${cardBg}`}>
+              <img src={d.img} alt={d.name} className="w-20 h-20 object-cover rounded-full" />
+              <div>
+                <p className="font-semibold">{d.name}</p>
+                <p className="text-sm opacity-80">{d.role}</p>
+                <div className="mt-3">
+                  <Link href="/user/consult">
+                    <Button className="text-sm bg-[#00A8E8] text-white rounded-lg">Consult</Button>
+                  </Link>
+                </div>
+              </div>
             </Card>
           ))}
         </div>
       </section>
 
-      {/* 💙 Why Choose Us */}
-      <section className={`py-16 px-6 text-center ${isDarkMode ? "bg-[#0F2137]" : "bg-blue-50"}`}>
-        <h2 className="text-3xl font-bold mb-10">
-          Why Choose <span className="text-[#00A8E8]">MediConnection</span>?
-        </h2>
+      {/* WHY CHOOSE US */}
+      <section className={`py-16 px-4 lg:px-16 mt-14 ${isDarkMode ? "bg-[#071226]" : "bg-gradient-to-r from-blue-50 to-cyan-50"}`}>
+        <h2 className="text-3xl font-bold text-center mb-10">Why Choose MediConnection?</h2>
+
         <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
           {[
             {
-              icon: <Handshake className="text-[#00A8E8]" size={32} />,
+              icon: <Handshake size={28} className="text-[#00A8E8]" />,
               title: "Seamless Connection",
-              desc: "Connect with doctors and health centers in seconds.",
+              desc: "Connect with certified doctors and health centers quickly.",
             },
             {
-              icon: <CalendarCheck className="text-[#00A8E8]" size={32} />,
+              icon: <CalendarCheck size={28} className="text-[#00A8E8]" />,
               title: "Instant Booking",
-              desc: "Book appointments with real-time availability.",
+              desc: "Real-time slot availability and easy booking flow.",
             },
             {
-              icon: <FileText className="text-[#00A8E8]" size={32} />,
-              title: "Digital Reports",
-              desc: "Download prescriptions and medical records easily.",
+              icon: <FileText size={28} className="text-[#00A8E8]" />,
+              title: "Digital Records",
+              desc: "Secure storage and fast access to all medical documents.",
             },
             {
-              icon: <User className="text-[#00A8E8]" size={32} />,
-              title: "Verified Doctors",
-              desc: "Only trusted, qualified doctors are listed.",
+              icon: <ShieldCheck size={28} className="text-[#00A8E8]" />,
+              title: "Verified Providers",
+              desc: "Health centers and doctors verified by our quality team.",
             },
-          ].map((item, i) => (
-            <Card
-              key={i}
-              className={`p-6 shadow-md rounded-xl flex flex-col items-center ${
-                isDarkMode ? "bg-[#0F2137]" : "bg-white"
-              }`}
-            >
-              {item.icon}
-              <p className="font-semibold mt-3">{item.title}</p>
-              <p className="text-sm mt-2 opacity-80">{item.desc}</p>
+          ].map((item, idx) => (
+            <Card key={idx} className={`p-6 text-center rounded-xl ${cardBg}`}>
+              <div className="flex items-center justify-center mb-3">{item.icon}</div>
+              <p className="font-semibold">{item.title}</p>
+              <p className="text-sm opacity-80 mt-2">{item.desc}</p>
             </Card>
           ))}
         </div>
       </section>
+
+
     </motion.div>
   );
 }
