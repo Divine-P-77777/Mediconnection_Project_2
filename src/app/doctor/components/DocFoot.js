@@ -28,9 +28,9 @@ const DocFoot = () => {
 
           {/* Name & Copyright */}
           <div className="text-center sm:text-left">
-            <p className="text-lg font-semibold">Mediconnect</p>
+            <p className="text-lg font-semibold">Mediconnection</p>
             <p className="text-xs sm:text-sm">
-              &copy; {new Date().getFullYear()} Mediconnect.vercel.app
+              &copy; {new Date().getFullYear()} Mediconnection.vercel.app
             </p>
           </div>
         </div>

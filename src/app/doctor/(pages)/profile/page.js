@@ -7,7 +7,7 @@ import { Loader2, User, Stethoscope, Phone, Eye } from "lucide-react";
 import { useSelector } from "react-redux";
 import CloudinaryUpload from "@/app/components/Cloudinary";
 import Loader from  "@/app/components/Loader";
-
+import { useRouter } from "next/navigation";
 
 export default function DoctorProfile() {
   const { user } = useAuth();
@@ -24,8 +24,16 @@ export default function DoctorProfile() {
     profile: "",
     account_number: "",
   });
+  const router = useRouter();
 
   const toggleVisible = () => setVisibleAC(!visibleAC);
+
+    if(!user){
+    router.push("/auth/doctor");
+    errorToast("Please login to access doctor portal");
+    return null;
+  }
+
 
   // Fetch doctor profile via API
   const fetchDoctorData = async () => {

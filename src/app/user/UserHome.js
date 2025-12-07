@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselItem } from "@/components/ui/carousel";
 
+
 const featureCards = [
   {
     title: "Book a Slot",
@@ -78,45 +79,61 @@ export default function UserHome() {
         animate={{ opacity: 1 }}
         className="relative w-full h-[72vh] flex items-center justify-center overflow-hidden"
       >
-  
+
         <img
           src="/banner.png"
           alt="Healthcare banner"
           className="absolute inset- w-full h-full object-cover opacity-70"
-        /> 
-        <div className={`absolute inset-0 ${isDarkMode ? "bg-black/50" : "bg-white/30"}`}></div>
+        />
+        <div className={`absolute inset-0  ${isDarkMode ? "bg-black/50" : "bg-white/30"}`}></div>
 
         <div className="relative z-10 max-w-4xl text-center px-6">
           <motion.h1
             initial={{ y: -16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="text-3xl md:text-5xl font-extrabold leading-tight "
+            className="text-3xl md:text-5xl font-extrabold leading-snug"
           >
-            Your Health — <span className={` ${isDarkMode ? "text-[#77d2f6]" : "text-[#00A8E8]"}`}>One Tap Away</span>
+            Consult. Book. Heal. <br />
+            <span className="opacity-90">All in One Place ~</span>{" "}
+            <span className={isDarkMode ? "text-[#77d2f6]" : "text-[#097099]"}>
+              MediConnection
+            </span>
           </motion.h1>
-          <motion.p
+
+          {/* <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-3 text-lg md:text-2xl max-w-2xl mx-auto opacity-90 p-2 font-medium
+            className="mt-3 text-lg md:text-2xl max-w-2xl mx-auto opacity-90 p-2 font-bold
 "
           >
-            Book appointments, consult specialists live, and securely download your medical documents — all in one place.
-          </motion.p>
+            Book appointments, consult specialists live, and securely download your medical documents ~ all in one place.
+          </motion.p> */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="mt-8 flex flex-col  sm:flex-row gap-4 justify-end sm:justify-center items-end"
+            >
+              {/* Book Appointment Button */}
+              <Link href="/user/book">
+                <Button className="rounded-xl px-6 py-3 bg-[#00A8E8] hover:bg-[#0196d7] text-white flex items-center gap-2">
+                  <CalendarCheck size={20} className="text-white" />
+                  Book Appointment
+                </Button>
+              </Link>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-8 flex gap-4 justify-center">
-            <Link href="/user/book">
-              <Button className="rounded-xl px-6 py-3 bg-[#00A8E8] hover:bg-[#0196d7] text-white">
-                Book Appointment
-              </Button>
-            </Link>
-            <Link href="/user/consult">
-              <Button className="rounded-xl px-6 py-3 border-black border bg-white text-[#0077B6] hover:opacity-90">
-                Live Consult
-              </Button>
-            </Link>
-          </motion.div>
+              {/* Live Consult Button */}
+              <Link href="/user/consult">
+                <Button className="rounded-xl px-6 py-3 border border-black bg-white text-[#0077B6] hover:bg-gray-100 flex items-center gap-2">
+                  <Video size={20} className="text-[#0077B6]" />
+                  Live Consult
+                </Button>
+              </Link>
+            </motion.div>
+
+
         </div>
       </motion.section>
 

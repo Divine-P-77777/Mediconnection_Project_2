@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { errToast, Success } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ManageAccount() {
   const { user, isDoctor, loading } = useAuth();
@@ -16,6 +18,17 @@ export default function ManageAccount() {
     ifsc_code: '',
   });
   const [saving, setSaving] = useState(false);
+
+  const router = useRouter();
+  const { errorToast } = useToast();
+
+
+    if(!user){
+    router.push("/auth/doctor");
+    errorToast("Please login to access doctor portal");
+    return null;
+  }
+
 
   // ✅ Fetch existing account details when doctor logs in
   useEffect(() => {

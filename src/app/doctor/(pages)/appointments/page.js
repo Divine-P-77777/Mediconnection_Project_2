@@ -14,6 +14,8 @@ import {
 } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import { useSelector } from "react-redux";
+import { useToast } from "@/hooks/use-toast";
+import {useRouter} from "next/navigation";
 
 export default function DoctorAppointments() {
   const { user } = useAuth();
@@ -23,6 +25,8 @@ export default function DoctorAppointments() {
   const [showPopup, setShowPopup] = useState(false);
   const [loadingMeet, setLoadingMeet] = useState(null);
   const [loadingAppointments, setLoadingAppointments] = useState(false);
+  const { errorToast } = useToast();
+  const router = useRouter();
 
   const fetchAppointments = async () => {
     if (!user?.id) return;
@@ -47,6 +51,12 @@ export default function DoctorAppointments() {
   useEffect(() => {
     fetchAppointments();
   }, [user]);
+
+  if(!user){
+    router.push("/auth/doctor");
+    errorToast("Please login to access doctor portal");
+    return null;
+  }
 
   const openPopup = (id) => {
     setSelectedId(id);

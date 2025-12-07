@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 const DoctorServicesManage = () => {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
@@ -13,6 +15,15 @@ const DoctorServicesManage = () => {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ service_name: "", price: 0, duration_minutes: 30 });
   const [editingId, setEditingId] = useState(null);
+  const router = useRouter();
+  const { errorToast } = useToast();
+
+    if(!user){
+    router.push("/auth/doctor");
+    errorToast("Please login to access doctor portal");
+    return null;
+  }
+
 
   // Fetch services from API
   const fetchServices = async () => {

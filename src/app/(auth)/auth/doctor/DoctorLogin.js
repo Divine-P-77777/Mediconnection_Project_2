@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
+import DocNav from '@/app/doctor/components/DocNav';
+import DocFoot from '@/app/doctor/components/DocFoot';
 
 export default function DoctorLogin() {
   const router = useRouter();
@@ -62,6 +64,8 @@ export default function DoctorLogin() {
   };
 
   return (
+    <>
+    <DocNav />
     <div
       className={`flex min-h-screen items-center justify-center transition-colors ${
         isDarkMode ? 'bg-gray-900 text-gray-100' : 'bg-gray-100 text-gray-800'
@@ -124,47 +128,43 @@ export default function DoctorLogin() {
         </div>
 
         <div className="text-center mb-4 text-sm opacity-70">or</div>
+{/* Google OAuth */}
+<button
+  onClick={handleGoogleLogin}
+  disabled={loading}
+  className={`
+    w-full py-2 rounded-md font-semibold transition-colors flex items-center justify-center gap-2 border
+    ${loading ? "opacity-70 cursor-not-allowed" : ""}
+    
+    /* Light mode */
+    ${!isDarkMode && !loading ? "text-black border-gray-300 hover:bg-blue-300" : ""}
+    
+    /* Dark mode */
+    ${isDarkMode && !loading ? "text-white border-gray-600 hover:bg-gray-800" : ""}
+  `}
+>
+  {loading ? (
+    "Please wait..."
+  ) : (
+    <>
+      <svg
+        className="w-5 h-5"
+        viewBox="0 0 48 48"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.84-6.84C35.08 2.52 29.88 0 24 0 14.62 0 6.52 5.4 2.45 13.3l7.98 6.2C12.33 13.02 17.67 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.5 24.5c0-1.57-.14-3.08-.39-4.5H24v9h12.7c-.54 2.74-2.14 5.06-4.45 6.64l7.1 5.5c4.16-3.83 7.15-9.42 7.15-16.64z"/>
+        <path fill="#FBBC05" d="M10.43 28.5c-.5-1.47-.78-3.04-.78-4.5s.28-3.03.78-4.5l-7.98-6.2C.9 16.97 0 20.38 0 24s.9 7.03 2.45 10.2l7.98-6.2z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.9-2.14 15.87-5.8l-7.1-5.5C30.64 38.68 27.45 39.5 24 39.5c-6.33 0-11.67-3.52-14.57-8.5l-7.98 6.2C6.52 42.6 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </>
+  )}
+</button>
 
-        {/* Google OAuth */}
-        <button
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          className={`w-full py-2 rounded-md font-semibold transition-colors flex items-center justify-center gap-2
-            ${loading
-              ? 'opacity-70 cursor-not-allowed'
-              : 'border hover:bg-red-600 text-white'}`}
-        >
-          {loading ? (
-            'Please wait...'
-          ) : (
-            <>
-              <svg
-                className="w-5 h-5"
-                viewBox="0 0 48 48"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  fill="#EA4335"
-                  d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.84-6.84C35.08 2.52 29.88 0 24 0 14.62 0 6.52 5.4 2.45 13.3l7.98 6.2C12.33 13.02 17.67 9.5 24 9.5z"
-                />
-                <path
-                  fill="#4285F4"
-                  d="M46.5 24.5c0-1.57-.14-3.08-.39-4.5H24v9h12.7c-.54 2.74-2.14 5.06-4.45 6.64l7.1 5.5c4.16-3.83 7.15-9.42 7.15-16.64z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M10.43 28.5c-.5-1.47-.78-3.04-.78-4.5s.28-3.03.78-4.5l-7.98-6.2C.9 16.97 0 20.38 0 24s.9 7.03 2.45 10.2l7.98-6.2z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M24 48c6.48 0 11.9-2.14 15.87-5.8l-7.1-5.5C30.64 38.68 27.45 39.5 24 39.5c-6.33 0-11.67-3.52-14.57-8.5l-7.98 6.2C6.52 42.6 14.62 48 24 48z"
-                />
-              </svg>
-              Continue with Google
-            </>
-          )}
-        </button>
       </div>
     </div>
+    <DocFoot />
+    </>
   );
 }

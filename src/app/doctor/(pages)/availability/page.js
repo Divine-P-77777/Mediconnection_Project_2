@@ -5,6 +5,8 @@ import { useSelector } from "react-redux";
 import { supabase } from "@/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import Loader from "@/app/components/Loader";
+import { useToast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 const daysOfWeek = [
   "Monday",
   "Tuesday",
@@ -28,6 +30,15 @@ const DoctorManageProfile = () => {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const { user } = useAuth();
   const doctor_id = user?.id;
+const { errorToast } = useToast();
+  const router = useRouter();
+
+
+    if(!user){
+    router.push("/auth/doctor");
+    errorToast("Please login to access doctor portal");
+    return null;
+  }
 
   const [availability, setAvailability] = useState(
     daysOfWeek.map((day) => ({

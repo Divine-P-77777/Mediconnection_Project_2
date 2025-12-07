@@ -41,64 +41,58 @@ const DoctorHomePage = () => {
 
   return (
     <div
-      className={`transition-colors ${
-        isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
+      className={`transition-colors pt-20 min-h-screen ${
+        isDarkMode
+          ? "bg-gray-950 text-gray-100"
+          : "bg-gray-50 text-gray-900"
       }`}
     >
       {loading ? (
-          <Loader />
+        <Loader />
       ) : (
         <>
           {/* Section 1 - Doctor Quick Access */}
-          <section className="min-h-screen justify-center px-6 flex flex-col items-center">
+          <section className="min-h-screen px-6 flex flex-col items-center justify-center">
             <div className="text-center space-y-4 max-w-2xl">
-              <h2 className="text-2xl font-semibold">
-                Hello, Dr. {username} 
+              <h2
+                className="text-3xl font-semibold pt-20 tracking-wide 
+                text-cyan-500 dark:text-cyan-400"
+              >
+                {user ? `Hello, Dr. ${username}!` : "Hello, Doctor!"}
               </h2>
-              <h1 className="text-3xl md:text-4xl font-bold">
-                Welcome to the Doctor's Portal
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Manage your patients, appointments, services, and profile in one
-                place.
-              </p>
 
-     
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight">
+                Welcome to Your Doctor Dashboard
+              </h1>
+
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+                Manage patients, appointments, services, availability, and your profile
+                — all from one professional dashboard.
+              </p>
             </div>
 
             {/* Links Section */}
-            <div className="grid gap-5 mt-12 sm:grid-cols-2 md:grid-cols-3 w-full max-w-4xl">
-              
-              <Link
-                href="/doctor/appointments"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Appointments
-              </Link>
-              <Link
-                href="/doctor/availability"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Manage Availability
-              </Link>
-              <Link
-                href="/doctor/profile"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Manage Profile
-              </Link>
-              <Link
-                href="/doctor/manageaccount"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Account Details
-              </Link>
-              <Link
-                href="/doctor/manageservice"
-                className="px-6 py-5 rounded-2xl bg-cyan-500 text-white shadow hover:bg-cyan-600 transition text-center font-medium"
-              >
-                Manage Services
-              </Link>
+            <div className="grid gap-6 mt-14 sm:grid-cols-2 md:grid-cols-3 w-full max-w-4xl">
+              {[
+                { label: "Appointments", href: "/doctor/appointments" },
+                { label: "Manage Availability", href: "/doctor/availability" },
+                { label: "Manage Profile", href: "/doctor/profile" },
+                { label: "Account Details", href: "/doctor/manageaccount" },
+                { label: "Manage Services", href: "/doctor/manageservice" },
+              ].map((item, idx) => (
+                <Link
+                  key={idx}
+                  href={item.href}
+                  className={`px-6 py-5 rounded-2xl shadow-md transition text-center font-semibold
+                    ${
+                      isDarkMode
+                        ? "bg-cyan-600 hover:bg-cyan-500 text-white"
+                        : "bg-cyan-500 hover:bg-cyan-600 text-white"
+                    }`}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
             <AccountNoSet
@@ -113,54 +107,58 @@ const DoctorHomePage = () => {
 
           {/* Section 2 - Feature Showcase */}
           <section className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
-            <div className="text-center max-w-3xl mb-12">
-              <h3 className="text-2xl md:text-3xl font-bold mb-4">
-                Why use the Doctor Portal?
+            <div className="text-center max-w-3xl mb-14">
+              <h3 className="text-3xl md:text-4xl font-bold mb-4">
+                Why Use the Doctor Portal?
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Explore the features that make managing your practice seamless.
+                Explore powerful features designed to simplify your workflow.
               </p>
             </div>
 
-            <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 w-full max-w-5xl">
+            <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-3 w-full max-w-6xl">
               {[
                 {
                   title: "Seamless Consultations",
-                  desc: "Conduct video or in-person consultations with patients easily.",
+                  desc: "Conduct secure virtual or in-person consultations.",
                   img: "/images/consultation.png",
                 },
                 {
                   title: "Upload Prescriptions",
-                  desc: "Quickly upload and share prescriptions with patients.",
+                  desc: "Share prescriptions quickly and securely.",
                   img: "/images/prescription.png",
                 },
                 {
                   title: "Receive Payments",
-                  desc: "Get paid seamlessly through integrated payment gateways.",
+                  desc: "Smooth integrated payment experience.",
                   img: "/images/payment.png",
                 },
                 {
                   title: "Manage Patients",
-                  desc: "Track medical history and maintain patient records securely.",
+                  desc: "Review patient history and maintain accurate records.",
                   img: "/images/patient.png",
                 },
                 {
                   title: "Manage Services",
-                  desc: "List your medical services and control availability.",
+                  desc: "List services and manage availability effortlessly.",
                   img: "/images/services.png",
                 },
                 {
                   title: "Profile & Reputation",
-                  desc: "Build trust by keeping your profile updated.",
+                  desc: "Maintain your professional presence and trust.",
                   img: "/images/profile.png",
                 },
-                
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className={`rounded-2xl  ${isDarkMode ? "bg-gray-900" : "bg-white"} border border-cyan-300 shadow-md hover:shadow-lg transition p-6 text-center flex flex-col items-center`}
+                  className={`rounded-2xl p-6 shadow-lg border transition hover:shadow-xl flex flex-col items-center text-center
+                    ${
+                      isDarkMode
+                        ? "bg-gray-900 border-gray-700"
+                        : "bg-white border-gray-200"
+                    }`}
                 >
-                  <img src={item.img} alt={item.title} className="h-40 mb-4" />
+                  <img src={item.img} alt={item.title} className="h-36 mb-4" />
                   <h4 className="text-lg font-semibold mb-2">{item.title}</h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     {item.desc}
