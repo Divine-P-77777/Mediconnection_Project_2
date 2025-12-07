@@ -124,7 +124,7 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* 📱 Mobile Dropdown Menu */}
+      {/* Mobile Dropdown Menu */}
       {menuOpen && (
         <div
           className={`absolute top-16 right-4 w-72 p-5 rounded-2xl border shadow-lg transition-all duration-300 backdrop-blur-lg ${
@@ -160,7 +160,7 @@ const Navbar = () => {
             }`}
           />
 
-          {/* 🌓 Mode Toggle & Auth */}
+          {/* Mode Toggle & Auth */}
           <div className="flex flex-col gap-2">
             <button
               onClick={() => dispatch(toggleDarkMode())}
@@ -195,7 +195,7 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* 📜 Terms & Privacy - Minimal Row */}
+          {/*  Terms & Privacy - Minimal Row */}
           <div
             className={`mt-4 pt-3 flex justify-center items-center gap-6 text-xs font-medium border-t ${
               isDarkMode ? "border-cyan-800 text-gray-300" : "border-cyan-300 text-gray-600"

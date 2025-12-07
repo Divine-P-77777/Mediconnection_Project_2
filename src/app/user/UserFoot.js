@@ -26,7 +26,7 @@ const Footer = () => {
 
   return (
     <>
-      {/* 🌐 Desktop Footer */}
+      {/*  Desktop Footer */}
       <footer
         className={`hidden md:block w-full py-10 px-6 sm:px-20 transition-all duration-300 ${
           isDarkMode
