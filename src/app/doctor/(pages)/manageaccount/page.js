@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { errToast, Success } from '@/hooks/use-toast';
 import { useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +10,7 @@ export default function ManageAccount() {
   const { user, isDoctor, loading } = useAuth();
   const doctorId = user?.id;
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-
+const { Success, errorToast: errToast } = useToast();
   const [formData, setFormData] = useState({
     account_number: '',
     bank_name: '',
@@ -217,3 +216,6 @@ export default function ManageAccount() {
     </div>
   );
 }
+
+
+
