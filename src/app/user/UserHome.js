@@ -71,35 +71,36 @@ export default function UserHome() {
   const cardBg = isDarkMode ? "bg-[#0F2137] border border-gray-700" : "bg-white border border-gray-200";
 
   return (
-    <motion.div className={`w-full min-h-screen transition-colors duration-300 ${pageBg} pt-20`}>
+    <motion.div className={`w-full min-h-screen transition-colors duration-300 ${pageBg} pt-10`}>
       {/* HERO */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="relative w-full h-[72vh] flex items-center justify-center overflow-hidden"
       >
-        {/* background image
+  
         <img
-          src="https://images.unsplash.com/photo-1581093588401-0b1c8a0a9b63?w=1980&q=80&auto=format"
+          src="/banner.png"
           alt="Healthcare banner"
-          className="absolute inset-0 w-full h-full object-cover opacity-70"
-        /> */}
-        <div className={`absolute inset-0 ${isDarkMode ? "bg-black/50" : "bg-white/30"} backdrop-blur-sm`}></div>
+          className="absolute inset- w-full h-full object-cover opacity-70"
+        /> 
+        <div className={`absolute inset-0 ${isDarkMode ? "bg-black/50" : "bg-white/30"}`}></div>
 
         <div className="relative z-10 max-w-4xl text-center px-6">
           <motion.h1
             initial={{ y: -16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="text-3xl md:text-5xl font-extrabold leading-tight"
+            className="text-3xl md:text-5xl font-extrabold leading-tight "
           >
-            Your Health — <span className="text-[#00A8E8]">One Tap Away</span>
+            Your Health — <span className={` ${isDarkMode ? "text-[#77d2f6]" : "text-[#00A8E8]"}`}>One Tap Away</span>
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mt-3 text-lg md:text-xl max-w-2xl mx-auto opacity-90"
+            className="mt-3 text-lg md:text-2xl max-w-2xl mx-auto opacity-90 p-2 font-medium
+"
           >
             Book appointments, consult specialists live, and securely download your medical documents — all in one place.
           </motion.p>
