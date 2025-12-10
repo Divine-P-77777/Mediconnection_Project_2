@@ -44,7 +44,7 @@ export default function HealthCenterAuthPage() {
     : 'bg-gray-100 hover:bg-gray-200 text-gray-800';
 
   return (
-    <div className={`min-h-screen px-4 py-16 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
+    <div className={`min-h-screen px-4 py-24 transition-colors duration-300 ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black'}`}>
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold mb-2">Health Center Portal</h1>
         <p className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>

@@ -1,4 +1,6 @@
-import HealthCenterLoginForm from "./components/HealthCenterLoginForm";
+import HealthCenterAuthPage from "./components/HealthCenterAuthPage";
+import  HCNav from "@/app/healthcenter/components/HCNav"
+import  HCFoot from "@/app/healthcenter/components/HCFoot"
 
 export const metadata = {
   title: "Health Center Auth - MediConnection",
@@ -6,5 +8,11 @@ export const metadata = {
 };
 
 export default function HealthCenterPage() {
-  return <HealthCenterLoginForm />;
+  return (
+    <>
+      <HCNav />
+      <HealthCenterAuthPage />
+      <HCFoot />
+    </>
+  );
 }
