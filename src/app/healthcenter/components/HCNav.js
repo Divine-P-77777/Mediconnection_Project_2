@@ -32,7 +32,7 @@ const HealthCenterNav = () => {
     { name: "Profile", path: "/healthcenter/profile" },
     ...(isLoggedIn
       ? [{ name: "Logout", onClick: handleLogout }]
-      : [{ name: "Login", path: "/login" }]),
+      : [{ name: "Login", path: "/auth/healthcenter" }]),
   ];
 
   return (

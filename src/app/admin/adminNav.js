@@ -36,7 +36,7 @@ const AdminNav = () => {
     { name: "Careers", path: "/admin/careers" },
     ...(isLoggedIn
       ? [{ name: "Logout", onClick: handleLogout }]
-      : [{ name: "Login", path: "/login" }]),
+      : [{ name: "Login", path: "/auth/admin" }]),
   ];
 
   return (
