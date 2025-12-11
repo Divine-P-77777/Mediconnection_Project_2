@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useAuth } from '@/hooks/useAuth';
+import UserNav from '@/app/user/UserNav';
+import UserFoot from '@/app/user/UserFoot';
 
 const LoginForm = dynamic(() => import('./Auth/LoginForm'), { ssr: false });
 const SignUpForm = dynamic(() => import('./Auth/SignUpForm'), { ssr: false });
@@ -18,7 +20,7 @@ export default function AuthPage() {
 
   const [tab, setTab] = useState('login');
 
-  // ✅ Set initial tab from query params
+  // Set initial tab from query params
   useEffect(() => {
     const type = searchParams.get('type');
     if (type === 'user_register') {
@@ -28,14 +30,14 @@ export default function AuthPage() {
     }
   }, [searchParams]);
 
-  // ✅ Redirect if already logged in
+  // Redirect if already logged in
   useEffect(() => {
     if (loading) return;
 
     if (user) {
       // Only allow "user" role here
       if (isUser) {
-        return router.replace('/user'); // user dashboard/home
+        return router.replace('/user'); 
       }
 
       // Other roles should not use this page
@@ -44,14 +46,12 @@ export default function AuthPage() {
     }
   }, [user, loading, router, isUser]);
 
-  // ✅ Tab switch updates query params
   const handleTabChange = (value) => {
     setTab(value);
     const type = value === 'signup' ? 'user_register' : 'user_login';
     router.replace(`/auth?type=${type}`);
   };
 
-  // ✅ Theme-aware styles
   const bgPrimary = isDarkMode ? 'bg-gray-900 text-white' : 'bg-white text-black';
   const bgCard = isDarkMode ? 'bg-gray-800' : 'bg-white';
   const borderColor = isDarkMode ? 'border-gray-700' : 'border-gray-300';
@@ -64,7 +64,9 @@ export default function AuthPage() {
     : 'bg-gray-100 hover:bg-gray-200 text-gray-800';
 
   return (
-    <div className={`min-h-screen px-4 py-16 transition-colors duration-300 ${bgPrimary}`}>
+    <>
+    <UserNav />
+    <div className={`min-h-screen px-4 py-22 transition-colors duration-300 ${bgPrimary}`}>
       <div className="text-center mb-10">
         <h1 className="text-4xl font-extrabold mb-2">Welcome to Mediconnection</h1>
         <p className={`text-base ${mutedText}`}>
@@ -105,5 +107,7 @@ export default function AuthPage() {
         </div>
       </div>
     </div>
+    <UserFoot />
+    </>
   );
 }

@@ -103,7 +103,7 @@ export default function AdminAuthPage() {
 
   return (
     <div
-      className={`flex min-h-screen items-center justify-center transition-colors ${
+      className={`flex min-h-screen py-22 px-4 items-center justify-center transition-colors ${
         isDarkMode
           ? "bg-gray-900 text-gray-100"
           : "bg-gray-100 text-gray-800"
@@ -117,7 +117,7 @@ export default function AdminAuthPage() {
               : "bg-white border-gray-200"
           }`}
       >
-        <h2 className="mx-auto text-xl font-bold my-4 flex justify-center">
+        <h2 className="mx-auto text-lg sm:text-xl font-bold my-4 flex justify-center">
           Admin Panel of Mediconnection
         </h2>
 
