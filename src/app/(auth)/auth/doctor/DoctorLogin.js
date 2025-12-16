@@ -32,10 +32,10 @@ export default function DoctorLogin() {
         throw new Error('Not a doctor account');
       }
 
-      Success('✅ Login successful!');
+      Success(' Login successful!');
       router.push('/doctor');
     } catch (err) {
-      errorToast('❌ ' + err.message);
+      errorToast('somethings wents wrong ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -60,7 +60,7 @@ export default function DoctorLogin() {
 
   // Forgot password redirect
   const handleForgotPassword = () => {
-    router.push('/auth/forgot-password'); // 🔹 use your ForgotPasswordPage route
+    router.push('/auth/forgot-password'); 
   };
 
   return (

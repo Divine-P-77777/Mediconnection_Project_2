@@ -30,7 +30,7 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
 
   const isDateAllowed = (date) => {
     if (!allowedDates || allowedDates.length === 0) return true; // allow all if not provided
-    return allowedDates.some(d => 
+    return allowedDates.some(d =>
       d.getFullYear() === date.getFullYear() &&
       d.getMonth() === date.getMonth() &&
       d.getDate() === date.getDate()
@@ -61,14 +61,20 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
         year === selectedDate.getFullYear() &&
         month === selectedDate.getMonth();
 
+      let bgClass = "opacity-30 cursor-not-allowed";
+      if (allowed) {
+        bgClass = isDarkMode
+          ? "hover:bg-slate-700 text-gray-300"
+          : "hover:bg-gray-100 text-gray-700";
+      }
+      if (isSelected) {
+        bgClass = "bg-cyan-600 text-white shadow-lg shadow-cyan-500/20";
+      }
+
       days.push(
         <div
           key={i}
-          className={`p-2 w-10 h-10 flex items-center justify-center rounded-md cursor-pointer transition-all duration-300
-            ${isSelected ? "bg-cyan-500 text-white" : allowed 
-              ? (isDarkMode ? "hover:bg-gray-700" : "hover:bg-gray-300") 
-              : "opacity-30 cursor-not-allowed"}
-          `}
+          className={`p-2 w-10 h-10 flex items-center justify-center rounded-lg cursor-pointer transition-all duration-300 ${bgClass}`}
           onClick={() => handleDateSelect(i)}
         >
           {i}
@@ -79,12 +85,12 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
   };
 
   return (
-    <div className={`flex flex-col items-center p-4 rounded-lg shadow-sm transition-all duration-300
-      ${isDarkMode ? "bg-gray-900 text-white border border-cyan-400 shadow-cyan-200" : "bg-white text-black border border-gray-300 shadow-gray-300"}`}
+    <div className={`flex flex-col items-center p-4 rounded-xl shadow-lg transition-all duration-300
+      ${isDarkMode ? "bg-slate-900 text-white border border-slate-800" : "bg-white text-black border border-gray-100"}`}
     >
       {/* Header */}
       <div className={`flex justify-between w-full max-w-md items-center mb-4 p-2 rounded-lg
-        ${isDarkMode ? "bg-gray-800 border border-cyan-400 shadow-cyan-200" : "bg-gray-200 border border-gray-300 shadow-gray-300"}`}
+        ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}
       >
         <button className="px-3 py-1 rounded hover:bg-gray-400" onClick={() => setYear(year - 1)}>Prev</button>
         <h2 className="text-xl font-bold">{year}</h2>
@@ -93,10 +99,10 @@ export default function SeamlessCalendar({ onDateChange, selectedDate: externalD
 
       {/* Month Picker Dropdown */}
       <div className={`relative mb-4 p-2 rounded-lg
-        ${isDarkMode ? "bg-gray-800 border border-cyan-400 shadow-cyan-200" : "bg-gray-200 border border-gray-300 shadow-gray-300"}`}
+        ${isDarkMode ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}
       >
         <select
-          className={`px-4 py-2 rounded cursor-pointer ${isDarkMode ? "bg-gray-700 text-white" : "bg-gray-300 text-black"}`}
+          className={`px-4 py-2 rounded cursor-pointer outline-none ${isDarkMode ? "bg-slate-700 text-white" : "bg-white text-black border border-gray-200"}`}
           value={month}
           onChange={(e) => setMonth(parseInt(e.target.value))}
         >

@@ -23,7 +23,6 @@ const HealthCenterNav = () => {
     await signOut();
   };
 
-  // 🔹 Match with Health Center Home Page (Dashboard, Availability, Doctors, Profile)
   const navItems = [
     { name: "Home", path: "/healthcenter" },
     { name: "Appointment Requests", path: "/healthcenter/manageappointments" },

@@ -16,7 +16,7 @@ function Checkout() {
   }, []);
 
   const doPayment = async () => {
-    // 1️⃣ Call backend to generate order
+    // Call backend to generate order
     const res = await fetch("/api/appointments/payment/order", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -36,14 +36,14 @@ function Checkout() {
       return;
     }
 
-    // 2️⃣ Use payment_session_id from backend
+    // use payment_session_id from backend
     const checkoutOptions = {
       paymentSessionId: data.payment_session_id,
       redirectTarget: "_self",
       onSuccess: async (paymentResponse) => {
         console.log("Payment Response:", paymentResponse);
 
-        // 3️⃣ Call verify API after payment success
+        // 3Call verify API after payment success
         const verifyRes = await fetch("/api/payment/verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

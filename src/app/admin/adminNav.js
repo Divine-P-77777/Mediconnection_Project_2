@@ -7,8 +7,6 @@ import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { toggleDarkMode } from "../../store/themeSlice";
 import { Sun, Moon } from "lucide-react";
-
-// 🔹 Import AuthContext hook
 import { useAuth } from "@/hooks/useAuth";
 
 const AdminNav = () => {
@@ -18,16 +16,13 @@ const AdminNav = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  // 🔹 Get auth state from context
   const { session, user, signOut, role, isSuperAdmin } = useAuth();
   const isLoggedIn = !!session;
 
-  // 🔹 Logout handler
   const handleLogout = async () => {
     await signOut(); // calls supabase.auth.signOut()
   };
 
-  // 🔹 Nav items
   const navItems = [
     { name: "Home", path: "/admin" },
     { name: "Dashboard", path: "/admin/dashboard" },
