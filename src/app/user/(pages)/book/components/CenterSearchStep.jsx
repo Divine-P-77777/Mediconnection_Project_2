@@ -11,6 +11,7 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
   const [centers, setCenters] = useState([]);
   const [selected, setSelected] = useState(null);
   const [isLocating, setIsLocating] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
   const inputClass = `w-full p-3 rounded-lg border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500 ${isDarkMode
@@ -24,17 +25,24 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
       errorToast("Enter valid 6-digit pincode");
       return;
     }
+
+    setIsSearching(true);
     try {
       const res = await fetch(`/api/healthcenter/search?pincode=${code}`);
       const json = await res.json();
       if (!json.centers || json.centers.length === 0) {
         errorToast("No centers found for this pincode");
+        errorToast("Try with different pincode");
       }
       setCenters(json.centers || []);
     } catch (error) {
       errorToast("Failed to fetch centers");
+    } finally {
+      setIsSearching(false);
     }
   };
+
+
 
   const handleLocationSearch = () => {
     if (!navigator.geolocation) {
@@ -58,6 +66,7 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
             search(postcode); // Search immediately with new code
           } else {
             errorToast("Could not detect pincode from location");
+            errorToast("Try with different pincode");
           }
         } catch (error) {
           errorToast("Failed to fetch location details");
@@ -104,10 +113,11 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
             onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
           />
           <Button
-            className={`${isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-cyan-600 hover:bg-cyan-700"} text-white min-w-[100px] shadow-lg shadow-cyan-500/20 transition-all active:scale-95`}
+            className={`${isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-cyan-600 hover:bg-cyan-700"} text-white min-w-[100px] shadow-lg shadow-cyan-500/20 transition-all active:scale-95 disabled:opacity-70`}
             onClick={() => search()}
+            disabled={isSearching}
           >
-            Search
+            {isSearching ? <Loader2 className="w-5 h-5 animate-spin" /> : "Search"}
           </Button>
         </div>
 

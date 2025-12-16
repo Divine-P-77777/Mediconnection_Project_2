@@ -3,6 +3,7 @@ import { supabase } from "@/supabase/client";
 
 export function useServerStatus() {
   const [serverDown, setServerDown] = useState(false);
+  const [failureCount, setFailureCount] = useState(0);
 
   useEffect(() => {
     const checkServer = async () => {
@@ -13,10 +14,20 @@ export function useServerStatus() {
         });
 
         if (!res.ok && res.status !== 404) throw new Error(`HTTP ${res.status}`);
+
+        // Success: Reset failures and ensure server is marked up
+        setFailureCount(0);
         setServerDown(false);
       } catch (err) {
-        console.error("Supabase connection failed:", err.message);
-        setServerDown(true);
+        console.error("Supabase connection checking...", err.message);
+        setFailureCount((prev) => {
+          const newCount = prev + 1;
+          // Only mark server down after 3 consecutive failures
+          if (newCount >= 3) {
+            setServerDown(true);
+          }
+          return newCount;
+        });
       }
     };
 

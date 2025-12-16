@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSelector } from "react-redux";
 
-export default function ScheduleStep({ center, form, onConfirm }) {
+export default function ScheduleStep({ center, form, onConfirm, isBooking }) {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const [date, setDate] = useState(null);
   const [time, setTime] = useState("");
@@ -93,11 +93,11 @@ export default function ScheduleStep({ center, form, onConfirm }) {
             </Card>
             <div className="flex justify-center">
               <Button
-                disabled={!date || !time || !purpose}
+                disabled={!date || !time || !purpose || isBooking}
                 onClick={() => onConfirm({ date, time, purpose })}
                 className="w-fit mt-6 bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-6 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none"
               >
-                Confirm Appointment
+                {isBooking ? "Processing..." : "Confirm Appointment"}
               </Button>
             </div>
           </>

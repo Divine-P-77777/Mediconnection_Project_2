@@ -15,6 +15,8 @@ import PersonalInfoStep from "./components/PersonalInfoStep";
 import CenterSearchStep from "./components/CenterSearchStep";
 import ScheduleStep from "./components/ScheduleStep";
 
+import BookingSuccessModal from "./components/BookingSuccessModal";
+
 export default function BookAppointmentPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -24,6 +26,9 @@ export default function BookAppointmentPage() {
   const [step, setStep] = useState(1);
   const [selectedCenter, setSelectedCenter] = useState(null);
   const [cashfree, setCashfree] = useState(null);
+  const [isBooking, setIsBooking] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [lastAppointment, setLastAppointment] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -47,6 +52,7 @@ export default function BookAppointmentPage() {
 
   const handleBooking = async ({ date, time, purpose }) => {
     if (!user) return;
+    setIsBooking(true);
 
     // 1. Prepare Data
     const bookingData = {
@@ -83,6 +89,8 @@ export default function BookAppointmentPage() {
       }
 
       const appointmentId = json.appointment_id;
+      // Object for modal/PDF
+      const confirmedAppointment = { ...bookingData, id: appointmentId, status: "confirmed" };
 
       if (purpose.price > 0) {
         // 3. PAID APPOINTMENT - Trigger Payment with Real ID
@@ -112,8 +120,10 @@ export default function BookAppointmentPage() {
             // Optional: Verify payment here if relying on client-side callback
             // But usually server webhook or return URL handles final status
             // For now, redirect to my bookings
-            Success("Payment initiated successfully!");
-            router.push("/user/book/mybooking");
+            // Success("Payment initiated successfully!");
+            // router.push("/user/book/mybooking");
+            setLastAppointment(confirmedAppointment);
+            setSuccessModalOpen(true);
           },
           onFailure: () => errorToast("Payment failed"),
         };
@@ -122,12 +132,21 @@ export default function BookAppointmentPage() {
 
       } else {
         // 4. FREE APPOINTMENT
-        Success("Appointment booked successfully!");
-        router.push("/user/book/mybooking");
+        // Success("Appointment booked successfully!");
+        // router.push("/user/book/mybooking");
+        setLastAppointment(confirmedAppointment);
+        setSuccessModalOpen(true);
       }
     } catch (err) {
       console.error(err);
       errorToast("Something went wrong: " + err.message);
+    } finally {
+      // Small delay to prevent flickering if redirect happens fast or keep showing spinner until redirect?
+      // Actually usually better to keep spinning if redirecting, but users might get stuck.
+      // Safe to set false unless redirecting.
+      // But router.push doesn't stop execution. 
+      // Let's set false just in case of error. If success, page changes anyway.
+      setIsBooking(false);
     }
   };
 
@@ -159,8 +178,15 @@ export default function BookAppointmentPage() {
             center={selectedCenter}
             form={form}
             onConfirm={handleBooking}
+            isBooking={isBooking}
           />
         )}
+
+        <BookingSuccessModal
+          isOpen={successModalOpen}
+          onClose={() => router.push("/user/book/mybooking")}
+          appointment={lastAppointment}
+        />
       </div>
     </div>
   );
