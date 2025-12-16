@@ -3,12 +3,14 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
+import { MapPin, Loader2 } from "lucide-react";
 
 export default function CenterSearchStep({ onSelectCenter, onNext }) {
   const { errorToast } = useToast();
   const [pincode, setPincode] = useState("");
   const [centers, setCenters] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [isLocating, setIsLocating] = useState(false);
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
   const inputClass = `w-full p-3 rounded-lg border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500 ${isDarkMode
@@ -16,14 +18,62 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
     : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
     }`;
 
-  const search = async () => {
-    if (pincode.length !== 6) {
+  const search = async (codeOverride) => {
+    const code = typeof codeOverride === "string" ? codeOverride : pincode;
+    if (!code || code.length !== 6) {
       errorToast("Enter valid 6-digit pincode");
       return;
     }
-    const res = await fetch(`/api/healthcenter/search?pincode=${pincode}`);
-    const json = await res.json();
-    setCenters(json.centers || []);
+    try {
+      const res = await fetch(`/api/healthcenter/search?pincode=${code}`);
+      const json = await res.json();
+      if (!json.centers || json.centers.length === 0) {
+        errorToast("No centers found for this pincode");
+      }
+      setCenters(json.centers || []);
+    } catch (error) {
+      errorToast("Failed to fetch centers");
+    }
+  };
+
+  const handleLocationSearch = () => {
+    if (!navigator.geolocation) {
+      errorToast("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+          const data = await response.json();
+          const postcode = data.address?.postcode;
+
+          if (postcode) {
+            setPincode(postcode);
+            search(postcode); // Search immediately with new code
+          } else {
+            errorToast("Could not detect pincode from location");
+          }
+        } catch (error) {
+          errorToast("Failed to fetch location details");
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (error) => {
+        setIsLocating(false);
+        if (error.code === error.PERMISSION_DENIED) {
+          errorToast("Location permission denied. Please enter pincode manually.");
+        } else {
+          errorToast("Unable to retrieve location");
+        }
+      }
+    );
   };
 
   const continueNext = () => {
@@ -38,7 +88,7 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
   return (
     <Card className={`p-6 shadow-md transition-all duration-300 ${isDarkMode ? "bg-slate-900 border-slate-800" : "bg-white"}`}>
       <CardHeader>
-        <CardTitle>Find Health Center</CardTitle>
+        <CardTitle className={isDarkMode ? "text-white" : "text-gray-900"}>Find Health Center</CardTitle>
         <CardDescription>
           Search nearby centers by pincode
         </CardDescription>
@@ -53,8 +103,35 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
             value={pincode}
             onChange={(e) => setPincode(e.target.value.replace(/\D/g, ""))}
           />
-          <Button onClick={search}>Search</Button>
+          <Button
+            className={`${isDarkMode ? "bg-cyan-600 hover:bg-cyan-700" : "bg-cyan-600 hover:bg-cyan-700"} text-white min-w-[100px] shadow-lg shadow-cyan-500/20 transition-all active:scale-95`}
+            onClick={() => search()}
+          >
+            Search
+          </Button>
         </div>
+
+        <div className="relative flex items-center justify-center my-2">
+          <span className={`absolute px-2 text-sm ${isDarkMode ? "bg-slate-900 text-gray-500" : "bg-white text-gray-400"}`}>OR</span>
+          <div className={`w-full border-b ${isDarkMode ? "border-slate-700" : "border-gray-200"}`}></div>
+        </div>
+
+        <Button
+          variant="outline"
+          className={`w-full py-2 text-base border-2 border-dashed transition-all duration-300 flex justify-center items-center  group ${isDarkMode
+            ? "border-slate-700 text-cyan-400 hover:bg-slate-800 hover:border-cyan-500"
+            : "border-gray-300 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-500"
+            }`}
+          onClick={handleLocationSearch}
+          disabled={isLocating}
+        >
+          {isLocating ? (
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+          ) : (
+            <MapPin className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+          )}
+          <div className="flex items-center gap-2">{isLocating ? "Detecting..." : "Use My Location"}</div>
+        </Button>
 
         {centers.map((c) => (
           <div
@@ -67,12 +144,12 @@ export default function CenterSearchStep({ onSelectCenter, onNext }) {
                 : "border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-700"
               }`}
           >
-            <div className="font-semibold">{c.name}</div>
-            <div className="text-sm text-gray-500">{c.address}</div>
+            <div className={`font-semibold ${isDarkMode ? "text-white" : "text-gray-900"}`}>{c.name}</div>
+            <div className={`text-sm ${isDarkMode ? "text-gray-300" : "text-gray-500"}`}>{c.address}</div>
           </div>
         ))}
 
-        <Button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-6 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95" onClick={continueNext}>
+        <Button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-1 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95" onClick={continueNext}>
           Continue
         </Button>
       </CardContent>

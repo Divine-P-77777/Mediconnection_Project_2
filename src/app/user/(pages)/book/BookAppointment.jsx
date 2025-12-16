@@ -3,7 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { format } from "date-fns";
+
 import { useSelector } from "react-redux";
+import { load } from "@cashfreepayments/cashfree-js";
+import { useToast } from "@/hooks/use-toast";
 
 import { useAuth } from "@/hooks/useAuth";
 import Stepper from "./components/Stepper";
@@ -14,10 +18,19 @@ import ScheduleStep from "./components/ScheduleStep";
 export default function BookAppointmentPage() {
   const router = useRouter();
   const { user } = useAuth();
+  const { errorToast, Success } = useToast();
   const isDarkMode = useSelector((s) => s.theme.isDarkMode);
 
   const [step, setStep] = useState(1);
   const [selectedCenter, setSelectedCenter] = useState(null);
+  const [cashfree, setCashfree] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const cf = await load({ mode: "sandbox" });
+      setCashfree(cf);
+    })();
+  }, []);
 
   const form = useForm({
     defaultValues: {
@@ -31,6 +44,92 @@ export default function BookAppointmentPage() {
   useEffect(() => {
     if (!user) router.push("/auth");
   }, [user, router]);
+
+  const handleBooking = async ({ date, time, purpose }) => {
+    if (!user) return;
+
+    // 1. Prepare Data
+    const bookingData = {
+      center_id: selectedCenter._id || selectedCenter.id,
+      user_id: user._id || user.id,
+      center_name: selectedCenter.name,
+      // Ensure date is formatted as YYYY-MM-DD
+      date: format(new Date(date), "yyyy-MM-dd"),
+      time,
+      purpose: purpose.service_name,
+      user_name: form.getValues("fullName"),
+      phone: form.getValues("phone"),
+      gender: form.getValues("gender"),
+      // Ensure dob is formatted as YYYY-MM-DD
+      dob: format(new Date(form.getValues("dob")), "yyyy-MM-dd"),
+      price: purpose.price,
+      customer_email: user.email,
+    };
+
+    console.log("Booking Payload:", bookingData);
+
+    try {
+      // 2. Create Appointment FIRST
+      const res = await fetch("/api/appointments/book", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+
+      const json = await res.json();
+      if (!json.success) {
+        errorToast(json.error || "Booking failed");
+        return;
+      }
+
+      const appointmentId = json.appointment_id;
+
+      if (purpose.price > 0) {
+        // 3. PAID APPOINTMENT - Trigger Payment with Real ID
+        const payRes = await fetch("/api/appointments/payment/order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: purpose.price,
+            customer_id: user._id || "cust_temp",
+            customer_name: bookingData.user_name,
+            customer_email: bookingData.customer_email,
+            customer_phone: bookingData.phone,
+            appointment_id: appointmentId,
+          }),
+        });
+        const payData = await payRes.json();
+
+        if (!payData.payment_session_id) {
+          errorToast("Failed to initiate payment");
+          return;
+        }
+
+        const checkoutOptions = {
+          paymentSessionId: payData.payment_session_id,
+          redirectTarget: "_self",
+          onSuccess: async (paymentResponse) => {
+            // Optional: Verify payment here if relying on client-side callback
+            // But usually server webhook or return URL handles final status
+            // For now, redirect to my bookings
+            Success("Payment initiated successfully!");
+            router.push("/user/book/mybooking");
+          },
+          onFailure: () => errorToast("Payment failed"),
+        };
+
+        if (cashfree) cashfree.checkout(checkoutOptions);
+
+      } else {
+        // 4. FREE APPOINTMENT
+        Success("Appointment booked successfully!");
+        router.push("/user/book/mybooking");
+      }
+    } catch (err) {
+      console.error(err);
+      errorToast("Something went wrong: " + err.message);
+    }
+  };
 
   return (
     <div className={`flex flex-col w-full  min-h-screen ${isDarkMode ? "bg-slate-900" : "bg-white"}`}>
@@ -59,6 +158,7 @@ export default function BookAppointmentPage() {
           <ScheduleStep
             center={selectedCenter}
             form={form}
+            onConfirm={handleBooking}
           />
         )}
       </div>
