@@ -6,6 +6,8 @@ import axios from "axios";
 import { load } from "@cashfreepayments/cashfree-js";
 import { useSelector } from "react-redux";
 
+import BookingSuccessModal from "../book/components/BookingSuccessModal";
+
 export default function BookingModal({ doctor, onClose }) {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
 
@@ -22,15 +24,19 @@ export default function BookingModal({ doctor, onClose }) {
   const { user } = useAuth();
   const [cashfree, setCashfree] = useState(null);
   const [orderId, setOrderId] = useState("");
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [lastAppointment, setLastAppointment] = useState(null);
 
   // Load Cashfree SDK
   useEffect(() => {
     async function initSDK() {
-      const cf = await load({ mode: "production" }); 
+      const cf = await load({ mode: "production" });
       setCashfree(cf);
     }
     initSDK();
   }, []);
+
+  // ... (maintain helper functions and fetchAvailability)
 
   // Helper: get next date for weekday
   function getNextDateForDay(dayName) {
@@ -144,7 +150,6 @@ export default function BookingModal({ doctor, onClose }) {
           const verifyRes = await axios.post("/api/consultation/payment/verify", {
             orderId: sessionRes.data.order_id,
             doctorId: doctor?.doctor_id,   // use the consultation row id (not doctor_id!)
-          
             amount: doctor.price,
             paymentMethod: "CASHFREE",
           });
@@ -207,18 +212,46 @@ export default function BookingModal({ doctor, onClose }) {
     const result = await res.json();
     if (!result.success) throw new Error(result.error);
 
-    alert("Booking confirmed ");
-    window.location.href = "/user/consult";
-    onClose();
+    // Prepare appointment object for Success Modal / PDF
+    // Mapping payload + result logic to match what PDF generator expects
+    const confirmedAppt = {
+      id: result.data?.id || "N/A",  // ensure result.data has id
+      user_name: payload.fullName,
+      center_name: doctor.doctors?.name || "Dr. Assigned", // Reuse this field for Doctor Name? PDF expects center_name, better to map or update PDF gen.
+      // Actually PDF generator uses: user_name, center_name, date, time, purpose, status, phone, price
+      // Let's map it:
+      doctor_name: doctor.doctors?.name, // Might need to tweak PDF gen if it strictly looks for specific keys? 
+      // pdfGenerator looks for 'center_name'. We can pass doctor name there or update pdfGenerator.
+      // Let's repurpose center_name for Doctor Name in this context or pass a customized object.
+      center_name: doctor.doctors?.name || "Online Consult",
+      date: payload.consultationDate,
+      time: payload.consultationTime,
+      purpose: payload.speciality,
+      status: "confirmed",
+      phone: payload.phone,
+      price: payload.amount,
+      appointment_id: result.data?.id
+    };
+
+    setLastAppointment(confirmedAppt);
+    setSuccessModalOpen(true);
+
+    // Refresh table in background
+    window.dispatchEvent(new Event("consult-booked"));
+    // Do NOT close immediately
   }
 
   return (
-    <Dialog open={true} onClose={onClose} className="relative z-50">
+    <Dialog open={true} onClose={() => !successModalOpen && onClose()} className="relative z-50">
       <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
       <div className="fixed inset-0 flex items-center justify-center overflow-auto p-4">
+        {/* Hide form if success modal is open? Or overlay? BookingSuccessModal has fixed overlay. */}
+        {/* If we render BookingSuccessModal, it takes over screen properly. */}
+
         <div
           className={`rounded-2xl shadow-lg max-w-md w-full p-6 min-h-[80vh] overflow-y-auto space-y-6
             ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}
+          style={{ display: successModalOpen ? 'none' : 'block' }} // Hide form when success modal is active
         >
           <Dialog.Title className="text-xl font-bold mb-4">
             Book Appointment with {doctor?.doctors?.name}
@@ -349,6 +382,12 @@ export default function BookingModal({ doctor, onClose }) {
           </div>
         </div>
       </div>
+
+      <BookingSuccessModal
+        isOpen={successModalOpen}
+        onClose={onClose}
+        appointment={lastAppointment}
+      />
     </Dialog>
   );
 }

@@ -1,5 +1,5 @@
 import AdminFoot from "./AdminFoot";
-import AdminNav from "./AdminFoot";
+import AdminNav from "./AdminNav";
 
 
 
@@ -9,6 +9,6 @@ export default function AdminLayout({ children }) {
             <AdminNav />
             <div className="">{children}</div>
             <AdminFoot />
-       </>
+        </>
     );
 }

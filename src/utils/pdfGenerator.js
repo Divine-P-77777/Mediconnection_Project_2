@@ -26,7 +26,7 @@ export const generateAppointmentPDF = (appointment, user = null) => {
         const details = [
             ["Appointment ID", appointment.id || appointment.appointment_id || "N/A"],
             ["Patient Name", appointment.user_name || user?.name || "N/A"],
-            ["Health Center", appointment.center_name || "N/A"],
+            [appointment.doctor_name ? "Doctor" : "Health Center", appointment.doctor_name || appointment.center_name || "N/A"],
             ["Date", dateStr],
             ["Time", appointment.time],
             ["Purpose", appointment.purpose],
