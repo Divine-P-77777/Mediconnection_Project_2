@@ -1,7 +1,7 @@
 # 🏥 Mediconnect
 
 Mediconnection is a healthcare workflow platform built with **Next.js**, **Supabase**, and **Cloudinary**.  
-It streamlines health center registration, admin approval, doctor management, and patient consultations with secure role-based access.
+It streamlines health center/medical registration, admin approval, doctor management, and patient consultations with secure role-based access.
 
 This project was bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) and uses **Next.js** for frontend and API routes.
 
