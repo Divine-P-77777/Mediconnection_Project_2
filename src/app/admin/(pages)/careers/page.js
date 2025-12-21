@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const MAIN_SUPER_ADMIN_EMAIL = process.env.NEXT_PUBLIC_MAIN_SUPER_ADMIN_EMAIL;
 
+console.log("Main Super Admin Email:", MAIN_SUPER_ADMIN_EMAIL);
+
 export default function CareersPage() {
   const router = useRouter();
   const { Success, errorToast } = useToast();
