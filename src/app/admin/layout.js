@@ -1,14 +1,14 @@
-import AdminFoot from "./AdminFoot";
-import AdminNav from "./AdminNav";
+import AdminFooter from "./AdminFooter";
+import AdminNavbar from "./AdminNavbar";
 
 
 
 export default function AdminLayout({ children }) {
     return (
         <>
-            <AdminNav />
+            <AdminNavbar />
             <div className="">{children}</div>
-            <AdminFoot />
+            <AdminFooter />
         </>
     );
 }

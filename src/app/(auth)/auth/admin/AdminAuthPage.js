@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { FcGoogle } from "react-icons/fc";
-import AdminFoot from "@/app/admin/AdminFoot"
-import AdminNav from "@/app/admin/AdminNav"
+import AdminFooter from "@/app/admin/AdminFooter"
+import AdminNavbar from "@/app/admin/AdminNavbar"
 
 
 export default function AdminAuthPage() {
@@ -94,15 +94,15 @@ export default function AdminAuthPage() {
 
   return (
     <>
-      <AdminNav />
+      <AdminNavbar />
       <div
         className={`flex min-h-screen px-4 items-center justify-center ${isDarkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-800"
           }`}
       >
         <div
           className={`w-full max-w-md p-6 rounded-2xl shadow-lg border ${isDarkMode
-              ? "bg-gray-800 border-gray-700"
-              : "bg-white border-gray-200"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
             }`}
         >
           <h2 className="text-xl font-bold text-center mb-6">
@@ -159,7 +159,7 @@ export default function AdminAuthPage() {
           </button>
         </div>
       </div>
-      <AdminFoot />
+      <AdminFooter />
     </>
   );
 }
