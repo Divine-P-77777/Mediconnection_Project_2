@@ -1,5 +1,5 @@
-import AdminFoot from "./AdminFoot.js";
-import AdminNav from "./AdminNav.js";
+import AdminFoot from "./AdminFoot";
+import AdminNav from "./AdminNav";
 
 
 
