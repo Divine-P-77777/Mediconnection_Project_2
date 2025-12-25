@@ -1,0 +1,17 @@
+User-agent: *
+Allow: /
+
+# Block private & system routes
+Disallow: /admin/
+Disallow: /developer/
+Disallow: /doctor/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /_next/
+Disallow: /cgi-bin/
+
+# Explicitly allow public user pages
+Allow: /user/
+
+# Sitemap
+Sitemap: https://mediconnection.vercel.app/sitemap.xml

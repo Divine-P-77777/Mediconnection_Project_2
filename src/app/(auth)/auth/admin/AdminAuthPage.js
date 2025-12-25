@@ -7,9 +7,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useSelector } from "react-redux";
 import { FcGoogle } from "react-icons/fc";
 
-const allowedSuperAdmins =
-  process.env.NEXT_PUBLIC_SUPER_ADMINS?.split(",") || [];
-
 export default function AdminAuthPage() {
   const router = useRouter();
   const { Success, errorToast } = useToast();
@@ -19,12 +16,13 @@ export default function AdminAuthPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Email + Password Login
+  // Email + Password Login (ROLE BASED)
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Authenticate
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -32,9 +30,22 @@ export default function AdminAuthPage() {
 
       if (error) throw error;
 
-      if (!allowedSuperAdmins.includes(data.user.email)) {
-        await supabase.auth.signOut();
-        throw new Error("Sorry, you don’t have permission");
+      const user = data.user;
+
+      //  Fetch profile
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      // Role check
+      if (profile.role !== "super_admin") {
+        errorToast("Sorry, you don’t have permission");
+        router.replace("/admin"); // stay on login
+        return;
       }
 
       Success("Welcome Super Admin!");
@@ -62,13 +73,13 @@ export default function AdminAuthPage() {
     }
   };
 
-  // Google Login (Restricted)
+  // ⚠️ Google Login (still needs OAuth guard page)
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/admin`,
+          redirectTo: `${window.location.origin}/admin/oauth-check`,
         },
       });
 

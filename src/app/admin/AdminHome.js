@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { FileText, Shield, Briefcase, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useToast } from "@/hooks/use-toast";
 
 
 const adminFeatures = [
@@ -36,7 +36,7 @@ const adminFeatures = [
   },
 ];
 
-/** 🔹 Feature Card Component */
+/**  Feature Card Component */
 const FeatureCard = memo(({ feature, isDarkMode }) => {
   const Icon = feature.icon;
   return (
@@ -73,6 +73,14 @@ FeatureCard.displayName = "FeatureCard";
 export default function AdminHome() {
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
   const { user, session } = useAuth();
+
+  if(!user || !session){
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-lg">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div
