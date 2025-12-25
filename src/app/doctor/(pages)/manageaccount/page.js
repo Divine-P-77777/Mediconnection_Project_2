@@ -10,7 +10,7 @@ export default function ManageAccount() {
   const { user, isDoctor, loading } = useAuth();
   const doctorId = user?.id;
   const isDarkMode = useSelector((state) => state.theme.isDarkMode);
-const { Success, errorToast: errToast } = useToast();
+const { Success, errorToast} = useToast();
   const [formData, setFormData] = useState({
     account_number: '',
     bank_name: '',
@@ -19,7 +19,6 @@ const { Success, errorToast: errToast } = useToast();
   const [saving, setSaving] = useState(false);
 
   const router = useRouter();
-  const { errorToast } = useToast();
 
 
     if(!user){
@@ -58,7 +57,7 @@ const { Success, errorToast: errToast } = useToast();
   // ✅ Save / Update account details
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!doctorId) return errToast('Doctor ID not found');
+    if (!doctorId) return errorToast('Doctor ID not found');
     setSaving(true);
 
     try {
@@ -72,10 +71,10 @@ const { Success, errorToast: errToast } = useToast();
       if (res.ok) {
         Success('Account details saved!');
       } else {
-        errToast(data.error || 'Error saving account details');
+        errorToast(data.error || 'Error saving account details');
       }
     } catch (err) {
-      errToast(err.message);
+      errorToast(err.message);
     } finally {
       setSaving(false);
     }

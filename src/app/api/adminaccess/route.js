@@ -1,13 +1,13 @@
 // app/api/adminAccess/route.js
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import {serviceSupabase} from "@/supabase/serviceClient"
+
+import { serviceSupabase } from "@/supabase/serviceClient"
 
 export async function POST(req) {
   try {
     const { email, username, password, addedByHealthCenter } = await req.json();
 
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    const { data, error } = await serviceSupabase.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
