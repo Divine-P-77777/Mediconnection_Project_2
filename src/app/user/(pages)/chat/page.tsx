@@ -14,10 +14,19 @@ import {
     Sparkles,
     Loader2,
     ArrowLeft,
+    Mic,
+    Sun,
+    Moon,
 } from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useAppSelector } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import LiveVoiceModal from "./LiveVoiceModal";
+import { toggleDarkMode } from "@/store/themeSlice";
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 
 interface Message {
     role: "user" | "assistant";
@@ -29,23 +38,25 @@ const MAX_CONTEXT_MESSAGES = 8;
 const ChatPage = () => {
     const router = useRouter();
     const isDarkMode = useAppSelector((s) => s.theme.isDarkMode);
+    const dispatch = useAppDispatch();
 
     const [messages, setMessages] = useState<Message[]>([
         {
             role: "assistant",
             content:
-                "Hello! I'm your health assistant AI. Describe your symptoms, and I'll help you analyze them.",
+                "**Hello! 👋**\n\nI'm your **health assistant AI**.\n\nDescribe your symptoms and I’ll help you analyze them.",
         },
     ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [isLiveOpen, setIsLiveOpen] = useState(false);
 
     const inputRef = useRef<HTMLInputElement>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        inputRef.current?.focus();
-    }, []);
+        if (!isLiveOpen) inputRef.current?.focus();
+    }, [isLiveOpen]);
 
     useLayoutEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,7 +85,7 @@ const ChatPage = () => {
                 {
                     role: "assistant",
                     content:
-                        "⚠️ I'm having trouble connecting right now. Please try again shortly.",
+                        "⚠️ **Connection issue**\n\nPlease try again in a moment.",
                 },
             ]);
         } finally {
@@ -82,34 +93,80 @@ const ChatPage = () => {
         }
     }, [input, isLoading, messages]);
 
+    const handleVoiceSend = async (text: string): Promise<string> => {
+        const userMessage: Message = { role: "user", content: text };
+        setMessages((prev) => [...prev, userMessage]);
+
+        try {
+            const context = [...messages, userMessage].slice(-MAX_CONTEXT_MESSAGES);
+            const response = await axios.post("/api/chat", { messages: context });
+            const botText = response.data.content;
+
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: botText },
+            ]);
+
+            return botText;
+        } catch {
+            const errorText = "**Sorry**, voice connection failed.";
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: errorText },
+            ]);
+            return errorText;
+        }
+    };
+
     return (
         <div
-            className={`h-[100dvh] flex flex-col ${isDarkMode ? "bg-[#0A192F] text-slate-100" : "bg-slate-50 text-slate-800"
+            className={`h-[100dvh] flex flex-col ${isDarkMode
+                ? "bg-[#0A192F] text-slate-100"
+                : "bg-slate-50 text-slate-800"
                 }`}
         >
+            <LiveVoiceModal
+                isOpen={isLiveOpen}
+                onClose={() => setIsLiveOpen(false)}
+                onSend={handleVoiceSend}
+            />
+
             {/* HEADER */}
             <div
-                className={`shrink-0 border-b px-4 py-3 flex items-center gap-3 ${isDarkMode
+                className={`border-b px-4 py-3 flex items-center justify-between ${isDarkMode
                     ? "border-slate-700 bg-[#0A192F]"
                     : "border-slate-200 bg-white"
                     }`}
             >
-                <button
-                    onClick={() => router.push("/user")}
-                    className="p-2 rounded-lg hover:bg-slate-200/20"
-                >
-                    <ArrowLeft size={18} />
-                </button>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => router.push("/user")}>
+                        <ArrowLeft size={18} />
+                    </button>
 
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white">
-                    <Sparkles size={16} />
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white">
+                        <Sparkles size={16} />
+                    </div>
+
+                    <div>
+                        <h1 className="text-sm font-semibold">AI Health Assistant</h1>
+                        <p className="text-[11px] opacity-70">
+                            Powered by Gemini & MedModel
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <h1 className="text-sm font-semibold">AI Health Assistant</h1>
-                    <p className="text-[11px] opacity-70">
-                        Powered by Gemini & MedModel
-                    </p>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsLiveOpen(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium animate-pulse"
+                    >
+                        <Mic size={14} />
+                        Live Mode
+                    </button>
+
+                    <button onClick={() => dispatch(toggleDarkMode())}>
+                        {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+                    </button>
                 </div>
             </div>
 
@@ -135,14 +192,23 @@ const ChatPage = () => {
                             </div>
 
                             <div
-                                className={`px-4 py-3 rounded-2xl text-sm shadow-sm ${msg.role === "user"
+                                className={`px-4 py-3 rounded-2xl text-sm shadow-sm markdown ${msg.role === "user"
                                     ? "bg-slate-800 text-white rounded-br-none"
                                     : isDarkMode
                                         ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-none"
                                         : "bg-white text-slate-700 border rounded-bl-none"
                                     }`}
                             >
-                                {msg.content}
+                                {msg.role === "assistant" ? (
+                                    <ReactMarkdown
+                                        remarkPlugins={[remarkGfm]}
+                                        rehypePlugins={[rehypeHighlight]}
+                                    >
+                                        {msg.content}
+                                    </ReactMarkdown>
+                                ) : (
+                                    msg.content
+                                )}
                             </div>
                         </div>
                     </div>
@@ -158,9 +224,9 @@ const ChatPage = () => {
                 <div ref={bottomRef} />
             </div>
 
-            {/* FOOTER (FIXED-LIKE) */}
+            {/* FOOTER */}
             <div
-                className={`shrink-0 border-t px-3 py-3 ${isDarkMode
+                className={`border-t px-3 py-3 ${isDarkMode
                     ? "border-slate-700 bg-[#0A192F]"
                     : "border-slate-200 bg-white"
                     }`}
@@ -174,8 +240,7 @@ const ChatPage = () => {
                     <input
                         ref={inputRef}
                         type="text"
-                        className={`flex-1 px-3 py-3 text-sm outline-none bg-transparent ${isDarkMode ? "text-slate-100" : "text-slate-700"
-                            }`}
+                        className={`flex-1 px-3 py-3 text-sm bg-transparent outline-none ${isDarkMode ? "text-white placeholder:text-white" : "text-slate-700 placeholder:text-slate-700"}`}
                         placeholder="Describe your symptoms..."
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
@@ -184,7 +249,7 @@ const ChatPage = () => {
                     <button
                         onClick={handleSend}
                         disabled={isLoading || !input.trim()}
-                        className="p-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50"
+                        className="p-3 rounded-lg bg-indigo-600 text-white disabled:opacity-50"
                     >
                         <Send size={16} />
                     </button>

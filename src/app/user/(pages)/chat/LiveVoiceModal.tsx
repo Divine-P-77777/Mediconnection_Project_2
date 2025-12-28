@@ -23,16 +23,16 @@ export default function LiveVoiceModal({
 
     const recognitionRef = useRef<any>(null);
     const synthRef = useRef<SpeechSynthesis | null>(null);
+    const silenceTimer = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            // Initialize Speech Recognition
             const SpeechRecognition =
                 (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
             if (SpeechRecognition) {
                 recognitionRef.current = new SpeechRecognition();
-                recognitionRef.current.continuous = false; // Stop after one sentence for turn-taking
+                recognitionRef.current.continuous = true; // Keep listening until silence
                 recognitionRef.current.interimResults = true;
                 recognitionRef.current.lang = language;
 
@@ -42,46 +42,54 @@ export default function LiveVoiceModal({
                 };
 
                 recognitionRef.current.onresult = (event: any) => {
+                    // Clear existing timer on any sound/result
+                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
+
                     const current = event.resultIndex;
-                    const transcriptText = event.results[current][0].transcript;
+                    const transcriptText = Array.from(event.results)
+                        .slice(current)
+                        .map((result: any) => result[0].transcript)
+                        .join("");
+
+                    // Update UI with live transcript
                     setTranscript(transcriptText);
+
+                    // Set 2s silence timer
+                    silenceTimer.current = setTimeout(() => {
+                        recognitionRef.current.stop();
+                    }, 2000);
                 };
 
                 recognitionRef.current.onend = async () => {
+                    if (silenceTimer.current) clearTimeout(silenceTimer.current);
                     setIsListening(false);
-                    // If we have a final transcript, send it
-                    // We need to access the latest transcript state, capturing via ref or just checking logic
-                    // Note: sync issues might occur in strict mode, but standard closure applies.
                 };
-
-                // Handle "final" result event specifically for sending
-                recognitionRef.current.onresult = async (event: any) => {
-                    const current = event.resultIndex;
-                    const result = event.results[current];
-                    const text = result[0].transcript;
-                    setTranscript(text);
-
-                    if (result.isFinal) {
-                        setIsListening(false);
-                        setStatus("Thinking...");
-                        await handleProcessInput(text);
-                    }
-                };
-
             }
-
             synthRef.current = window.speechSynthesis;
         }
 
         return () => {
             if (recognitionRef.current) recognitionRef.current.stop();
             if (synthRef.current) synthRef.current.cancel();
-        }
-    }, [language]); // Re-init if lang changes
+            if (silenceTimer.current) clearTimeout(silenceTimer.current);
+        };
+    }, [language]);
+
+    // Effect to trigger send when listening stops and we have text
+    useEffect(() => {
+        const process = async () => {
+            if (!isListening && transcript.trim()) {
+                setStatus("Thinking...");
+                await handleProcessInput(transcript);
+            }
+        };
+        process();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isListening]);
 
     const handleProcessInput = async (text: string) => {
         if (!text.trim()) return;
-
+        // ... rest stays same, but reset transcript after sending is safer in 'speak' or here
         try {
             const responseText = await onSend(text);
             setStatus("Speaking...");
@@ -93,13 +101,10 @@ export default function LiveVoiceModal({
 
     const speak = (text: string) => {
         if (!synthRef.current) return;
-
-        // Stop previous
         synthRef.current.cancel();
 
         const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = language; // Speak in the same language context if possible, though responses are likely English
-        // Use a natural English voice if available for clarity, or Hindi if response is mixed
+        utterance.lang = language;
         utterance.rate = 1;
         utterance.pitch = 1;
 
@@ -158,7 +163,7 @@ export default function LiveVoiceModal({
                     {/* Orb Animation */}
                     <div className="relative flex items-center justify-center">
                         <div className={`w-32 h-32 rounded-full blur-3xl transition-all duration-500 ${isListening ? "bg-blue-500 scale-150 animate-pulse" :
-                                isSpeaking ? "bg-purple-500 scale-125 animate-pulse" : "bg-slate-700 scale-100"
+                            isSpeaking ? "bg-purple-500 scale-125 animate-pulse" : "bg-slate-700 scale-100"
                             }`} />
 
                         <div className={`absolute inset-0 rounded-full border border-white/10 transition-all duration-300 ${isListening ? "scale-125 border-blue-400/30" : "scale-100"}`} />
@@ -166,8 +171,8 @@ export default function LiveVoiceModal({
                         <button
                             onClick={toggleListening}
                             className={`relative z-10 w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-2xl ${isListening ? "bg-white text-blue-600 scale-110" :
-                                    isSpeaking ? "bg-white text-purple-600" :
-                                        "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white hover:scale-105"
+                                isSpeaking ? "bg-white text-purple-600" :
+                                    "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white hover:scale-105"
                                 }`}
                         >
                             {isSpeaking ? <Volume2 size={32} /> : isListening ? <Mic size={32} /> : <MicOff size={32} />}

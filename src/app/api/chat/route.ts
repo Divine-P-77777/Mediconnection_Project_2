@@ -18,27 +18,41 @@ const ai = new GoogleGenAI({
 /* ------------------------------------------------------------------ */
 /* Helper: Gemini with fallback */
 /* ------------------------------------------------------------------ */
-async function generateContentWithFallback(prompt: string): Promise<string> {
-    const models = ["gemini-2.5-flash", "gemini-2.5-pro"];
+/* ------------------------------------------------------------------ */
+/* Helper: Gemini with fallback + History */
+/* ------------------------------------------------------------------ */
+async function generateWithHistory(
+    systemInstruction: string,
+    history: { role: string; parts: { text: string }[] }[]
+): Promise<string> {
+    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
 
     for (const model of models) {
         try {
-            console.log(`🧠 Using Gemini model: ${model}`);
-
-            const res = await ai.models.generateContent({
+            const reqBody: any = {
                 model,
-                contents: [
-                    {
-                        role: "user",
-                        parts: [{ text: prompt }],
-                    },
-                ],
-            });
+                contents: history,
+            };
 
-            if (!res.text) throw new Error("Empty Gemini response");
-            return res.text;
+            // Attempt to add system instruction if model supports it (1.5+ does)
+            if (model.includes("1.5") || model.includes("2.0")) {
+                reqBody.systemInstruction = { parts: [{ text: systemInstruction }] };
+            } else {
+                // Fallback: Prepend system instruction to the first message part
+                if (history.length > 0 && history[0].role === "user") {
+                    const firstMsg = { ...history[0], parts: [{ text: systemInstruction + "\n\n" + history[0].parts[0].text }] };
+                    reqBody.contents = [firstMsg, ...history.slice(1)];
+                } else {
+                    // If no history or first is model, just prepend a user message
+                    reqBody.contents = [{ role: "user", parts: [{ text: systemInstruction }] }, ...history];
+                }
+            }
+
+            const res = await ai.models.generateContent(reqBody);
+
+            if (res.text) return res.text;
         } catch (err: any) {
-            console.warn(`⚠️ Model ${model} failed: ${err.message}`);
+            console.warn(`⚠️ ${model} failed: ${err.message}`);
         }
     }
 
@@ -58,7 +72,7 @@ export async function POST(req: Request) {
         }
 
         const { messages } = await req.json();
-        const lastMessage = messages?.[messages.length - 1];
+        const lastMessage = messages?.at(-1);
 
         if (!lastMessage?.content) {
             return NextResponse.json(
@@ -70,75 +84,67 @@ export async function POST(req: Request) {
         const userText: string = lastMessage.content;
 
         /* -------------------------------------------------------------- */
-        /* Step 1: Symptom Extraction */
+        /* Step 1: Symptom Extraction (STRICT) */
         /* -------------------------------------------------------------- */
         const extractionPrompt = `
-You are a medical assistant.
-
-Valid symptoms list:
+Extract symptoms strictly from this list:
 ${allSymptoms.join(", ")}
 
-User Input:
+User input:
 "${userText}"
 
-Task:
-- Extract symptoms ONLY from the valid list
-- Map synonyms to closest valid symptom
-- Return ONLY a JSON array of strings
-- No markdown, no explanation
+Rules:
+- Output ONLY a JSON array
+- Use only symptoms from the list
+- Map synonyms if needed
+- If none found, return []
 
 Examples:
-Input: "I have itching and a skin rash"
-Output: ["itching", "skin_rash"]
-
-Input: "I feel fine"
-Output: []
+"I have itching and a rash" → ["itching","skin_rash"]
+"I feel fine" → []
 `;
 
         let extractedSymptoms: string[] = [];
 
         try {
-            const raw = await generateContentWithFallback(extractionPrompt);
-            const clean = raw.replace(/```json|```/g, "").trim();
+            // For extraction, we only need the immediate input
+            const extractionHistory = [{ role: "user", parts: [{ text: extractionPrompt }] }];
+            const raw = await generateWithHistory("You are a medical data extractor.", extractionHistory);
 
-            extractedSymptoms = JSON.parse(clean);
-        } catch (err) {
-            console.warn("⚠️ Gemini extraction fallback used");
-
-            extractedSymptoms = allSymptoms.filter((s) =>
-                userText.toLowerCase().includes(s.replace(/_/g, " "))
+            extractedSymptoms = JSON.parse(
+                raw.replace(/```json|```/g, "").trim()
             );
+        } catch {
+            extractedSymptoms = [];
         }
 
-        // Normalize + safety
-        extractedSymptoms = Array.isArray(extractedSymptoms)
-            ? extractedSymptoms.map((s) => s.trim().toLowerCase()).filter(Boolean)
-            : [];
-
-        console.log("✅ Extracted Symptoms:", extractedSymptoms);
+        // Strict filtering (VERY IMPORTANT)
+        extractedSymptoms = extractedSymptoms
+            .map((s) => s.trim().toLowerCase())
+            .filter((s) => allSymptoms.includes(s));
 
         /* -------------------------------------------------------------- */
-        /* Step 2: Python ML Backend */
+        /* Step 2: ML Backend */
         /* -------------------------------------------------------------- */
+        const API_URL =
+            process.env.NODE_ENV === "development"
+                ? process.env.CHATBOT_API_DEV
+                : process.env.CHATBOT_API_PROD;
+
         let diseasePrediction = "Unknown";
         let predictionOk = false;
-        let API_URL = process.env.NODE_ENV === "development" ?
-            process.env.CHATBOT_API_DEV : process.env.CHATBOT_API_PROD;
 
-        if (extractedSymptoms.length > 0) {
+        if (API_URL && extractedSymptoms.length > 0) {
             try {
                 const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 50_000);
+                const timeout = setTimeout(() => controller.abort(), 15_000);
 
-                const res = await fetch(
-                    `${API_URL}/predict`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ symptoms: extractedSymptoms }),
-                        signal: controller.signal,
-                    }
-                );
+                const res = await fetch(`${API_URL}/predict`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ symptoms: extractedSymptoms }),
+                    signal: controller.signal,
+                });
 
                 clearTimeout(timeout);
 
@@ -153,38 +159,46 @@ Output: []
         }
 
         /* -------------------------------------------------------------- */
-        /* Step 3: Final Response */
+        /* Step 3: Final Response (Context Aware) */
         /* -------------------------------------------------------------- */
-        const finalPrompt = predictionOk
+
+        const chatSystemInstruction = predictionOk
             ? `
-User input:
-"${userText}"
+Detected symptoms: ${extractedSymptoms.join(", ")}
+Possible condition: ${diseasePrediction}
 
-Extracted symptoms:
-${extractedSymptoms.join(", ")}
-
-Predicted disease:
-${diseasePrediction}
-
-Respond empathetically.
-Mention the disease as a possibility.
-Give brief advice.
-Strongly recommend consulting a doctor.
+Your role:
+- Respond in a calm, empathetic tone.
+- Explain the possible condition (${diseasePrediction}) as a possibility, not a diagnosis.
+- Recommend seeing a doctor.
+- Keep responses short/concise (optimized for voice).
 `
             : `
-User input:
-"${userText}"
+Detected symptoms: ${extractedSymptoms.join(", ") || "None clearly detected"}
 
-Extracted symptoms:
-${extractedSymptoms.join(", ")}
-
-No confirmed prediction.
-Acknowledge symptoms.
-Provide general guidance.
-Ask user to clarify if needed.
+Your role:
+- Respond helpfully.
+- If symptoms are unclear, ask for clarification.
+- Avoid medical alarm.
+- Keep responses short/concise (optimized for voice).
 `;
 
-        const botResponse = await generateContentWithFallback(finalPrompt);
+        // Transform frontend messages to Gemini format
+        // We rely on the Frontend to send a clean history array.
+        // We map 'assistant' -> 'model'
+        const history = messages.slice(0, -1).map((m: any) => ({
+            role: m.role === "user" ? "user" : "model",
+            parts: [{ text: m.content }],
+        }));
+
+        // Add the current user message
+        history.push({
+            role: "user",
+            parts: [{ text: userText }],
+        });
+
+        // Pass the system instruction + history
+        const botResponse = await generateWithHistory(chatSystemInstruction, history);
 
         return NextResponse.json({
             role: "assistant",
@@ -192,10 +206,10 @@ Ask user to clarify if needed.
             meta: {
                 symptoms: extractedSymptoms,
                 prediction: diseasePrediction,
-                model: predictionOk ? "ml+gemini" : "gemini-only",
+                mode: predictionOk ? "ml+gemini" : "gemini-only",
             },
         });
-    } catch (err: any) {
+    } catch (err) {
         console.error("🔥 Chat API Error:", err);
         return NextResponse.json(
             { error: "AI service unavailable" },
