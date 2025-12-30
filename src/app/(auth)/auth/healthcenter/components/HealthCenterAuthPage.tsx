@@ -51,7 +51,7 @@ const HealthCenterAuthPage: FC = () => {
         }
 
         // ✅ Correct role
-        router.replace("/healthcenter/dashboard");
+        router.replace("/healthcenter");
       } catch {
         setCheckingSession(false);
       }

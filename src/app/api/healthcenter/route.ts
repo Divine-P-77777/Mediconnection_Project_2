@@ -17,8 +17,10 @@ interface HealthCenterRegisterBody {
 /* -------------------- POST: REGISTER HEALTH CENTER -------------------- */
 
 export async function POST(req: Request): Promise<NextResponse> {
+  console.log("POST /api/healthcenter called");
   try {
     const body: HealthCenterRegisterBody = await req.json();
+    console.log("Body parsed:", { ...body, password: "***" });
 
     const {
       email,
@@ -42,6 +44,7 @@ export async function POST(req: Request): Promise<NextResponse> {
       !contact ||
       !pincode
     ) {
+      console.log("Validation failed");
       return NextResponse.json(
         { error: "All fields required" },
         { status: 400 }
@@ -49,6 +52,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     }
 
     /* -------- STEP 1: SIGN UP USER -------- */
+    console.log("Step 1: Signing up user...");
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -67,15 +71,20 @@ export async function POST(req: Request): Promise<NextResponse> {
     });
 
     if (error) {
+      console.error("SignUp Error:", error);
       throw error;
     }
 
+    console.log("SignUp successful, User ID:", data.user?.id);
+
     const userId: string | undefined = data.user?.id;
     if (!userId) {
+      console.error("User creation failed: No user ID returned");
       throw new Error("User creation failed");
     }
 
     /* -------- STEP 2: INSERT HEALTH CENTER -------- */
+    console.log("Step 2: Inserting health center record...");
     const { error: hcError } = await supabase
       .from("health_centers")
       .insert([
@@ -91,8 +100,11 @@ export async function POST(req: Request): Promise<NextResponse> {
       ]);
 
     if (hcError) {
+      console.error("Insert Health Center Error:", hcError);
       throw hcError;
     }
+
+    console.log("Health Center inserted successfully");
 
     return NextResponse.json(
       {
@@ -108,6 +120,7 @@ export async function POST(req: Request): Promise<NextResponse> {
   } catch (err: unknown) {
     const message =
       err instanceof Error ? err.message : "Server error";
+    console.error("Catch Error:", err);
 
     return NextResponse.json(
       { error: message },

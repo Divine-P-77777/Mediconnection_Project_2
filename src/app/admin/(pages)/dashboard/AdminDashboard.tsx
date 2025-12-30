@@ -13,11 +13,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { InfoRow } from "@/components/ui/InfoRow";
 import { Button } from "@/components/ui/button";
 
-/* ---------------------------------- */
-/* Types */
-/* ---------------------------------- */
 interface HealthCenter {
   id: string;
   name: string;
@@ -32,9 +30,7 @@ interface HealthCenter {
   created_at: string;
 }
 
-/* ---------------------------------- */
-/* Component */
-/* ---------------------------------- */
+
 export default function AdminDashboard(): JSX.Element {
   const { session, loading: authLoading } = useAuth();
   const router = useRouter();
@@ -139,7 +135,7 @@ export default function AdminDashboard(): JSX.Element {
     }
   };
 
-  /* ---------- Filtering ---------- */
+  /*  Filtering  */
   const filteredCenters = useMemo(() => {
     const q = searchQuery.toLowerCase();
     return localCenters.filter(
@@ -159,9 +155,6 @@ export default function AdminDashboard(): JSX.Element {
 
   if (loading || authLoading) return <Loader />;
 
-  /* ---------------------------------- */
-  /* Render */
-  /* ---------------------------------- */
   return (
     <div
       className={`p-6 pt-28 min-h-screen ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
@@ -186,8 +179,8 @@ export default function AdminDashboard(): JSX.Element {
           name="query"
           placeholder="Search health centers..."
           className={`flex-1 p-2 rounded border ${isDarkMode
-              ? "bg-gray-700 border-gray-600"
-              : "bg-white border-gray-300"
+            ? "bg-gray-700 border-gray-600"
+            : "bg-white border-gray-300"
             }`}
         />
         <button className="p-2 bg-blue-600 text-white rounded">
@@ -233,8 +226,8 @@ export default function AdminDashboard(): JSX.Element {
                     <button
                       onClick={() => toggleApproval(c.id, c.approved)}
                       className={`p-2 rounded-full ${c.approved
-                          ? "bg-green-600"
-                          : "bg-red-600"
+                        ? "bg-green-600"
+                        : "bg-red-600"
                         } text-white`}
                     >
                       {c.approved ? <Check size={16} /> : <X size={16} />}
@@ -293,29 +286,32 @@ export default function AdminDashboard(): JSX.Element {
           </Button>
         </div>
       )}
-
       {/* Dialog */}
-      <Dialog open={!!selectedCenter} onOpenChange={() => setSelectedCenter(null)}>
-        <DialogContent>
+      <Dialog
+        open={!!selectedCenter}
+        onOpenChange={() => setSelectedCenter(null)}
+      >
+        <DialogContent isDarkMode={isDarkMode}>
           <DialogHeader>
             <DialogTitle>Health Center Details</DialogTitle>
           </DialogHeader>
 
           {selectedCenter && (
-            <div className="space-y-2 text-sm">
-              <p><strong>Name:</strong> {selectedCenter.name}</p>
-              <p><strong>Email:</strong> {selectedCenter.email}</p>
-              <p><strong>Address:</strong> {selectedCenter.address}</p>
-              <p><strong>Phone:</strong> {selectedCenter.contact}</p>
-              <p><strong>Pincode:</strong> {selectedCenter.pincode}</p>
-              <p>
-                <strong>Created:</strong>{" "}
-                {new Date(selectedCenter.created_at).toLocaleString()}
-              </p>
+            <div className="mt-4 space-y-3 text-sm">
+              <InfoRow isDarkMode={isDarkMode} label="Name" value={selectedCenter.name} />
+              <InfoRow isDarkMode={isDarkMode} label="Email" value={selectedCenter.email} />
+              <InfoRow isDarkMode={isDarkMode} label="Address" value={selectedCenter.address} />
+              <InfoRow isDarkMode={isDarkMode} label="Phone" value={selectedCenter.contact} />
+              <InfoRow isDarkMode={isDarkMode} label="Pincode" value={selectedCenter.pincode} />
+              <InfoRow isDarkMode={isDarkMode}
+                label="Created"
+                value={new Date(selectedCenter.created_at).toLocaleString()}
+              />
             </div>
           )}
         </DialogContent>
       </Dialog>
+
     </div>
   );
 }

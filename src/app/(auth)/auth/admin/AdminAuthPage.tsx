@@ -1,14 +1,14 @@
 "use client";
 
 import { FC, FormEvent, useState } from "react";
-import { supabase } from "@/supabase/client";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/hooks/use-toast";
 import { FcGoogle } from "react-icons/fc";
 
-import AdminFooter from "@/app/admin/AdminFooter";
-import AdminNavbar from "@/app/admin/AdminNavbar";
+import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
+
+import AdminNavbar from "@/app/admin/AdminNavbar";
+import AdminFooter from "@/app/admin/AdminFooter";
 
 /* ================= COMPONENT ================= */
 
@@ -17,79 +17,67 @@ const AdminAuthPage: FC = () => {
   const { success: Success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  /* ================= HANDLERS ================= */
+  /* ================= LOGIN ================= */
 
-  const handleLogin = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const res = await fetch("/api/super-admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error("User not found");
+      const data = await res.json();
 
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-
-      if (profileError) throw profileError;
-
-      if (profile.role !== "super_admin") {
-        errorToast("Sorry, you don’t have permission");
-        router.replace("/admin");
-        return;
+      if (!res.ok) {
+        throw new Error(data.error || "Admin login failed");
       }
 
       Success("Welcome Super Admin!");
-      router.push("/admin/dashboard");
+      router.replace("/admin");
     } catch (err) {
-      errorToast("❌ Login Failed: " + (err as Error).message);
+      errorToast((err as Error).message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async (): Promise<void> => {
+  /* ================= PASSWORD RESET ================= */
+
+  const handleForgotPassword = async () => {
     if (!email) {
       errorToast("Please enter your email first");
       return;
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/admin`,
+      const res = await fetch("/api/admin/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
 
-      if (error) throw error;
-      Success("Password reset link sent");
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error);
+
+      Success("Password reset link sent to your email");
     } catch (err) {
       errorToast((err as Error).message);
     }
   };
 
-  const handleGoogleLogin = async (): Promise<void> => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/admin/oauth-check`,
-        },
-      });
-
-      if (error) throw error;
-    } catch (err) {
-      errorToast("Google Login Failed: " + (err as Error).message);
-    }
+  /* ================= GOOGLE LOGIN ================= */
+  // OPTIONAL: usually disabled for admins
+  const handleGoogleLogin = async () => {
+    errorToast("Google login is disabled for admin accounts");
   };
 
   /* ================= UI ================= */
@@ -100,14 +88,14 @@ const AdminAuthPage: FC = () => {
 
       <div
         className={`flex min-h-screen px-4 items-center justify-center ${isDarkMode
-            ? "bg-gray-900 text-gray-100"
-            : "bg-gray-100 text-gray-800"
+          ? "bg-gray-900 text-gray-100"
+          : "bg-gray-100 text-gray-800"
           }`}
       >
         <div
           className={`w-full max-w-md p-6 rounded-2xl shadow-lg border ${isDarkMode
-              ? "bg-gray-800 border-gray-700"
-              : "bg-white border-gray-200"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
             }`}
         >
           <h2 className="text-xl font-bold text-center mb-6">
@@ -157,10 +145,10 @@ const AdminAuthPage: FC = () => {
 
           <button
             onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-2 w-full py-2 border rounded-md"
+            className="flex items-center justify-center gap-2 w-full py-2 border rounded-md opacity-50 cursor-not-allowed"
           >
             <FcGoogle size={20} />
-            Continue with Google
+            Google login disabled
           </button>
         </div>
       </div>

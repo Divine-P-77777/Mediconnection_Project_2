@@ -1,12 +1,14 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Mail, Lock, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
+import { supabase } from "@/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
-import { useRouter } from "next/navigation";
-import { supabase } from "@/supabase/client";
 
 /* ---------------- Types ---------------- */
 
@@ -19,10 +21,10 @@ type LoginFormData = {
 
 const HealthCenterLoginForm: FC = () => {
   const router = useRouter();
-  const { success: Success, errorToast } = useToast();
+  const { success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -30,74 +32,42 @@ const HealthCenterLoginForm: FC = () => {
     formState: { errors },
   } = useForm<LoginFormData>();
 
-  useEffect(() => {
-    const checkSession = async (): Promise<void> => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session?.user) return;
-
-      const userId = data.session.user.id;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
-
-      if (profile?.role === "health_center") {
-        router.replace("/healthcenter/dashboard");
-      }
-    };
-
-    checkSession();
-  }, [router]);
-
-  const onSubmit = async (formData: LoginFormData): Promise<void> => {
+  const onSubmit = async (formData: LoginFormData) => {
     try {
       setLoading(true);
 
-      const res = await fetch("/api/healthcenter", {
+      const res = await fetch("/api/healthcenter/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: "login", ...formData }),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Login failed");
-      if (!data?.user?.approved) {
-        throw new Error("Your account is not approved yet");
+
+      if (!res.ok) {
+        throw new Error(data.error || "Login failed");
       }
 
-      Success("Welcome back, Health Center!");
-      router.push("/healthcenter/dashboard");
+      success("Welcome back, Health Center!");
+      router.replace("/healthcenter/dashboard");
     } catch (err) {
       errorToast((err as Error).message);
-    } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async (): Promise<void> => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/healthcenter/dashboard`,
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      errorToast((err as Error).message);
-    }
-  };
+  /* ---------------- Styles ---------------- */
 
   const baseInput =
     "pl-10 border rounded-lg w-full py-2 focus:outline-none focus:ring-2 transition duration-200";
-  const placeholderColor = isDarkMode
-    ? "placeholder-gray-400"
-    : "placeholder-gray-500";
+
   const inputBg = isDarkMode
     ? "bg-gray-800 text-white border-gray-700 focus:ring-cyan-400"
     : "bg-white text-black border-gray-300 focus:ring-cyan-600";
+
+  const placeholderColor = isDarkMode
+    ? "placeholder-gray-400"
+    : "placeholder-gray-500";
 
   return (
     <form
@@ -115,9 +85,9 @@ const HealthCenterLoginForm: FC = () => {
       <div className="relative">
         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <input
-          {...register("email", { required: "Email is required" })}
           type="email"
           placeholder="Email"
+          {...register("email", { required: "Email is required" })}
           className={`${baseInput} ${inputBg} ${placeholderColor}`}
         />
         {errors.email && (
@@ -128,16 +98,24 @@ const HealthCenterLoginForm: FC = () => {
       <div className="relative">
         <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
         <input
-          {...register("password", { required: "Password is required" })}
           type="password"
           placeholder="Password"
+          {...register("password", { required: "Password is required" })}
           className={`${baseInput} ${inputBg} ${placeholderColor}`}
         />
         {errors.password && (
-          <p className="text-xs text-red-500">
-            {errors.password.message}
-          </p>
+          <p className="text-xs text-red-500">{errors.password.message}</p>
         )}
+      </div>
+
+      <div className="flex justify-end">
+        <Link
+          href="/auth/forgot-password"
+          className={`text-sm hover:underline ${isDarkMode ? "text-cyan-400" : "text-cyan-600"
+            }`}
+        >
+          Forgot Password?
+        </Link>
       </div>
 
       <button
@@ -147,15 +125,6 @@ const HealthCenterLoginForm: FC = () => {
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Login
-      </button>
-
-      <button
-        type="button"
-        onClick={handleGoogleLogin}
-        disabled={loading}
-        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg font-medium disabled:opacity-70"
-      >
-        Continue with Google
       </button>
     </form>
   );

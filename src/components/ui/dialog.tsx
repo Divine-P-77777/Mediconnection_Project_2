@@ -5,10 +5,14 @@ import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/* ---------------------------------- Root ---------------------------------- */
+
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
 export const DialogPortal = DialogPrimitive.Portal;
 export const DialogClose = DialogPrimitive.Close;
+
+/* -------------------------------- Overlay --------------------------------- */
 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -26,23 +30,54 @@ const DialogOverlay = React.forwardRef<
 
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+/* ------------------------------ Content Props ------------------------------ */
+
+interface DialogContentProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> {
+  isDarkMode?: boolean;
+}
+
+/* -------------------------------- Content -------------------------------- */
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, isDarkMode = false, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
+
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed z-50 left-1/2 top-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white dark:bg-gray-900 p-6 shadow-lg focus:outline-none",
-        "data-[state=open]:animate-scaleIn data-[state=closed]:animate-scaleOut",
+        `
+        fixed z-50 left-1/2 top-1/2 w-full max-w-lg
+        -translate-x-1/2 -translate-y-1/2
+        rounded-2xl p-6 shadow-lg focus:outline-none
+        data-[state=open]:animate-scaleIn
+        data-[state=closed]:animate-scaleOut
+        ${isDarkMode
+          ? "bg-gray-900 text-white"
+          : "bg-white text-gray-900"
+        }
+        `,
         className
       )}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none">
+
+      <DialogPrimitive.Close
+        className={cn(
+          `
+          absolute right-4 top-4 rounded-full p-1
+          focus:outline-none
+          ${isDarkMode
+            ? "text-gray-400 hover:bg-gray-800"
+            : "text-gray-500 hover:bg-gray-200"
+          }
+          `
+        )}
+      >
         <X className="h-5 w-5" />
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
@@ -51,15 +86,22 @@ const DialogContent = React.forwardRef<
 
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
+/* -------------------------------- Header --------------------------------- */
+
 const DialogHeader = ({
   className,
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn("flex flex-col space-y-2 text-center sm:text-left", className)}
+    className={cn(
+      "flex flex-col space-y-2 text-center sm:text-left",
+      className
+    )}
     {...props}
   />
 );
+
+/* --------------------------------- Title --------------------------------- */
 
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
@@ -77,19 +119,31 @@ const DialogTitle = React.forwardRef<
 
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
+/* ------------------------------- Description ------------------------------ */
+
+interface DialogDescriptionProps
+  extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description> {
+  isDarkMode?: boolean;
+}
+
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
+  DialogDescriptionProps
+>(({ className, isDarkMode = false, ...props }, ref) => (
   <DialogPrimitive.Description
     ref={ref}
-    className={cn("text-sm text-gray-600 dark:text-gray-400", className)}
+    className={cn(
+      isDarkMode ? "text-gray-400" : "text-gray-600",
+      className
+    )}
     {...props}
   />
 ));
 
 DialogDescription.displayName =
   DialogPrimitive.Description.displayName;
+
+/* -------------------------------- Exports -------------------------------- */
 
 export {
   DialogContent,

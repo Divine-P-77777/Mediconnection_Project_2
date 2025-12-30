@@ -1,62 +1,52 @@
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { allSymptoms } from "./data";
 
 /* ------------------------------------------------------------------ */
-/* Gemini Client */
+/* OpenAI (GitHub Marketplace – Fine-Grained Token) */
 /* ------------------------------------------------------------------ */
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GITHUB_TOKEN_FINE;
 
 if (!apiKey) {
-    console.error("❌ GEMINI_API_KEY missing");
+    console.error("❌ GITHUB_TOKEN_FINE missing");
 }
 
-const ai = new GoogleGenAI({
-    apiKey: apiKey!,
+const client = new OpenAI({
+    apiKey,
+    baseURL: "https://models.github.ai/inference",
 });
 
 /* ------------------------------------------------------------------ */
-/* Helper: Gemini with fallback */
-/* ------------------------------------------------------------------ */
-/* ------------------------------------------------------------------ */
-/* Helper: Gemini with fallback + History */
+/* Helper: GPT with fallback + History */
 /* ------------------------------------------------------------------ */
 async function generateWithHistory(
     systemInstruction: string,
-    history: { role: string; parts: { text: string }[] }[]
+    history: { role: "user" | "assistant"; content: string }[]
 ): Promise<string> {
-    const models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
+    const models = ["openai/gpt-4.1", "openai/gpt-4o-mini"];
+    const errors: string[] = [];
 
     for (const model of models) {
         try {
-            const reqBody: any = {
+            const res = await client.chat.completions.create({
                 model,
-                contents: history,
-            };
+                temperature: 0.3,
+                messages: [
+                    { role: "system", content: systemInstruction },
+                    ...history,
+                ],
+            });
 
-            // Attempt to add system instruction if model supports it (1.5+ does)
-            if (model.includes("1.5") || model.includes("2.0")) {
-                reqBody.systemInstruction = { parts: [{ text: systemInstruction }] };
-            } else {
-                // Fallback: Prepend system instruction to the first message part
-                if (history.length > 0 && history[0].role === "user") {
-                    const firstMsg = { ...history[0], parts: [{ text: systemInstruction + "\n\n" + history[0].parts[0].text }] };
-                    reqBody.contents = [firstMsg, ...history.slice(1)];
-                } else {
-                    // If no history or first is model, just prepend a user message
-                    reqBody.contents = [{ role: "user", parts: [{ text: systemInstruction }] }, ...history];
-                }
-            }
-
-            const res = await ai.models.generateContent(reqBody);
-
-            if (res.text) return res.text;
+            const text = res.choices?.[0]?.message?.content;
+            if (text) return text;
         } catch (err: any) {
             console.warn(`⚠️ ${model} failed: ${err.message}`);
+            errors.push(`${model}: ${err.message}`);
         }
     }
 
-    throw new Error("All Gemini models failed");
+    console.error("All GPT models failed:", errors);
+    throw new Error("All GPT models failed");
 }
 
 /* ------------------------------------------------------------------ */
@@ -84,7 +74,7 @@ export async function POST(req: Request) {
         const userText: string = lastMessage.content;
 
         /* -------------------------------------------------------------- */
-        /* Step 1: Symptom Extraction (STRICT) */
+        /* Step 1: Symptom Extraction (STRICT JSON) */
         /* -------------------------------------------------------------- */
         const extractionPrompt = `
 Extract symptoms strictly from this list:
@@ -107,9 +97,10 @@ Examples:
         let extractedSymptoms: string[] = [];
 
         try {
-            // For extraction, we only need the immediate input
-            const extractionHistory = [{ role: "user", parts: [{ text: extractionPrompt }] }];
-            const raw = await generateWithHistory("You are a medical data extractor.", extractionHistory);
+            const raw = await generateWithHistory(
+                "You are a medical data extractor. Return STRICT JSON only.",
+                [{ role: "user", content: extractionPrompt }]
+            );
 
             extractedSymptoms = JSON.parse(
                 raw.replace(/```json|```/g, "").trim()
@@ -118,7 +109,7 @@ Examples:
             extractedSymptoms = [];
         }
 
-        // Strict filtering (VERY IMPORTANT)
+        // HARD FILTER (VERY IMPORTANT)
         extractedSymptoms = extractedSymptoms
             .map((s) => s.trim().toLowerCase())
             .filter((s) => allSymptoms.includes(s));
@@ -161,44 +152,37 @@ Examples:
         /* -------------------------------------------------------------- */
         /* Step 3: Final Response (Context Aware) */
         /* -------------------------------------------------------------- */
-
         const chatSystemInstruction = predictionOk
             ? `
 Detected symptoms: ${extractedSymptoms.join(", ")}
 Possible condition: ${diseasePrediction}
 
 Your role:
-- Respond in a calm, empathetic tone.
-- Explain the possible condition (${diseasePrediction}) as a possibility, not a diagnosis.
-- Recommend seeing a doctor.
-- Keep responses short/concise (optimized for voice).
+- Respond in a calm, empathetic tone
+- Explain this as a POSSIBILITY, not a diagnosis
+- Recommend seeing a doctor
+- Keep responses short and voice-optimized
 `
             : `
 Detected symptoms: ${extractedSymptoms.join(", ") || "None clearly detected"}
 
 Your role:
-- Respond helpfully.
-- If symptoms are unclear, ask for clarification.
-- Avoid medical alarm.
-- Keep responses short/concise (optimized for voice).
+- Respond helpfully
+- Ask for clarification if symptoms are unclear
+- Avoid medical alarm
+- Keep responses short and voice-optimized
 `;
 
-        // Transform frontend messages to Gemini format
-        // We rely on the Frontend to send a clean history array.
-        // We map 'assistant' -> 'model'
-        const history = messages.slice(0, -1).map((m: any) => ({
-            role: m.role === "user" ? "user" : "model",
-            parts: [{ text: m.content }],
+        // Map frontend messages → OpenAI format
+        const history = messages.map((m: any) => ({
+            role: m.role === "assistant" ? "assistant" : "user",
+            content: m.content,
         }));
 
-        // Add the current user message
-        history.push({
-            role: "user",
-            parts: [{ text: userText }],
-        });
-
-        // Pass the system instruction + history
-        const botResponse = await generateWithHistory(chatSystemInstruction, history);
+        const botResponse = await generateWithHistory(
+            chatSystemInstruction,
+            history
+        );
 
         return NextResponse.json({
             role: "assistant",
@@ -206,7 +190,7 @@ Your role:
             meta: {
                 symptoms: extractedSymptoms,
                 prediction: diseasePrediction,
-                mode: predictionOk ? "ml+gemini" : "gemini-only",
+                mode: predictionOk ? "ml+gpt" : "gpt-only",
             },
         });
     } catch (err) {
