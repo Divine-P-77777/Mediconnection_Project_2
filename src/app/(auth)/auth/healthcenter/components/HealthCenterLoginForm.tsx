@@ -49,7 +49,7 @@ const HealthCenterLoginForm: FC = () => {
       }
 
       success("Welcome back, Health Center!");
-      router.replace("/healthcenter/dashboard");
+      router.replace("/healthcenter");
     } catch (err) {
       errorToast((err as Error).message);
       setLoading(false);

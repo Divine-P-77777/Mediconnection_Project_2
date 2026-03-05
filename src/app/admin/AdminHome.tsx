@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { JSX, memo, useEffect } from "react";
 import { useSelector } from "react-redux";
 import {
   Card,
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
-import { JSX } from "react"
+
 /* ---------------------------------- */
 /* Types */
 /* ---------------------------------- */
@@ -81,8 +81,8 @@ const FeatureCard = memo(({ feature, isDarkMode }: FeatureCardProps) => {
       <Link href={feature.link}>
         <Card
           className={`p-6 h-[200px] text-center border rounded-lg transition-shadow ${isDarkMode
-            ? "bg-gray-800 border-gray-700 shadow-cyan-400/30"
-            : "bg-white border-gray-300 shadow-gray-300"
+              ? "bg-gray-800 border-gray-700 shadow-cyan-400/30"
+              : "bg-white border-gray-300 shadow-gray-300"
             } hover:shadow-md`}
         >
           <CardHeader>
@@ -93,15 +93,14 @@ const FeatureCard = memo(({ feature, isDarkMode }: FeatureCardProps) => {
           </CardHeader>
 
           <CardContent>
-            <p className="text-sm opacity-80">
-              {feature.description}
-            </p>
+            <p className="text-sm opacity-80">{feature.description}</p>
           </CardContent>
         </Card>
       </Link>
     </motion.div>
   );
 });
+
 FeatureCard.displayName = "FeatureCard";
 
 /* ---------------------------------- */
@@ -116,6 +115,12 @@ export default function AdminHome(): JSX.Element {
   const router = useRouter();
 
   /* ---------- Guard ---------- */
+  useEffect(() => {
+    if (!loading && (!user || !session || !isSuperAdmin)) {
+      router.replace("/auth/admin");
+    }
+  }, [user, session, isSuperAdmin, loading, router]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -125,16 +130,14 @@ export default function AdminHome(): JSX.Element {
   }
 
   if (!user || !session || !isSuperAdmin) {
-    router.replace("/auth/admin");
     return null;
   }
 
-  /* ---------- Render ---------- */
   return (
     <div
       className={`min-h-screen p-6 py-24 transition-colors ${isDarkMode
-        ? "bg-[#0A192F] text-white"
-        : "bg-gray-50 text-gray-900"
+          ? "bg-[#0A192F] text-white"
+          : "bg-gray-50 text-gray-900"
         }`}
     >
       {/* Greeting */}
@@ -155,7 +158,7 @@ export default function AdminHome(): JSX.Element {
       {/* Admin Info */}
       <div className="mb-8">
         <div
-          className={`mx-auto max-w-md p-4 rounded-lg shadow transition-colors ${isDarkMode ? "bg-gray-800" : "bg-white"
+          className={`mx-auto max-w-md p-4 rounded-lg shadow ${isDarkMode ? "bg-gray-800" : "bg-white"
             }`}
         >
           <h3 className="text-lg font-semibold mb-2">

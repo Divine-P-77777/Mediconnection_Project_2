@@ -1,82 +1,77 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 import { serviceSupabase } from "@/supabase/serviceClient";
 
-/* -------------------- TYPES -------------------- */
+/* -------------------- ADMIN GUARD -------------------- */
 
-interface RouteParams {
-  params: Promise<{
-    id: string;
-  }>;
-}
+async function requireSuperAdmin(req: Request) {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) throw new Error("Missing Authorization header");
 
-interface UpdateHealthCenterBody {
-  approved?: boolean;
+  const token = authHeader.replace("Bearer ", "");
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) throw new Error("Invalid token");
+
+  if (data.user.app_metadata?.role !== "super_admin") {
+    throw new Error("Forbidden");
+  }
+
+  return data.user;
 }
 
 /* -------------------- PATCH -------------------- */
 
 export async function PATCH(
   req: Request,
-  { params }: RouteParams
-): Promise<NextResponse> {
-  const { id } = await params;
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "Health center ID is required" },
-      { status: 400 }
-    );
-  }
-
-  return updateHealthCenter(req, id);
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const { id } = await ctx.params; // ✅ REQUIRED
+  return updateApproval(req, id);
 }
 
 /* -------------------- PUT -------------------- */
 
 export async function PUT(
   req: Request,
-  { params }: RouteParams
-): Promise<NextResponse> {
-  const { id } = await params;
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "Health center ID is required" },
-      { status: 400 }
-    );
-  }
-
-  return updateHealthCenter(req, id);
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const { id } = await ctx.params;
+  return updateApproval(req, id);
 }
 
-/* -------------------- SHARED UPDATE LOGIC -------------------- */
+/* -------------------- UPDATE LOGIC -------------------- */
 
-async function updateHealthCenter(
-  req: Request,
-  id: string
-): Promise<NextResponse> {
+async function updateApproval(req: Request, id: string) {
   try {
-    const body: UpdateHealthCenterBody = await req.json();
-    const { approved } = body;
+    await requireSuperAdmin(req);
+
+    const { approved } = await req.json();
+    if (typeof approved !== "boolean") {
+      return NextResponse.json(
+        { error: "approved must be boolean" },
+        { status: 400 }
+      );
+    }
 
     const { data, error } = await serviceSupabase
       .from("health_centers")
-      .update({ approved: Boolean(approved) })
+      .update({ approved })
       .eq("id", id)
-      .select()
+      .select("id, approved")
       .single();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json({ data }, { status: 200 });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Server error";
-
+  } catch (err: any) {
     return NextResponse.json(
-      { error: message },
+      { error: err.message ?? "Server error" },
       { status: 500 }
     );
   }

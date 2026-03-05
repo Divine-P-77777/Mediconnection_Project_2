@@ -16,6 +16,9 @@ import {
 import { InfoRow } from "@/components/ui/InfoRow";
 import { Button } from "@/components/ui/button";
 
+
+
+
 interface HealthCenter {
   id: string;
   name: string;
@@ -128,12 +131,19 @@ export default function AdminDashboard(): JSX.Element {
       if (!res.ok) throw new Error(data.error);
 
       Success("Health center deleted");
+      setLocalCenters((prev) =>
+        prev.map((c) =>
+          c.id === data.data.id
+            ? { ...c, approved: data.data.approved }
+            : c
+        )
+      );
 
-      setLocalCenters((prev) => prev.filter((c) => c.id !== id));
     } catch (err: any) {
       errorToast(err.message);
     }
   };
+
 
   /*  Filtering  */
   const filteredCenters = useMemo(() => {

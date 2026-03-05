@@ -1,33 +1,39 @@
 import { NextResponse } from "next/server";
-import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 
-/* -------------------- TYPES (MATCH DB SCHEMA) -------------------- */
+/* -------------------- TYPES -------------------- */
 
 interface HealthCenterMe {
   id: string;
   name: string;
   hcrn_hfc: string;
-  address: string;
-  phone: string;
-  pincode: string | number;
+  address: string | null;
+  phone: string | null;
+  pincode: string | number | null;
   approved: boolean;
-  email: string;
+  email: string | null;
   document_proof?: string | null;
   created_at: string;
 }
 
-/* -------------------- GET: CURRENT HEALTH CENTER -------------------- */
+/* -------------------- GET -------------------- */
 
 export async function GET(): Promise<NextResponse> {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = await cookies(); // ✅ MUST be awaited
 
-    const supabase = createRouteHandlerClient({
-      cookies: async () => cookieStore,
-    });
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get: (name) => cookieStore.get(name)?.value,
+        },
+      }
+    );
 
-    /* -------- AUTHENTICATE USER -------- */
+    /* ---------- AUTH ---------- */
     const {
       data: { user },
       error: authError,
@@ -40,8 +46,8 @@ export async function GET(): Promise<NextResponse> {
       );
     }
 
-    /* -------- FETCH HEALTH CENTER -------- */
-    const { data: centerData, error } = await supabase
+    /* ---------- FETCH CENTER ---------- */
+    const { data, error } = await supabase
       .from("health_centers")
       .select(
         `
@@ -55,32 +61,27 @@ export async function GET(): Promise<NextResponse> {
         email,
         document_proof,
         created_at
-      `
+        `
       )
       .eq("user_id", user.id)
       .single();
 
-    const data = centerData as HealthCenterMe | null;
-
-    if (error) {
-      throw error;
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Health center not found" },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(
-      { data },
+      { data: data as HealthCenterMe },
       { status: 200 }
     );
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : "Failed to fetch health center";
-
-    console.error("Health center fetch error:", message);
-
+  } catch (err) {
+    console.error("Health center /me error:", err);
     return NextResponse.json(
-      { error: message },
-      { status: 400 }
+      { error: "Failed to fetch health center" },
+      { status: 500 }
     );
   }
 }

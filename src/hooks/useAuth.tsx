@@ -11,11 +11,6 @@ import { supabase } from "@/supabase/client";
 import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 
-
-/* ---------------------------------- */
-/* Types */
-/* ---------------------------------- */
-
 type Role = "super_admin" | "doctor" | "health_center" | "user" | "guest";
 
 interface ResetPasswordResult {
@@ -44,15 +39,9 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-/* ---------------------------------- */
-/* Context */
-/* ---------------------------------- */
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/* ---------------------------------- */
-/* Provider */
-/* ---------------------------------- */
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
@@ -61,8 +50,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const router = useRouter();
 
-  /* ---------- Role Resolution ---------- */
-  const role: Role = (user?.user_metadata?.role as Role) ?? "guest";
+
+  const role: Role =
+    (user?.app_metadata?.role as Role) ??
+    (user?.user_metadata?.role as Role) ??
+    "guest";
 
   const isSuperAdmin = role === "super_admin";
   const isDoctor = role === "doctor";
@@ -150,12 +142,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         throw new Error("Email is required");
       }
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/auth/reset-password`,
+        }),
       });
 
-      if (error) {
-        throw error;
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send reset email");
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -196,9 +195,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   );
 };
 
-/* ---------------------------------- */
-/* Hook */
-/* ---------------------------------- */
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);

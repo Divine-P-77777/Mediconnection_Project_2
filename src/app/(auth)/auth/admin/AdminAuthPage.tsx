@@ -6,22 +6,28 @@ import { FcGoogle } from "react-icons/fc";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+
 
 import AdminNavbar from "@/app/admin/AdminNavbar";
 import AdminFooter from "@/app/admin/AdminFooter";
+import dynamic from "next/dynamic";
+const ForgotPasswordForm = dynamic(
+  () => import("../forgot-password/ForgotPasswordForm"),
+  { ssr: false }
+);
 
-/* ================= COMPONENT ================= */
 
 const AdminAuthPage: FC = () => {
   const router = useRouter();
   const { success: Success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  /* ================= LOGIN ================= */
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -58,10 +64,13 @@ const AdminAuthPage: FC = () => {
     }
 
     try {
-      const res = await fetch("/api/admin/reset-password", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({
+          email,
+          redirectTo: `${window.location.origin}/auth/reset-password`
+        }),
       });
 
       const data = await res.json();
@@ -87,7 +96,7 @@ const AdminAuthPage: FC = () => {
       <AdminNavbar />
 
       <div
-        className={`flex min-h-screen px-4 items-center justify-center ${isDarkMode
+        className={`flex min-h-screen px-4 py-24 items-center justify-center ${isDarkMode
           ? "bg-gray-900 text-gray-100"
           : "bg-gray-100 text-gray-800"
           }`}
@@ -112,14 +121,25 @@ const AdminAuthPage: FC = () => {
               className="w-full px-3 py-2 rounded-md border"
             />
 
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="w-full px-3 py-2 rounded-md border"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full px-3 py-2 pr-10 rounded-md border"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+              </button>
+            </div>
 
             <button
               type="submit"
@@ -130,26 +150,18 @@ const AdminAuthPage: FC = () => {
             </button>
           </form>
 
-          <button
-            onClick={handleForgotPassword}
-            className="mt-3 text-sm text-cyan-600 hover:underline w-full"
-          >
-            Forgot Password?
-          </button>
-
-          <div className="flex items-center my-4">
-            <div className="flex-1 h-px bg-gray-300" />
-            <span className="px-2 text-sm">or</span>
-            <div className="flex-1 h-px bg-gray-300" />
+          {/* Forgot Password */}
+          <div className="mt-8">
+            <ForgotPasswordForm
+              direction="col"
+              className="w-full"
+              email=""
+              cancelText="Cancel"
+              submitText="Send"
+            />
           </div>
 
-          <button
-            onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-2 w-full py-2 border rounded-md opacity-50 cursor-not-allowed"
-          >
-            <FcGoogle size={20} />
-            Google login disabled
-          </button>
+
         </div>
       </div>
 

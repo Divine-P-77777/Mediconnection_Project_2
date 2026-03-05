@@ -5,8 +5,7 @@ import { serviceSupabase } from "@/supabase/serviceClient";
 
 export async function POST(req: Request) {
     try {
-        const body = await req.json();
-        const { email, password } = body;
+        const { email, password } = await req.json();
         const cookieStore = await cookies();
 
         if (!email || !password) {
@@ -16,7 +15,7 @@ export async function POST(req: Request) {
             );
         }
 
-        /* 1️⃣ Authenticate user (normal auth client, NOT service role) */
+        /* 1️⃣ Authenticate user */
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
             process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -26,16 +25,12 @@ export async function POST(req: Request) {
                     set: (name, value, options) => {
                         try {
                             cookieStore.set({ name, value, ...options });
-                        } catch (error) {
-                            // Handle server component cookie set limitations if needed
-                        }
+                        } catch { }
                     },
                     remove: (name, options) => {
                         try {
                             cookieStore.set({ name, value: "", ...options });
-                        } catch (error) {
-                            // Handle server component cookie set limitations if needed
-                        }
+                        } catch { }
                     },
                 },
             }
@@ -56,49 +51,57 @@ export async function POST(req: Request) {
 
         const userId = authData.user.id;
 
-        /* 2️⃣ Fetch profile using SERVICE ROLE (bypasses RLS safely) */
+        /* 2️⃣ Verify role (profiles) */
         const { data: profile, error: profileError } = await serviceSupabase
             .from("profiles")
-            .select("role, approved")
+            .select("role")
             .eq("id", userId)
             .single();
 
         if (profileError || !profile) {
             await supabase.auth.signOut();
             return NextResponse.json(
-                { error: "Failed to fetch user profile." },
+                { error: "Profile not found." },
                 { status: 500 }
             );
         }
 
-        /* 3️⃣ Role check */
         if (profile.role !== "health_center") {
             await supabase.auth.signOut();
             return NextResponse.json(
-                {
-                    error: "Unauthorized access. Health Center account required.",
-                },
+                { error: "Health Center account required." },
                 { status: 403 }
             );
         }
 
-        /* 4️⃣ Approval check */
-        if (!profile.approved) {
+        /* 3️⃣ Approval check (health_centers) */
+        const { data: center, error: centerError } = await serviceSupabase
+            .from("health_centers")
+            .select("approved")
+            .eq("user_id", userId)
+            .single();
+
+        if (centerError || !center) {
+            await supabase.auth.signOut();
+            return NextResponse.json(
+                { error: "Health center record not found." },
+                { status: 403 }
+            );
+        }
+
+        if (!center.approved) {
             await supabase.auth.signOut();
             return NextResponse.json(
                 {
                     error:
-                        "Your account is not approved yet. You will be notified via email.",
+                        "Your health center is not approved yet. Please wait for admin approval.",
                 },
                 { status: 403 }
             );
         }
 
-        /* 5️⃣ Success */
-        return NextResponse.json(
-            { success: true },
-            { status: 200 }
-        );
+        /* 4️⃣ Success */
+        return NextResponse.json({ success: true }, { status: 200 });
     } catch (err) {
         console.error("Health center login error:", err);
         return NextResponse.json(
