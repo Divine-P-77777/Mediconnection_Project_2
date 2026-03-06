@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/supabase/client";
+import { serviceSupabase } from "@/supabase/serviceClient";
+import { getAuthUser } from "@/lib/serverAuth";
 
 /* -------------------- TYPES -------------------- */
+
 type AvailabilityStatus = "available" | "unavailable";
 
 interface DoctorAvailability {
@@ -37,56 +39,51 @@ interface DeleteBody {
 }
 
 /* -------------------- GET -------------------- */
-export async function GET(req: Request): Promise<NextResponse> {
+
+export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const doctor_id: string | null = searchParams.get("doctor_id");
+    const doctor_id = searchParams.get("doctor_id");
 
     if (!doctor_id) {
-      return NextResponse.json(
-        { error: "Missing doctor_id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing doctor_id" }, { status: 400 });
     }
 
-    const { data: availabilityData, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("doctor_availability")
       .select("*")
       .eq("doctor_id", doctor_id);
 
     if (error) throw error;
 
-    const data = availabilityData as DoctorAvailability[] | null;
-
-    return NextResponse.json({ data: data ?? [] });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Fetch failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ data: (data as DoctorAvailability[]) ?? [] });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Fetch failed" }, { status: 400 });
   }
 }
 
 /* -------------------- POST -------------------- */
-export async function POST(req: Request): Promise<NextResponse> {
+
+export async function POST(req: Request) {
   try {
+    const user = await getAuthUser();
     const body: PostBody = await req.json();
     const { doctor_id, availability } = body;
 
     if (!doctor_id || !Array.isArray(availability)) {
-      return NextResponse.json(
-        { error: "Missing doctor_id or availability array" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing doctor_id or availability array" }, { status: 400 });
+    }
+    if (user.id !== doctor_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Delete existing availability first
-    const { error: delError } = await supabase
+    // Delete existing then insert new
+    const { error: delError } = await serviceSupabase
       .from("doctor_availability")
       .delete()
       .eq("doctor_id", doctor_id);
-
     if (delError) throw delError;
 
-    // Insert new availability
     const insertData = availability.map((a) => ({
       doctor_id,
       day_of_week: a.day_of_week,
@@ -94,33 +91,33 @@ export async function POST(req: Request): Promise<NextResponse> {
       status: a.status || "available",
     }));
 
-    const { error: insertError } = await supabase
+    const { error: insertError } = await serviceSupabase
       .from("doctor_availability")
       .insert(insertData);
-
     if (insertError) throw insertError;
 
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Create failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Create failed" }, { status: 400 });
   }
 }
 
 /* -------------------- PUT -------------------- */
-export async function PUT(req: Request): Promise<NextResponse> {
+
+export async function PUT(req: Request) {
   try {
+    const user = await getAuthUser();
     const body: PutBody = await req.json();
     const { doctor_id, day_of_week, slots, status } = body;
 
     if (!doctor_id || !day_of_week || !slots) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (user.id !== doctor_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { data: updatedData, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("doctor_availability")
       .update({ slot_time: slots, status })
       .eq("doctor_id", doctor_id)
@@ -130,29 +127,28 @@ export async function PUT(req: Request): Promise<NextResponse> {
 
     if (error) throw error;
 
-    const data = updatedData as DoctorAvailability | null;
-
-    return NextResponse.json({ success: true, data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Update failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json({ success: true, data: data as DoctorAvailability | null });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Update failed" }, { status: 400 });
   }
 }
 
 /* -------------------- DELETE -------------------- */
-export async function DELETE(req: Request): Promise<NextResponse> {
+
+export async function DELETE(req: Request) {
   try {
+    const user = await getAuthUser();
     const body: DeleteBody = await req.json();
     const { doctor_id, day_of_week } = body;
 
     if (!doctor_id) {
-      return NextResponse.json(
-        { error: "Missing doctor_id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing doctor_id" }, { status: 400 });
+    }
+    if (user.id !== doctor_id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    let query = supabase
+    let query = serviceSupabase
       .from("doctor_availability")
       .delete()
       .eq("doctor_id", doctor_id);
@@ -165,8 +161,7 @@ export async function DELETE(req: Request): Promise<NextResponse> {
     if (error) throw error;
 
     return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Delete failed";
-    return NextResponse.json({ error: message }, { status: 400 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Delete failed" }, { status: 400 });
   }
 }

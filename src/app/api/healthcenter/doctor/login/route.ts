@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
-
-/* -------------------- SUPABASE CLIENT -------------------- */
-
-const supabase: SupabaseClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { serviceSupabase } from "@/supabase/serviceClient";
 
 /* -------------------- TYPES -------------------- */
 
@@ -15,77 +10,62 @@ interface DoctorLoginBody {
   password: string;
 }
 
-interface DoctorApproval {
-  approved: boolean;
-}
-
 /* -------------------- POST: DOCTOR LOGIN -------------------- */
 
-export async function POST(req: Request): Promise<NextResponse> {
+export async function POST(req: Request) {
   try {
-    const body: DoctorLoginBody = await req.json();
-    const { email, password } = body;
+    const { email, password }: DoctorLoginBody = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email and password required" }, { status: 400 });
     }
 
-    /* -------- CHECK DOCTOR APPROVAL -------- */
-    const { data: doctorData, error: checkError } = await supabase
+    /* 1️⃣ Check doctor approval BEFORE auth (avoids wasted signIn) */
+    const { data: doctor } = await serviceSupabase
       .from("doctors")
       .select("approved")
       .eq("email", email)
       .maybeSingle();
 
-    const doctor = doctorData as DoctorApproval | null;
-
-    if (checkError) {
-      throw checkError;
-    }
-
     if (!doctor) {
-      return NextResponse.json(
-        { error: "Doctor not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
     }
-
     if (!doctor.approved) {
-      return NextResponse.json(
-        { error: "Doctor is not approved yet" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Doctor is not approved yet" }, { status: 403 });
     }
 
-    /* -------- AUTH LOGIN -------- */
-    const { data, error } =
-      await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    /* 2️⃣ Authenticate with cookie-based server client */
+    const cookieStore = await cookies();
 
-    if (error) {
-      throw error;
-    }
-
-    return NextResponse.json(
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
-        success: true,
-        user: data.user,
-        session: data.session,
-      },
-      { status: 200 }
+        cookies: {
+          get: (name) => cookieStore.get(name)?.value,
+          set: (name, value, options) => {
+            try { cookieStore.set({ name, value, ...options }); } catch { }
+          },
+          remove: (name, options) => {
+            try { cookieStore.set({ name, value: "", ...options }); } catch { }
+          },
+        },
+      }
     );
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Doctor login failed";
 
-    return NextResponse.json(
-      { error: message },
-      { status: 400 }
-    );
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) throw error;
+
+    /* 3️⃣ Ensure app_metadata has doctor role */
+    if (data.user.app_metadata?.role !== "doctor") {
+      await serviceSupabase.auth.admin.updateUserById(data.user.id, {
+        app_metadata: { role: "doctor" },
+      });
+    }
+
+    return NextResponse.json({ success: true }, { status: 200 });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Doctor login failed" }, { status: 400 });
   }
 }

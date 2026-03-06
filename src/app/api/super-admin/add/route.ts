@@ -1,8 +1,13 @@
 import { NextResponse } from "next/server";
-import { serviceSupabase } from "@/supabase/serviceClient"; // service role client
+import { serviceSupabase } from "@/supabase/serviceClient";
+import { requireSuperAdmin } from "@/lib/serverAuth";
+
+/* -------------------- POST: CREATE SUPER ADMIN -------------------- */
 
 export async function POST(req: Request) {
     try {
+        await requireSuperAdmin();
+
         const { email, password, username } = await req.json();
 
         if (!email || !password || !username) {
@@ -13,7 +18,8 @@ export async function POST(req: Request) {
             email,
             password,
             email_confirm: true,
-            user_metadata: { role: "super_admin" },
+            user_metadata: { username },
+            app_metadata: { role: "super_admin" },
         });
 
         if (error) throw error;
@@ -22,21 +28,20 @@ export async function POST(req: Request) {
 
         const { error: profileError } = await serviceSupabase
             .from("profiles")
-            .insert({
+            .upsert({
                 id: userId,
                 role: "super_admin",
                 username,
                 official_email: email,
-                approved: true,
-            });
+            }, { onConflict: "id" });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+            console.error("Profile upsert error:", profileError);
+        }
 
         return NextResponse.json({ success: true });
     } catch (err: any) {
-        return NextResponse.json(
-            { error: err.message },
-            { status: 500 }
-        );
+        const status = err.message === "Forbidden" || err.message === "Unauthorized" ? 403 : 500;
+        return NextResponse.json({ error: err.message }, { status });
     }
 }

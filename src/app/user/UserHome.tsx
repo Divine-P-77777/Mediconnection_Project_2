@@ -117,18 +117,17 @@ export default function UserHome() {
             transition={{ delay: 0.4 }}
             className="mt-8 flex flex-col  sm:flex-row gap-4 justify-end sm:justify-center items-end"
           >
-            {/* Book Appointment Button */}
             <Link href="/user/book">
-              <Button className="rounded-xl px-6 py-3 bg-[#00A8E8] hover:bg-[#0196d7] text-white flex items-center gap-2">
-                <CalendarCheck size={20} className="text-white" />
+              <Button className="rounded-full px-8 py-6 bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/30 hover:shadow-lg text-white font-semibold text-lg flex items-center gap-3 transition-all hover:scale-105 border-0">
+                <CalendarCheck size={24} className="text-white" />
                 Book Appointment
               </Button>
             </Link>
 
             {/* Live Consult Button */}
             <Link href="/user/consult">
-              <Button className="rounded-xl px-6 py-3 border border-black bg-white text-[#0077B6] hover:bg-gray-100 flex items-center gap-2">
-                <Video size={20} className="text-[#0077B6]" />
+              <Button className="rounded-full px-8 py-6 border-2 border-cyan-100 bg-white/80 backdrop-blur-sm text-cyan-600 hover:bg-cyan-50 hover:border-cyan-300 font-semibold text-lg flex items-center gap-3 transition-all hover:scale-105 shadow-sm hover:shadow-md">
+                <Video size={24} className="text-cyan-600" />
                 Live Consult
               </Button>
             </Link>
@@ -145,18 +144,21 @@ export default function UserHome() {
           {featureCards.map((f, idx) => (
             <motion.div key={idx} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 * idx }}>
               <Link href={f.link}>
-                <Card className={`overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl cursor-pointer ${cardBg}`}>
-                  <div className="w-full h-44 overflow-hidden">
-                    <img src={f.img} alt={f.title} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500" />
+                <Card className={`overflow-hidden rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer border-transparent ${cardBg}`}>
+                  <div className="w-full h-48 overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+                    <img src={f.img} alt={f.title} className="w-full h-full object-cover transform hover:scale-110 transition-transform duration-700" />
                   </div>
-                  <CardHeader className="flex items-center gap-3 pt-4 px-4">
-                    <div className="p-2 rounded-md bg-white/10">{f.icon}</div>
-                    <CardTitle className="text-lg font-semibold">{f.title}</CardTitle>
+                  <CardHeader className="flex flex-row items-center gap-4 pt-6 px-6 relative z-20 -mt-12">
+                    <div className="p-3 rounded-2xl bg-white shadow-lg flex-shrink-0">{f.icon}</div>
+                    <CardTitle className="text-xl font-bold text-white tracking-wide">{f.title}</CardTitle>
                   </CardHeader>
-                  <CardContent className="px-4 pb-6">
-                    <p className="text-sm opacity-90">{f.desc}</p>
-                    <div className="mt-4 flex justify-end">
-                      <ArrowRightCircle className="text-[#00A8E8]" />
+                  <CardContent className="px-6 pb-8 pt-2">
+                    <p className="text-sm opacity-90 leading-relaxed">{f.desc}</p>
+                    <div className="mt-6 flex justify-end">
+                      <div className="p-2 rounded-full bg-cyan-50 text-cyan-500 hover:bg-cyan-500 hover:text-white transition-colors">
+                        <ArrowRightCircle size={24} />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -182,7 +184,7 @@ export default function UserHome() {
               </div>
               <div>
                 <Link href="/user/book">
-                  <Button className="bg-[#00A8E8] text-white rounded-lg">Book Now</Button>
+                  <Button className="rounded-full px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/30 hover:shadow-lg text-white font-semibold transition-all hover:scale-105 border-0">Book Now</Button>
                 </Link>
               </div>
             </div>
@@ -198,9 +200,12 @@ export default function UserHome() {
 
         <Carousel>
           {testimonials.map((t, i) => (
-            <CarouselItem key={i} className={`p-6 rounded-xl text-center ${isDarkMode ? "bg-[#0F2137]" : "bg-white"} shadow-md`}>
-              <p className="italic">"{t.feedback}"</p>
-              <p className="mt-3 font-semibold">— {t.name}</p>
+            <CarouselItem key={i} className={`p-8 rounded-[2rem] text-center border ${isDarkMode ? "bg-[#0F2137] border-gray-800" : "bg-white border-cyan-50"} shadow-sm`}>
+              <div className="mb-4 inline-flex justify-center items-center w-12 h-12 rounded-full bg-cyan-100 text-cyan-500">
+                <HeartPulse size={24} />
+              </div>
+              <p className="italic text-lg opacity-90">"{t.feedback}"</p>
+              <p className="mt-4 font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-blue-500">— {t.name}</p>
             </CarouselItem>
           ))}
         </Carousel>
@@ -214,13 +219,16 @@ export default function UserHome() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {trustedCenters.map((c, i) => (
-            <Card key={i} className={`rounded-xl overflow-hidden ${cardBg}`}>
-              <img src={c.img} alt={c.name} className="w-full h-36 object-cover" />
-              <CardContent className="p-4">
-                <p className="font-semibold">{c.name}</p>
-                <p className="text-sm opacity-80">{c.subtitle}</p>
-                <div className="mt-4 flex gap-2">
-                  <Button className="text-sm bg-[#00A8E8] text-white rounded-lg">View</Button>
+            <Card key={i} className={`rounded-[2rem] overflow-hidden border-transparent shadow-sm hover:shadow-xl transition-all duration-300 ${cardBg}`}>
+              <div className="relative">
+                <img src={c.img} alt={c.name} className="w-full h-40 object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <p className="absolute bottom-3 left-4 text-white font-bold text-lg">{c.name}</p>
+              </div>
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-cyan-600 mb-4">{c.subtitle}</p>
+                <div className="flex gap-2">
+                  <Button className="text-sm rounded-full bg-cyan-50 text-cyan-600 hover:bg-cyan-100 font-semibold w-full transition-colors">View Details</Button>
                 </div>
               </CardContent>
             </Card>
@@ -236,14 +244,17 @@ export default function UserHome() {
 
         <div className="grid md:grid-cols-3 gap-6">
           {doctors.map((d, i) => (
-            <Card key={i} className={`rounded-xl flex items-center gap-4 p-4 ${cardBg}`}>
-              <img src={d.img} alt={d.name} className="w-20 h-20 object-cover rounded-full" />
-              <div>
-                <p className="font-semibold">{d.name}</p>
-                <p className="text-sm opacity-80">{d.role}</p>
-                <div className="mt-3">
+            <Card key={i} className={`rounded-[2rem] flex items-center gap-5 p-5 border-transparent shadow-sm hover:shadow-xl transition-all duration-300 ${cardBg}`}>
+              <div className="relative flex-shrink-0">
+                <img src={d.img} alt={d.name} className="w-24 h-24 object-cover rounded-full border-4 border-cyan-100 shadow-sm" />
+                <div className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-green-400 border-2 border-white" />
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-lg">{d.name}</p>
+                <p className="text-sm text-cyan-600 font-medium mb-3">{d.role}</p>
+                <div>
                   <Link href="/user/consult">
-                    <Button className="text-sm bg-[#00A8E8] text-white rounded-lg">Consult</Button>
+                    <Button className="text-sm rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-cyan-500/30 hover:shadow-lg font-semibold transition-all hover:scale-105 border-0">Consult Now</Button>
                   </Link>
                 </div>
               </div>
@@ -279,10 +290,12 @@ export default function UserHome() {
               desc: "Health centers and doctors verified by our quality team.",
             },
           ].map((item, idx) => (
-            <Card key={idx} className={`p-6 text-center rounded-xl ${cardBg}`}>
-              <div className="flex items-center justify-center mb-3">{item.icon}</div>
-              <p className="font-semibold">{item.title}</p>
-              <p className="text-sm opacity-80 mt-2">{item.desc}</p>
+            <Card key={idx} className={`p-8 text-center rounded-[2rem] border-transparent shadow-sm hover:-translate-y-2 hover:shadow-xl transition-all duration-300 ${cardBg}`}>
+              <div className="mx-auto w-16 h-16 rounded-3xl bg-gradient-to-br from-cyan-100 to-blue-50 flex items-center justify-center mb-5 shadow-inner">
+                {item.icon}
+              </div>
+              <p className="font-bold text-lg mb-2">{item.title}</p>
+              <p className="text-sm opacity-80 leading-relaxed">{item.desc}</p>
             </Card>
           ))}
         </div>

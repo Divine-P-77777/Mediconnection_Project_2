@@ -107,17 +107,17 @@ export default function ScheduleStep({
       {slots.length > 0 && (
         <>
           <Card
-            className={`mt-6 p-2 shadow-md transition-all duration-300 ${isDarkMode
-              ? "bg-slate-900 border-slate-800"
+            className={`mt-6 p-4 shadow-sm rounded-[2rem] border-transparent transition-all duration-300 ${isDarkMode
+              ? "bg-slate-900"
               : "bg-white"
               }`}
           >
             <CardHeader>
               <CardTitle
-                className={`text-center ${isDarkMode ? "text-white" : "text-gray-900"
+                className={`text-center text-lg ${isDarkMode ? "text-white" : "text-gray-900"
                   }`}
               >
-                Select Time
+                Select Time Slot
               </CardTitle>
             </CardHeader>
 
@@ -126,11 +126,11 @@ export default function ScheduleStep({
                 <Button
                   key={t}
                   onClick={() => setTime(t)}
-                  className={`transition-all duration-300 ${time === t
-                    ? "bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-500/20"
+                  className={`rounded-full py-6 transition-all duration-300 font-medium ${time === t
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/30 scale-105 border-0"
                     : isDarkMode
-                      ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                      ? "bg-slate-800 text-gray-300 hover:bg-slate-700 hover:text-white border-transparent"
+                      : "bg-gray-50 text-gray-700 hover:bg-cyan-50 hover:text-cyan-600 border-transparent shadow-sm"
                     }`}
                 >
                   {t}
@@ -140,17 +140,17 @@ export default function ScheduleStep({
           </Card>
 
           <Card
-            className={`mt-6 p-2 shadow-md transition-all duration-300 ${isDarkMode
-              ? "bg-slate-900 border-slate-800"
+            className={`mt-6 p-4 shadow-sm rounded-[2rem] border-transparent transition-all duration-300 ${isDarkMode
+              ? "bg-slate-900"
               : "bg-white"
               }`}
           >
             <CardHeader>
               <CardTitle
-                className={`text-center ${isDarkMode ? "text-white" : "text-gray-900"
+                className={`text-center text-lg ${isDarkMode ? "text-white" : "text-gray-900"
                   }`}
               >
-                Purpose
+                Consultation Purpose
               </CardTitle>
             </CardHeader>
 
@@ -159,11 +159,11 @@ export default function ScheduleStep({
                 <Button
                   key={p.service_name}
                   onClick={() => setPurpose(p)}
-                  className={`h-auto py-3 whitespace-normal text-left flex flex-col items-start transition-all duration-300 ${purpose?.service_name === p.service_name
-                    ? "bg-cyan-600 text-white hover:bg-cyan-700 shadow-md shadow-cyan-500/20"
+                  className={`h-auto py-4 px-6 rounded-2xl whitespace-normal text-left flex flex-col items-start transition-all duration-300 ${purpose?.service_name === p.service_name
+                    ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/30 scale-[1.02] border-0"
                     : isDarkMode
-                      ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border border-slate-700"
-                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                      ? "bg-slate-800 text-gray-300 hover:bg-slate-700 border-transparent"
+                      : "bg-gray-50 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 border-transparent shadow-sm"
                     }`}
                 >
                   <span className="font-medium">
@@ -185,7 +185,7 @@ export default function ScheduleStep({
               onClick={() =>
                 onConfirm({ date, time, purpose })
               }
-              className="w-fit mt-6 bg-cyan-600 hover:bg-cyan-700 text-white py-1 px-6 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none"
+              className="w-full md:w-auto mt-8 bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/30 hover:shadow-lg text-white py-6 px-12 rounded-full text-lg font-bold transition-all active:scale-95 disabled:opacity-50 disabled:shadow-none disabled:hover:scale-100 border-0"
             >
               {isBooking ? "Processing..." : "Confirm Appointment"}
             </Button>

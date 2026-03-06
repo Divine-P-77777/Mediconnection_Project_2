@@ -100,7 +100,7 @@ export default function DownloadCenter() {
     const totalPages = Math.max(1, Math.ceil(rows.length / limit));
 
     return (
-      <div className="overflow-x-auto rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="overflow-x-auto rounded-[2rem] shadow-sm border border-gray-100 dark:border-gray-800">
         <table
           className={`min-w-full text-sm ${isDarkMode ? "text-gray-200" : "text-gray-800"
             }`}
@@ -136,7 +136,7 @@ export default function DownloadCenter() {
                 <td className="px-4 py-2 text-center">
                   <button
                     onClick={() => setPopupData(row)}
-                    className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 transition"
+                    className="px-5 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-medium hover:shadow-lg hover:shadow-cyan-500/30 transition-all active:scale-95"
                   >
                     View
                   </button>
@@ -157,23 +157,23 @@ export default function DownloadCenter() {
           </tbody>
         </table>
 
-        <div className="flex justify-between items-center p-3 text-sm">
+        <div className="flex justify-between items-center p-4 text-sm bg-gray-50/50 dark:bg-gray-800/30">
           <button
             disabled={page === 1}
             onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600"
+            className="px-5 py-2 border rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 dark:border-gray-600"
           >
             Prev
           </button>
 
-          <span>
+          <span className="font-medium bg-white dark:bg-gray-800 px-4 py-1.5 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
             Page {page} of {totalPages}
           </span>
 
           <button
             disabled={page >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1 border rounded disabled:opacity-50 dark:border-gray-600"
+            className="px-5 py-2 border rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 dark:border-gray-600"
           >
             Next
           </button>

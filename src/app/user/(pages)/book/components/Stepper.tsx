@@ -20,11 +20,11 @@ export default function Stepper({ step }: StepperProps) {
         return (
           <div
             key={label}
-            className={`flex-1 text-center pb-2 border-b-4 transition-all duration-300 ${active
-              ? "border-cyan-500 text-cyan-500 font-bold"
+            className={`flex-1 text-center py-2 rounded-full transition-all duration-300 font-medium ${active
+              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md shadow-cyan-500/30"
               : isDarkMode
-                ? "border-slate-700 text-gray-500"
-                : "border-gray-200 text-gray-400"
+                ? "text-gray-400 hover:bg-slate-800"
+                : "text-gray-500 hover:bg-gray-100"
               }`}
           >
             {label}

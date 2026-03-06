@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/supabase/client";
+import { serviceSupabase } from "@/supabase/serviceClient";
 
 /* -------------------- TYPES -------------------- */
 
@@ -15,18 +15,18 @@ interface DoctorService {
   doctor_id: string;
   service_name: string;
   price: number;
-  doctors: DoctorInfo | null; // Joined column
+  doctors: DoctorInfo | null;
 }
 
 /* -------------------- GET: FETCH DOCTOR SERVICES -------------------- */
 
-export async function GET(req: Request): Promise<NextResponse> {
+export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const service: string | null = searchParams.get("service");
-  const search: string | null = searchParams.get("search");
+  const service = searchParams.get("service");
+  const search = searchParams.get("search");
 
   try {
-    let query = supabase
+    let query = serviceSupabase
       .from("doctor_services")
       .select(`
         id, 
@@ -47,20 +47,16 @@ export async function GET(req: Request): Promise<NextResponse> {
       query = query.eq("service_name", service);
     }
 
-    const { data: servicesData, error } = await query;
-
+    const { data, error } = await query;
     if (error) throw error;
 
-    // Supabase returns 'doctors' as an object (single) or array depending on relation one-to-one/many
-    // Usually inner join returns single object if foreign key is unique or we use proper notation
-    // Assuming 'doctors' is singular relation here based on original code structure
-    const doctors = (servicesData || []) as unknown as DoctorService[];
-
-    return NextResponse.json({ success: true, doctors });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to fetch doctors";
+    return NextResponse.json({
+      success: true,
+      doctors: (data || []) as unknown as DoctorService[],
+    });
+  } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: err.message || "Failed to fetch doctors" },
       { status: 500 }
     );
   }

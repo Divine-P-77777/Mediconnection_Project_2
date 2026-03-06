@@ -115,14 +115,14 @@ export default function ConsultationsTable() {
           placeholder="Search by patient name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={`w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-cyan-500 ${isDarkMode
-            ? "bg-gray-800 text-white border-gray-700 placeholder-gray-400"
-            : "bg-white border-gray-300"
+          className={`w-full p-4 pl-6 rounded-full border focus:outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-sm transition-all ${isDarkMode
+            ? "bg-gray-800 text-white border-gray-700 placeholder-gray-400 focus:bg-gray-700"
+            : "bg-white border-gray-200 focus:border-cyan-300"
             }`}
         />
       </div>
 
-      <div className="overflow-x-auto shadow-md rounded-lg">
+      <div className="overflow-x-auto shadow-sm rounded-[2rem] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
         <table
           className={`w-full border-collapse ${isDarkMode ? "text-gray-200" : "text-gray-800"
             }`}
@@ -190,7 +190,7 @@ export default function ConsultationsTable() {
                   <td className="p-3 text-center">
                     <button
                       onClick={() => setSelectedConsult(c)}
-                      className="px-4 py-1 bg-cyan-500 text-white rounded-md hover:bg-cyan-600"
+                      className="px-5 py-2 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full font-medium hover:shadow-lg hover:shadow-cyan-500/30 transition-all active:scale-95"
                     >
                       View
                     </button>
@@ -202,9 +202,9 @@ export default function ConsultationsTable() {
                         c.meet_url &&
                         window.open(c.meet_url, "_blank")
                       }
-                      className={`px-4 py-1 rounded-md transition-colors ${canJoinConsult(c)
-                        ? "bg-green-500 text-white hover:bg-green-600"
-                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                      className={`px-5 py-2 rounded-full font-medium transition-all active:scale-95 ${canJoinConsult(c)
+                        ? "bg-gradient-to-r from-emerald-400 to-emerald-600 text-white hover:shadow-lg hover:shadow-emerald-500/30"
+                        : "bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-600 cursor-not-allowed"
                         }`}
                     >
                       Join Now
@@ -224,14 +224,14 @@ export default function ConsultationsTable() {
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="px-4 py-2 border rounded-lg"
+          className="px-6 py-2 border rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
         >
           Prev
         </button>
-        <span className="px-4 py-2 border rounded-full">{page}</span>
+        <span className="px-5 py-2 border rounded-full bg-gray-50 dark:bg-gray-800 font-medium">{page}</span>
         <button
           onClick={() => setPage((p) => p + 1)}
-          className="px-4 py-2 border rounded-lg"
+          className="px-6 py-2 border rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
         >
           Next
         </button>
@@ -244,12 +244,12 @@ export default function ConsultationsTable() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
         >
           <div
-            className={`rounded-lg p-6 max-w-lg w-full ${isDarkMode
-              ? "bg-gray-800 text-white"
+            className={`rounded-[2rem] p-8 max-w-lg w-full shadow-2xl ${isDarkMode
+              ? "bg-slate-900 border border-slate-800 text-white"
               : "bg-white"
               }`}
           >
-            <h3 className="text-lg font-bold mb-4">
+            <h3 className="text-2xl font-bold mb-6 text-center">
               Consultation Details
             </h3>
 
@@ -277,10 +277,10 @@ export default function ConsultationsTable() {
               </p>
             </div>
 
-            <div className="flex justify-end mt-6">
+            <div className="flex justify-end mt-8 border-t border-gray-100 dark:border-gray-800 pt-6">
               <button
                 onClick={() => setSelectedConsult(null)}
-                className="px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-600"
+                className="w-full px-6 py-3 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-full font-medium transition-colors"
               >
                 Close
               </button>

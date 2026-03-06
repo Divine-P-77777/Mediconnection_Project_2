@@ -197,7 +197,7 @@ export default function BookAppointmentPage() {
           </h1>
           <button
             onClick={() => router.push("/user/book/mybooking")}
-            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-full font-semibold shadow-lg hover:shadow-cyan-500/50 hover:scale-105"
+            className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-full font-semibold shadow-md hover:shadow-cyan-500/30 hover:shadow-lg transition-all hover:scale-105 border-0"
           >
             My Bookings
           </button>

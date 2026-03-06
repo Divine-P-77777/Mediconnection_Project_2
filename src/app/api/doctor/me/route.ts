@@ -1,11 +1,13 @@
-import { supabase } from "@/supabase/client";
 import { NextResponse } from "next/server";
+import { serviceSupabase } from "@/supabase/serviceClient";
+import { getAuthUser } from "@/lib/serverAuth";
 
 /* -------------------- TYPES -------------------- */
+
 interface DoctorProfile {
   id: string;
   name: string;
-  email: string; // usually present
+  email: string;
   specialization: string;
   contact: string;
   profile?: string | null;
@@ -23,19 +25,17 @@ interface UpdateProfileBody {
 }
 
 /* -------------------- GET: FETCH PROFILE -------------------- */
-export async function GET(req: Request): Promise<NextResponse> {
+
+export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId: string | null = searchParams.get("userId");
+    const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User ID required" }, { status: 400 });
     }
 
-    const { data: profileData, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("doctors")
       .select("*")
       .eq("id", userId)
@@ -43,26 +43,27 @@ export async function GET(req: Request): Promise<NextResponse> {
 
     if (error) throw error;
 
-    const data = profileData as DoctorProfile | null;
-
-    return NextResponse.json({ data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Fetch profile failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ data: data as DoctorProfile | null });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Fetch profile failed" }, { status: 500 });
   }
 }
 
 /* -------------------- PATCH: UPDATE PROFILE -------------------- */
-export async function PATCH(req: Request): Promise<NextResponse> {
+
+export async function PATCH(req: Request) {
   try {
+    const user = await getAuthUser();
     const body: UpdateProfileBody = await req.json();
     const { userId, name, specialization, contact, profile } = body;
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+    }
+
+    // Ensure user can only update their own profile
+    if (user.id !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const updates: Partial<DoctorProfile> = {};
@@ -71,7 +72,7 @@ export async function PATCH(req: Request): Promise<NextResponse> {
     if (contact) updates.contact = contact;
     if (profile) updates.profile = profile;
 
-    const { data: updatedData, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("doctors")
       .update(updates)
       .eq("id", userId)
@@ -80,11 +81,8 @@ export async function PATCH(req: Request): Promise<NextResponse> {
 
     if (error) throw error;
 
-    const data = updatedData as DoctorProfile | null;
-
-    return NextResponse.json({ data });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Update profile failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ data: data as DoctorProfile | null });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Update profile failed" }, { status: 500 });
   }
 }

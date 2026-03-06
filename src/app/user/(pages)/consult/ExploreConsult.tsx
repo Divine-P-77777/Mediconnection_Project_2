@@ -113,9 +113,9 @@ export default function ExploreConsult() {
           placeholder="Search services or doctors..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className={`w-full p-3 rounded-xl border transition focus:ring-2 focus:ring-cyan-500 ${isDarkMode
+          className={`w-full p-4 pl-6 rounded-full border transition-all focus:ring-2 focus:ring-cyan-500/50 shadow-sm ${isDarkMode
             ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
-            : "bg-white border-gray-300 text-black placeholder-gray-500"
+            : "bg-white border-gray-200 text-black placeholder-gray-400"
             }`}
         />
       </div>
@@ -125,11 +125,11 @@ export default function ExploreConsult() {
           <button
             key={service}
             onClick={() => setActiveServiceTab(service)}
-            className={`px-4 py-2 rounded-full font-medium transition ${activeServiceTab === service
-              ? "bg-cyan-500 text-white"
+            className={`px-5 py-2.5 rounded-full font-semibold transition-all shadow-sm ${activeServiceTab === service
+              ? "bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-cyan-500/30 font-bold"
               : isDarkMode
-                ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "bg-gray-800/80 text-gray-300 hover:bg-gray-700 border border-gray-700"
+                : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200 hover:border-cyan-200 hover:text-cyan-600"
               }`}
           >
             {service}

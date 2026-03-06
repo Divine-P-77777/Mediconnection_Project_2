@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/supabase/client";
+import { serviceSupabase } from "@/supabase/serviceClient";
 
 /* -------------------- TYPES -------------------- */
 
@@ -16,114 +16,79 @@ interface HealthCenterRegisterBody {
 
 /* -------------------- POST: REGISTER HEALTH CENTER -------------------- */
 
-export async function POST(req: Request): Promise<NextResponse> {
-  console.log("POST /api/healthcenter called");
+export async function POST(req: Request) {
   try {
     const body: HealthCenterRegisterBody = await req.json();
-    console.log("Body parsed:", { ...body, password: "***" });
 
     const {
-      email,
-      password,
-      username,
-      name,
-      hcrn_hfc,
-      address,
-      contact,
-      pincode,
+      email, password, username, name,
+      hcrn_hfc, address, contact, pincode,
     } = body;
 
-    // Validate input
-    if (
-      !email ||
-      !password ||
-      !username ||
-      !name ||
-      !hcrn_hfc ||
-      !address ||
-      !contact ||
-      !pincode
-    ) {
-      console.log("Validation failed");
-      return NextResponse.json(
-        { error: "All fields required" },
-        { status: 400 }
-      );
+    if (!email || !password || !username || !name || !hcrn_hfc || !address || !contact || !pincode) {
+      return NextResponse.json({ error: "All fields required" }, { status: 400 });
     }
 
-    /* -------- STEP 1: SIGN UP USER -------- */
-    console.log("Step 1: Signing up user...");
-    const { data, error } = await supabase.auth.signUp({
+    /* -------- 1. Create Auth User (Service Role) -------- */
+    const { data, error } = await serviceSupabase.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          role: "health_center",
-          username,
-          full_name: name,
-          hcrn_hfc,
-          address,
-          contact,
-          pincode,
-          approved: false,
-        },
-      },
+      email_confirm: true,
+      user_metadata: { username, full_name: name },
+      app_metadata: { role: "health_center" },
     });
 
-    if (error) {
-      console.error("SignUp Error:", error);
-      throw error;
+    if (error) throw error;
+
+    const userId = data.user.id;
+
+    /* -------- 2. Insert Profile -------- */
+    const { error: profileError } = await serviceSupabase
+      .from("profiles")
+      .upsert({
+        id: userId,
+        role: "health_center",
+        username,
+        health_center_name: name,
+        hcrn_hfc,
+        address,
+        contact_number: contact,
+        pincode,
+      }, { onConflict: "id" });
+
+    if (profileError) {
+      console.error("Profile insert error:", profileError);
+      // Don't rollback — profile trigger might have already created it
     }
 
-    console.log("SignUp successful, User ID:", data.user?.id);
-
-    const userId: string | undefined = data.user?.id;
-    if (!userId) {
-      console.error("User creation failed: No user ID returned");
-      throw new Error("User creation failed");
-    }
-
-    /* -------- STEP 2: INSERT HEALTH CENTER -------- */
-    console.log("Step 2: Inserting health center record...");
-    const { error: hcError } = await supabase
+    /* -------- 3. Insert Health Center -------- */
+    const { error: hcError } = await serviceSupabase
       .from("health_centers")
-      .insert([
-        {
-          user_id: userId,
-          hcrn_hfc,
-          name,
-          address,
-          phone: contact,
-          pincode,
-          approved: false,
-        },
-      ]);
+      .insert({
+        user_id: userId,
+        hcrn_hfc,
+        name,
+        address,
+        phone: contact,
+        pincode,
+        approved: false,
+      });
 
     if (hcError) {
-      console.error("Insert Health Center Error:", hcError);
+      console.error("Health center insert error:", hcError);
+      // Rollback auth user if HC insert fails
+      await serviceSupabase.auth.admin.deleteUser(userId);
       throw hcError;
     }
 
-    console.log("Health Center inserted successfully");
-
     return NextResponse.json(
-      {
-        message:
-          "Health Center registered. Waiting for admin approval.",
-        user: {
-          id: userId,
-          email,
-        },
-      },
+      { message: "Health Center registered. Waiting for admin approval.", user: { id: userId, email } },
       { status: 201 }
     );
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Server error";
-    console.error("Catch Error:", err);
-
+  } catch (err: any) {
+    console.error("HC Registration error:", err);
     return NextResponse.json(
-      { error: message },
+      { error: err.message || "Server error" },
       { status: 500 }
     );
   }

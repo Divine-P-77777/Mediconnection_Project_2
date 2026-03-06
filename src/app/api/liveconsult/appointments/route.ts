@@ -1,14 +1,10 @@
-import { supabase } from "@/supabase/client";
 import { NextResponse } from "next/server";
+import { serviceSupabase } from "@/supabase/serviceClient";
+import { getAuthUser } from "@/lib/serverAuth";
 
 /* -------------------- TYPES -------------------- */
 
-type ConsultationStatus =
-  | "pending"
-  | "confirmed"
-  | "completed"
-  | "cancelled"
-  | string;
+type ConsultationStatus = "pending" | "confirmed" | "completed" | "cancelled" | string;
 
 interface PatchAppointmentBody {
   appointmentId: string;
@@ -17,87 +13,68 @@ interface PatchAppointmentBody {
 
 /* -------------------- GET: DOCTOR APPOINTMENTS -------------------- */
 
-export async function GET(req: Request): Promise<NextResponse> {
+export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const doctorId: string | null = searchParams.get("doctorId");
+    const doctorId = searchParams.get("doctorId");
 
     if (!doctorId) {
-      return NextResponse.json(
-        { error: "Doctor ID required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Doctor ID required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await serviceSupabase
       .from("liveconsult")
-      .select(
-        `
-        id,
-        full_name,
-        email,
-        consultation_date,
-        consultation_time,
-        speciality,
-        status,
-        bills,
-        prescriptions,
-        reports,
-        meet_url
-      `
-      )
+      .select(`
+        id, full_name, email,
+        consultation_date, consultation_time,
+        speciality, status,
+        bills, prescriptions, reports, meet_url
+      `)
       .eq("doctor_id", doctorId)
       .order("consultation_date", { ascending: false });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json({ data }, { status: 200 });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Failed to fetch appointments";
-
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to fetch appointments" }, { status: 500 });
   }
 }
 
 /* -------------------- PATCH: UPDATE APPOINTMENT STATUS -------------------- */
 
-export async function PATCH(req: Request): Promise<NextResponse> {
+export async function PATCH(req: Request) {
   try {
+    const user = await getAuthUser();
     const body: PatchAppointmentBody = await req.json();
     const { appointmentId, status } = body;
 
     if (!appointmentId || !status) {
-      return NextResponse.json(
-        { error: "Appointment ID and status required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Appointment ID and status required" }, { status: 400 });
     }
 
-    const { data, error } = await supabase
+    // Verify the doctor owns this appointment
+    const { data: appt } = await serviceSupabase
+      .from("liveconsult")
+      .select("doctor_id")
+      .eq("id", appointmentId)
+      .single();
+
+    if (!appt || appt.doctor_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const { data, error } = await serviceSupabase
       .from("liveconsult")
       .update({ status })
       .eq("id", appointmentId)
       .select()
       .maybeSingle();
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     return NextResponse.json({ data }, { status: 200 });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error ? err.message : "Failed to update appointment";
-
-    return NextResponse.json(
-      { error: message },
-      { status: 500 }
-    );
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Failed to update appointment" }, { status: 500 });
   }
 }

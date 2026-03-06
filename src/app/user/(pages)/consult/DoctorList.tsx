@@ -57,9 +57,9 @@ export default function DoctorList({
                 transition={{ duration: 0.3 }}
               >
                 <Card
-                  className={`rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition border ${isDarkMode
+                  className={`rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border-transparent ${isDarkMode
                     ? "bg-gray-800 border-gray-700"
-                    : "bg-white border-gray-200"
+                    : "bg-white border-gray-100"
                     }`}
                 >
                   <CardHeader className="flex flex-col items-center text-center p-6">
@@ -97,7 +97,7 @@ export default function DoctorList({
                     <motion.button
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setBookingDoctor(doc)}
-                      className="mt-3 w-fit px-8 py-2 rounded-3xl bg-cyan-600 text-white font-medium hover:bg-cyan-700 transition shadow-md"
+                      className="mt-4 w-full py-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold hover:shadow-cyan-500/30 hover:shadow-lg transition-all"
                     >
                       Book Now
                     </motion.button>

@@ -49,18 +49,18 @@ export default function DocumentsModal({
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 p-3">
       <div
-        className={`rounded-xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl animate-fadeIn ${isDarkMode
-          ? "bg-gray-900 text-gray-100"
+        className={`rounded-[2rem] p-8 w-full max-w-lg max-h-[85vh] overflow-y-auto shadow-2xl animate-fadeIn ${isDarkMode
+          ? "bg-slate-900 border border-slate-800 text-gray-100"
           : "bg-white text-gray-900"
           }`}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold">Available Documents</h3>
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl font-bold">Available Documents</h3>
           <button
             onClick={onClose}
-            className={`p-2 rounded transition ${isDarkMode
-              ? "hover:bg-gray-700"
-              : "hover:bg-gray-200"
+            className={`p-2 rounded-full transition-colors ${isDarkMode
+              ? "hover:bg-slate-800 bg-slate-800/50"
+              : "hover:bg-gray-100 bg-gray-50"
               }`}
           >
             <X size={22} />
@@ -87,15 +87,17 @@ export default function DocumentsModal({
                       href={url}
                       target="_blank"
                       rel="noreferrer"
-                      className={`flex justify-between items-center px-4 py-3 rounded-lg border shadow-sm transition hover:shadow-md ${isDarkMode
-                        ? "bg-gray-800 border-gray-700 hover:bg-gray-700"
-                        : "bg-gray-100 border-gray-300 hover:bg-gray-200"
+                      className={`flex justify-between items-center px-5 py-4 rounded-2xl border-2 transition-all hover:-translate-y-0.5 shadow-sm ${isDarkMode
+                        ? "bg-slate-800 border-slate-700 hover:border-cyan-500/50 hover:bg-slate-700/50"
+                        : "bg-gray-50 border-gray-100 hover:border-cyan-200 hover:bg-cyan-50/30"
                         }`}
                     >
-                      <span className="font-medium">
+                      <span className="font-semibold">
                         {section.label.slice(0, -1)} {index + 1}
                       </span>
-                      <Download size={20} className="text-blue-500" />
+                      <div className="p-2 rounded-full bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400">
+                        <Download size={18} />
+                      </div>
                     </a>
                   ))}
                 </div>
@@ -112,12 +114,12 @@ export default function DocumentsModal({
             )}
         </div>
 
-        <div className="mt-6 text-right">
+        <div className="mt-8 text-right border-t border-gray-100 dark:border-slate-800 pt-6">
           <button
             onClick={onClose}
-            className={`px-4 py-2 rounded-lg transition ${isDarkMode
-              ? "bg-gray-800 hover:bg-gray-700"
-              : "bg-gray-300 hover:bg-gray-400"
+            className={`w-full px-6 py-3 rounded-full font-medium transition-colors ${isDarkMode
+              ? "bg-slate-800 hover:bg-slate-700 text-gray-200"
+              : "bg-gray-100 hover:bg-gray-200 text-gray-800"
               }`}
           >
             Close

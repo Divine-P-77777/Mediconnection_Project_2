@@ -1,57 +1,80 @@
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
 import { redirect } from "next/navigation";
+import { serviceSupabase } from "@/supabase/serviceClient";
 import Loader from "@/app/components/Loader";
 
 export default async function Page() {
-  // Await cookies()
   const cookieStore = await cookies();
 
-  const supabase = createServerComponentClient({
-    cookies: () => cookieStore as any,
-  });
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get: (name) => cookieStore.get(name)?.value,
+      },
+    }
+  );
 
-  // 1. Get session
-  const {
-    data: { session },
-    error: sessionError,
-  } = await supabase.auth.getSession();
+  // 1. Get user (more reliable than getSession)
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-  // 2. If no session → redirect
-  if (sessionError || !session) {
-    console.error("Session error:", sessionError ?? "No session available");
+  // 2. No user → public landing
+  if (userError || !user) {
     redirect("/user");
   }
 
-  // 3. Fetch user profile
-  const { data: profile, error: profileError } = await supabase
+  // 3. Check app_metadata first, then profile table
+  const role = user.app_metadata?.role;
+
+  if (role) {
+    const roleRedirects: Record<string, string> = {
+      super_admin: "/admin",
+      doctor: "/doctor",
+      health_center: "/healthcenter",
+      user: "/user",
+    };
+
+    // For health_center, check approval
+    if (role === "health_center") {
+      const { data: hc } = await serviceSupabase
+        .from("health_centers")
+        .select("approved")
+        .eq("user_id", user.id)
+        .single();
+
+      if (hc && !hc.approved) {
+        redirect("/pending-approval");
+      }
+    }
+
+    redirect(roleRedirects[role] ?? "/user");
+  }
+
+  // 4. Fallback: check profiles table
+  const { data: profile } = await serviceSupabase
     .from("profiles")
     .select("role, approved")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
-  // 4. On error or no profile → redirect
-  if (profileError || !profile) {
-    console.error("Profile fetch error:", profileError?.message);
+  if (!profile) {
     redirect("/user");
   }
 
-  // 5. Handle unapproved health_center
   if (profile.role === "health_center" && !profile.approved) {
     redirect("/pending-approval");
   }
 
-  // 6. Role-based redirects
   const roleRedirects: Record<string, string> = {
-    super_admin: "/admin", // super_admin → /admin
+    super_admin: "/admin",
     doctor: "/doctor",
     health_center: "/healthcenter",
     user: "/user",
   };
 
-  const target = roleRedirects[profile.role] ?? "/user";
-  redirect(target);
+  redirect(roleRedirects[profile.role] ?? "/user");
 
-  // Loader fallback
   return <Loader />;
 }

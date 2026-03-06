@@ -38,9 +38,9 @@ export default function CenterSearchStep({
 
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
-  const inputClass = `w-full p-3 rounded-lg border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500 ${isDarkMode
-      ? "bg-slate-800 border-slate-700 text-white placeholder:text-gray-500"
-      : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
+  const inputClass = `w-full p-4 pl-6 rounded-full border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-sm ${isDarkMode
+    ? "bg-slate-800 border-slate-700 text-white placeholder:text-gray-500"
+    : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400"
     }`;
 
   const search = async (codeOverride?: string): Promise<void> => {
@@ -133,9 +133,9 @@ export default function CenterSearchStep({
 
   return (
     <Card
-      className={`p-6 shadow-md transition-all duration-300 ${isDarkMode
-          ? "bg-slate-900 border-slate-800"
-          : "bg-white"
+      className={`p-6 shadow-sm rounded-[2rem] border-transparent transition-all duration-300 ${isDarkMode
+        ? "bg-slate-900"
+        : "bg-white"
         }`}
     >
       <CardHeader>
@@ -164,7 +164,7 @@ export default function CenterSearchStep({
           <Button
             onClick={() => search()}
             disabled={isSearching}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white min-w-[100px] shadow-lg shadow-cyan-500/20 transition-all active:scale-95 disabled:opacity-70"
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white min-w-[120px] shadow-md shadow-cyan-500/20 transition-all active:scale-95 disabled:opacity-70 rounded-full h-auto py-3 font-semibold text-base border-0 hover:shadow-cyan-500/40 hover:scale-105 mx-2"
           >
             {isSearching ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -176,17 +176,17 @@ export default function CenterSearchStep({
 
         <div className="relative flex items-center justify-center my-2">
           <span
-            className={`absolute px-2 text-sm ${isDarkMode
-                ? "bg-slate-900 text-gray-500"
-                : "bg-white text-gray-400"
+            className={`absolute px-4 font-medium text-sm rounded-full ${isDarkMode
+              ? "bg-slate-900 text-gray-500"
+              : "bg-white text-gray-400"
               }`}
           >
             OR
           </span>
           <div
             className={`w-full border-b ${isDarkMode
-                ? "border-slate-700"
-                : "border-gray-200"
+              ? "border-slate-700"
+              : "border-gray-200"
               }`}
           />
         </div>
@@ -195,9 +195,9 @@ export default function CenterSearchStep({
           variant="outline"
           onClick={handleLocationSearch}
           disabled={isLocating}
-          className={`w-full py-2 text-base border-2 border-dashed transition-all duration-300 flex justify-center items-center group ${isDarkMode
-              ? "border-slate-700 text-cyan-400 hover:bg-slate-800 hover:border-cyan-500"
-              : "border-gray-300 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-500"
+          className={`w-full py-6 rounded-full text-base border-2 border-dashed transition-all duration-300 flex justify-center items-center group shadow-sm ${isDarkMode
+            ? "border-slate-700 text-cyan-400 hover:bg-slate-800/80 hover:border-cyan-500 hover:text-cyan-300"
+            : "border-gray-200 text-cyan-600 hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700"
             }`}
         >
           {isLocating ? (
@@ -214,11 +214,11 @@ export default function CenterSearchStep({
           <div
             key={c.id}
             onClick={() => setSelected(c)}
-            className={`p-4 rounded-lg border cursor-pointer transition-all duration-300 flex justify-between items-center ${selected?.id === c.id
-                ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20"
-                : isDarkMode
-                  ? "border-slate-700 hover:border-cyan-400 hover:bg-slate-800 text-gray-300"
-                  : "border-gray-200 hover:border-cyan-300 hover:bg-gray-50 text-gray-700"
+            className={`p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex justify-between items-center shadow-sm ${selected?.id === c.id
+              ? "border-cyan-400 bg-cyan-50/50 shadow-cyan-500/10 dark:bg-cyan-900/20"
+              : isDarkMode
+                ? "border-slate-700 hover:border-cyan-400/50 hover:bg-slate-800/50 text-gray-300 hover:-translate-y-1"
+                : "border-gray-100 hover:border-cyan-300/50 hover:bg-gray-50 text-gray-700 hover:-translate-y-1 hover:shadow-md"
               }`}
           >
             <div
@@ -229,8 +229,8 @@ export default function CenterSearchStep({
             </div>
             <div
               className={`text-sm ${isDarkMode
-                  ? "text-gray-300"
-                  : "text-gray-500"
+                ? "text-gray-300"
+                : "text-gray-500"
                 }`}
             >
               {c.address}
@@ -240,7 +240,7 @@ export default function CenterSearchStep({
 
         <Button
           onClick={continueNext}
-          className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-1 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
+          className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/30 hover:shadow-lg text-white py-6 rounded-full text-lg font-semibold transition-all active:scale-95 border-0 mt-4"
         >
           Continue
         </Button>

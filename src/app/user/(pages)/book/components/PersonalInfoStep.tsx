@@ -36,9 +36,9 @@ export default function PersonalInfoStep({
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
-  const inputClass = `w-full pl-14 pr-3 py-3 rounded-lg border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500 ${isDarkMode
-      ? "bg-slate-800 border-slate-700 text-white placeholder:text-gray-500 hover:border-slate-600"
-      : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 hover:border-cyan-300"
+  const inputClass = `w-full pl-5 pr-3 py-3 rounded-full border transition-all duration-300 outline-none focus:ring-2 focus:ring-cyan-500/50 shadow-sm ${isDarkMode
+    ? "bg-slate-800 border-slate-700 text-white placeholder:text-gray-500 hover:border-slate-600"
+    : "bg-white border-gray-200 text-gray-900 placeholder:text-gray-400 hover:border-cyan-300"
     }`;
 
   const onError = (errors: FieldErrors<PersonalInfoFormValues>): void => {
@@ -57,9 +57,9 @@ export default function PersonalInfoStep({
   return (
     <form onSubmit={handleSubmit(submit, onError)}>
       <Card
-        className={`p-6 shadow-md transition-all duration-300 ${isDarkMode
-            ? "bg-slate-900 border-slate-800"
-            : "bg-white"
+        className={`p-6 shadow-sm rounded-[2rem] border-transparent transition-all duration-300 ${isDarkMode
+          ? "bg-slate-900"
+          : "bg-white"
           }`}
       >
         <CardHeader>
@@ -82,7 +82,7 @@ export default function PersonalInfoStep({
               <input
                 {...field}
                 placeholder="Full Name"
-                className={inputClass.replace("pl-14", "pl-3")}
+                className={inputClass}
               />
             )}
           />
@@ -106,7 +106,7 @@ export default function PersonalInfoStep({
                   {...field}
                   maxLength={10}
                   placeholder="Phone number"
-                  className={inputClass}
+                  className={`${inputClass} pl-12`}
                   onChange={(e) =>
                     field.onChange(e.target.value.replace(/\D/g, ""))
                   }
@@ -122,7 +122,7 @@ export default function PersonalInfoStep({
             render={({ field }) => (
               <select
                 {...field}
-                className={inputClass.replace("pl-14", "pl-3")}
+                className={inputClass}
               >
                 <option value="">Select Gender</option>
                 <option value="male">Male</option>
@@ -136,9 +136,9 @@ export default function PersonalInfoStep({
             <button
               type="button"
               onClick={() => setShowCalendar((v) => !v)}
-              className={`w-full border rounded-lg p-3 text-left transition-all duration-300 flex items-center justify-between group ${isDarkMode
-                  ? "bg-slate-800 border-slate-700 text-white hover:border-cyan-500"
-                  : "bg-white border-gray-200 text-gray-900 hover:border-cyan-500"
+              className={`w-full border rounded-full pl-5 pr-4 py-3 text-left transition-all duration-300 flex items-center justify-between group shadow-sm ${isDarkMode
+                ? "bg-slate-800 border-slate-700 text-white hover:border-cyan-500"
+                : "bg-white border-gray-200 text-gray-900 hover:border-cyan-500"
                 }`}
             >
               <span className={!watch("dob") ? "text-gray-400" : ""}>
@@ -179,7 +179,7 @@ export default function PersonalInfoStep({
 
           <Button
             type="submit"
-            className="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-1 text-lg font-semibold shadow-lg shadow-cyan-500/20 transition-all active:scale-95"
+            className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:shadow-cyan-500/30 hover:shadow-lg text-white py-6 rounded-full text-lg font-semibold transition-all active:scale-95 border-0 mt-4"
           >
             Continue to Search
           </Button>

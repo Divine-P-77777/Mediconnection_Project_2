@@ -310,12 +310,13 @@ export default function BookingModal({
         {/* If we render BookingSuccessModal, it takes over screen properly. */}
 
         <div
-          className={`rounded-2xl shadow-lg max-w-md w-full p-6 min-h-[80vh] overflow-y-auto space-y-6
-            ${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}
+          className={`rounded-[2rem] shadow-xl max-w-md w-full p-8 min-h-[80vh] overflow-y-auto space-y-6
+            ${isDarkMode ? "bg-slate-900 text-white" : "bg-white text-gray-900"}`}
           style={{ display: successModalOpen ? 'none' : 'block' }} // Hide form when success modal is active
         >
-          <Dialog.Title className="text-xl font-bold mb-4">
-            Book Appointment with {doctor?.doctors?.name}
+          <Dialog.Title className="text-2xl font-bold mb-4 text-center">
+            Book Appointment
+            <span className="block text-lg font-medium text-cyan-500 mt-1 opacity-90">Dr. {doctor?.doctors?.name}</span>
           </Dialog.Title>
 
           {/* Form */}
@@ -332,12 +333,12 @@ export default function BookingModal({
                 <input
                   type={field === "dob" ? "date" : "text"}
                   name={field}
-                  value={form[field]}
+                  value={form[field as keyof BookingForm]}
                   onChange={handleChange}
-                  className={`w-full p-2 rounded-lg border
+                  className={`w-full p-3 px-5 rounded-full border transition-all duration-300 focus:ring-2 focus:ring-cyan-500/50 shadow-sm
                     ${isDarkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-50 text-black"
+                      ? "bg-slate-800 text-white border-slate-700 placeholder-gray-500"
+                      : "bg-white text-gray-900 border-gray-200 placeholder-gray-400"
                     }`}
                 />
               </div>
@@ -350,10 +351,10 @@ export default function BookingModal({
                 name="gender"
                 value={form.gender}
                 onChange={handleChange}
-                className={`w-full p-2 rounded-lg border
+                className={`w-full p-3 px-5 rounded-full border transition-all duration-300 shadow-sm
                   ${isDarkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-50 text-black"
+                    ? "bg-slate-800 text-white border-slate-700"
+                    : "bg-white text-gray-900 border-gray-200"
                   }`}
               >
                 <option value="male">Male</option>
@@ -370,10 +371,10 @@ export default function BookingModal({
               <select
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(e.target.value)}
-                className={`w-full p-2 rounded
+                className={`w-full p-3 px-5 rounded-full border transition-all shadow-sm
                   ${isDarkMode
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-50 text-black"
+                    ? "bg-slate-800 text-white border-slate-700"
+                    : "bg-white text-gray-900 border-gray-200"
                   }`}
               >
                 <option value="">-- Select a day --</option>
@@ -394,10 +395,10 @@ export default function BookingModal({
                 <select
                   value={selectedSlot}
                   onChange={(e) => setSelectedSlot(e.target.value)}
-                  className={`w-full p-2 rounded
+                  className={`w-full p-3 px-5 rounded-full border transition-all shadow-sm
                     ${isDarkMode
-                      ? "bg-gray-700 text-white"
-                      : "bg-gray-50 text-black"
+                      ? "bg-slate-800 text-white border-slate-700"
+                      : "bg-white text-gray-900 border-gray-200"
                     }`}
                 >
                   <option value="">-- Select a slot --</option>
@@ -414,28 +415,26 @@ export default function BookingModal({
           </div>
 
           {/* Buttons */}
-          <div className="space-y-2">
+          <div className="space-y-3 pt-4 border-t border-gray-200 dark:border-slate-800">
             <button
               onClick={handleBooking}
               disabled={!selectedDay || !selectedSlot}
-              className={`w-full px-4 py-2 rounded-lg font-medium transition-colors duration-200
-                disabled:bg-gray-400
-                ${isDarkMode
-                  ? "bg-cyan-600 hover:bg-cyan-700 text-white"
-                  : "bg-cyan-500 hover:bg-cyan-600 text-white"
-                }`}
+              className={`w-full px-4 py-4 rounded-full font-bold text-lg shadow-md transition-all duration-300
+                disabled:opacity-50 disabled:shadow-none disabled:hover:scale-100 hover:-translate-y-1
+                bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-cyan-500/30
+                `}
             >
               {doctor.price > 0
                 ? `Pay & Book (₹${doctor.price})`
-                : "Book"}
+                : "Confirm Booking"}
             </button>
 
             <button
               onClick={onClose}
-              className={`w-full px-4 py-2 rounded-lg transition-colors duration-200
+              className={`w-full px-4 py-3 rounded-full font-medium transition-colors duration-200
                 ${isDarkMode
-                  ? "bg-gray-700 text-white hover:bg-gray-600"
-                  : "bg-gray-200 text-black hover:bg-gray-300"
+                  ? "bg-slate-800 text-gray-300 hover:bg-slate-700"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
             >
               Cancel
