@@ -2,13 +2,14 @@
 
 import { FC, useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
 import { supabase } from "@/supabase/client";
+import { getRoleFromUser } from "@/lib/role-redirect";
 
 /* ================= TYPES ================= */
 
@@ -21,6 +22,7 @@ type LoginFormValues = {
 
 const LoginForm: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { success: Success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
@@ -76,13 +78,22 @@ const LoginForm: FC = () => {
         throw new Error(data?.error || "Login failed");
       }
 
-      if (data?.user?.user_metadata?.role !== "user") {
-        errorToast("Only customer accounts can log in here.");
+      const role = getRoleFromUser(data?.user);
+      if (role !== "user" && role !== "guest") {
+        Success("Login successful! Redirecting to your portal...");
+        const portal =
+          role === "doctor"
+            ? "/doctor"
+            : role === "health_center"
+            ? "/healthcenter"
+            : "/admin";
+        router.push(portal);
         return;
       }
 
       Success("Login successful!");
-      router.push("/user");
+      const nextUrl = searchParams.get("next") || "/user";
+      router.push(nextUrl);
     } catch (err) {
       errorToast(`Login Failed: ${(err as Error).message}`);
     } finally {

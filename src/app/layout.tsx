@@ -27,7 +27,7 @@ export const metadata: Metadata = {
         "telemedicine",
     ],
     icons: {
-        icon: "/cube.gif",
+        icon: "/logo.png",
         shortcut: "/logo.png",
         apple: "/logo.png",
     },

@@ -46,15 +46,16 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profileRole, setProfileRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   const router = useRouter();
 
-
   const role: Role =
     (user?.app_metadata?.role as Role) ??
     (user?.user_metadata?.role as Role) ??
-    "guest";
+    profileRole ??
+    (user ? "user" : "guest");
 
   const isSuperAdmin = role === "super_admin";
   const isDoctor = role === "doctor";
@@ -63,6 +64,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   /* ---------- Session Handling ---------- */
   useEffect(() => {
+    const fetchProfileRole = async (userId: string) => {
+      try {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (prof?.role) {
+          setProfileRole(prof.role as Role);
+        }
+      } catch (err) {
+        console.error("Profile role fetch error:", err);
+      }
+    };
+
     const loadSession = async () => {
       const { data, error } = await supabase.auth.getSession();
 
@@ -70,15 +87,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         console.error("Session error:", error);
       }
 
+      const currentUser = data.session?.user ?? null;
       setSession(data.session ?? null);
-      setUser(data.session?.user ?? null);
+      setUser(currentUser);
+
+      if (currentUser && !currentUser.app_metadata?.role) {
+        await fetchProfileRole(currentUser.id);
+      }
+
       setLoading(false);
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setSession(session ?? null);
-        setUser(session?.user ?? null);
+      async (_event, newSession) => {
+        const currentUser = newSession?.user ?? null;
+        setSession(newSession ?? null);
+        setUser(currentUser);
+
+        if (currentUser && !currentUser.app_metadata?.role) {
+          await fetchProfileRole(currentUser.id);
+        }
+
         setLoading(false);
       }
     );

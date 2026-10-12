@@ -3,6 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { redirect } from "next/navigation";
 import { serviceSupabase } from "@/supabase/serviceClient";
 import Loader from "@/app/components/Loader";
+import { getRoleFromUser, getRoleDashboardUrl } from "@/lib/role-redirect";
 
 export default async function Page() {
   const cookieStore = await cookies();
@@ -17,64 +18,47 @@ export default async function Page() {
     }
   );
 
-  // 1. Get user (more reliable than getSession)
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  // 1. Check user session
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  // 2. No user → public landing
+  // 2. Unauthenticated -> public landing
   if (userError || !user) {
     redirect("/user");
   }
 
-  // 3. Check app_metadata first, then profile table
-  const role = user.app_metadata?.role;
+  // 3. Resolve role
+  const role = getRoleFromUser(user);
 
-  if (role) {
-    const roleRedirects: Record<string, string> = {
-      super_admin: "/admin",
-      doctor: "/doctor",
-      health_center: "/healthcenter",
-      user: "/user",
-    };
+  // 4. Check approval for provider roles
+  if (role === "health_center") {
+    const { data: hc } = await serviceSupabase
+      .from("health_centers")
+      .select("approved")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    // For health_center, check approval
-    if (role === "health_center") {
-      const { data: hc } = await serviceSupabase
-        .from("health_centers")
-        .select("approved")
-        .eq("user_id", user.id)
-        .single();
-
-      if (hc && !hc.approved) {
-        redirect("/pending-approval");
-      }
+    if (hc && !hc.approved) {
+      redirect("/pending-approval");
     }
-
-    redirect(roleRedirects[role] ?? "/user");
   }
 
-  // 4. Fallback: check profiles table
-  const { data: profile } = await serviceSupabase
-    .from("profiles")
-    .select("role, approved")
-    .eq("id", user.id)
-    .maybeSingle();
+  if (role === "doctor") {
+    const { data: doc } = await serviceSupabase
+      .from("doctors")
+      .select("approved")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  if (!profile) {
-    redirect("/user");
+    if (doc && !doc.approved) {
+      redirect("/pending-approval");
+    }
   }
 
-  if (profile.role === "health_center" && !profile.approved) {
-    redirect("/pending-approval");
-  }
-
-  const roleRedirects: Record<string, string> = {
-    super_admin: "/admin",
-    doctor: "/doctor",
-    health_center: "/healthcenter",
-    user: "/user",
-  };
-
-  redirect(roleRedirects[profile.role] ?? "/user");
+  // 5. Redirect to role dashboard
+  redirect(getRoleDashboardUrl(role));
 
   return <Loader />;
 }

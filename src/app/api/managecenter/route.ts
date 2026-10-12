@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { serviceSupabase } from "@/supabase/serviceClient";
 import { requireSuperAdmin } from "@/lib/serverAuth";
+import { deleteMediaFromRow } from "@/lib/cloudinary";
 
 /* -------------------- GET: FETCH ALL CENTERS -------------------- */
 
@@ -31,6 +32,17 @@ export async function DELETE(req: Request) {
 
     if (!id) {
       return NextResponse.json({ error: "Health center ID required" }, { status: 400 });
+    }
+
+    // Fetch row to delete media from Cloudinary
+    const { data: centerData } = await serviceSupabase
+      .from("health_centers")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (centerData) {
+      await deleteMediaFromRow("health_centers", centerData);
     }
 
     const { error } = await serviceSupabase

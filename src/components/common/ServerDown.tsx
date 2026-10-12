@@ -28,6 +28,7 @@ const ServerDownPage = () => {
             alt="Server Down"
             width={250}
             height={250}
+            unoptimized
             className="rounded-xl"
           />
         </div>

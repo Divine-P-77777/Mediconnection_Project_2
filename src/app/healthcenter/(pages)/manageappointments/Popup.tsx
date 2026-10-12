@@ -36,45 +36,25 @@ export default function Popup({ appointmentId, onClose, onUpdate }: PopupProps) 
 
     setUploading(true);
     try {
-      // 1. Upload file to Supabase Storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${appointmentId}/${Date.now()}.${fileExt}`;
-      const bucketName = "documents"; // Assuming a bucket named 'documents'
+      // Upload file to Cloudinary via backend API
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from(bucketName)
-        .upload(fileName, file);
+      const res = await fetch(
+        `/api/upload?appointmentId=${appointmentId}&fileType=${docType}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
-      if (uploadError) throw new Error(uploadError.message);
+      const result = await res.json();
 
-      // Get public URL
-      const { data: publicUrlData } = supabase.storage
-        .from(bucketName)
-        .getPublicUrl(fileName);
+      if (!res.ok) {
+        throw new Error(result.message || "Failed to upload document.");
+      }
 
-      const publicUrl = publicUrlData.publicUrl;
-
-      // 2. Fetch current appointment to get existing array
-      const { data: currentData, error: fetchError } = await supabase
-        .from("appointments")
-        .select(docType)
-        .eq("id", appointmentId)
-        .single();
-
-      if (fetchError) throw new Error(fetchError.message);
-
-      const existingDocs = currentData?.[docType] || [];
-      const updatedDocs = [...existingDocs, publicUrl];
-
-      // 3. Update appointment record
-      const { error: updateError } = await supabase
-        .from("appointments")
-        .update({ [docType]: updatedDocs })
-        .eq("id", appointmentId);
-
-      if (updateError) throw new Error(updateError.message);
-
-      successToast("Document uploaded successfully!");
+      successToast("Document uploaded successfully to Cloudinary!");
       onUpdate();
       onClose();
     } catch (err: any) {

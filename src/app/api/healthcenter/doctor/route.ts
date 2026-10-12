@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import { serviceSupabase } from "@/supabase/serviceClient";
+import { deleteMediaFromRow } from "@/lib/cloudinary";
 
 /* -------------------- TYPES -------------------- */
 
@@ -316,10 +317,10 @@ export async function DELETE(req: Request) {
       );
     }
 
-    /* ownership check */
+    /* ownership check & fetch doctor media */
     const { data: doctor } = await serviceSupabase
       .from("doctors")
-      .select("health_center_id")
+      .select("*")
       .eq("id", id)
       .single();
 
@@ -335,6 +336,10 @@ export async function DELETE(req: Request) {
         { error: "Forbidden" },
         { status: 403 }
       );
+    }
+
+    if (doctor) {
+      await deleteMediaFromRow("doctors", doctor);
     }
 
     await serviceSupabase.auth.admin.deleteUser(id);

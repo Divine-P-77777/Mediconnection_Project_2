@@ -1,13 +1,12 @@
 "use client";
 
 import { FC, FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FcGoogle } from "react-icons/fc";
 
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
 import { FiEye, FiEyeOff } from "react-icons/fi";
-
 
 import AdminNavbar from "@/app/admin/AdminNavbar";
 import AdminFooter from "@/app/admin/AdminFooter";
@@ -17,9 +16,9 @@ const ForgotPasswordForm = dynamic(
   { ssr: false }
 );
 
-
 const AdminAuthPage: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { success: Success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +46,8 @@ const AdminAuthPage: FC = () => {
       }
 
       Success("Welcome Super Admin!");
-      router.replace("/admin");
+      const nextUrl = searchParams.get("next") || "/admin";
+      router.replace(nextUrl);
     } catch (err) {
       errorToast((err as Error).message);
     } finally {

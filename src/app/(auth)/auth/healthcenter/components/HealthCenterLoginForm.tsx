@@ -3,7 +3,7 @@
 import { FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Mail, Lock, Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 import { supabase } from "@/supabase/client";
@@ -21,6 +21,7 @@ type LoginFormData = {
 
 const HealthCenterLoginForm: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
@@ -49,7 +50,8 @@ const HealthCenterLoginForm: FC = () => {
       }
 
       success("Welcome back, Health Center!");
-      router.replace("/healthcenter");
+      const nextUrl = searchParams.get("next") || "/healthcenter";
+      router.replace(nextUrl);
     } catch (err) {
       errorToast((err as Error).message);
       setLoading(false);

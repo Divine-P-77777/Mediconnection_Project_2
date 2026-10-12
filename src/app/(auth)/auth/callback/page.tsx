@@ -4,8 +4,7 @@ import { FC, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/supabase/client";
 import { Loader2 } from "lucide-react";
-
-type UserRole = "super_admin" | "doctor" | "health_center" | "user";
+import { getRoleDashboardUrl, UserRole } from "@/lib/role-redirect";
 
 const AuthCallback: FC = () => {
   const router = useRouter();
@@ -54,22 +53,9 @@ const AuthCallback: FC = () => {
           return;
         }
 
-        const role = profile.role as UserRole;
-
-        // Role-based redirect
-        switch (role) {
-          case "super_admin":
-            router.replace("/admin/dashboard");
-            break;
-          case "doctor":
-            router.replace("/doctor");
-            break;
-          case "health_center":
-            router.replace("/healthcenter");
-            break;
-          default:
-            router.replace("/user");
-        }
+        const role = (profile.role as UserRole) || "user";
+        const destination = getRoleDashboardUrl(role);
+        router.replace(destination);
       } catch (err) {
         console.error("OAuth callback error:", err);
         router.replace("/auth?error=Unexpected error");

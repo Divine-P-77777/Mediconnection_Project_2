@@ -1,7 +1,7 @@
 "use client";
 
 import { FC, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAppSelector } from "@/store/hooks";
@@ -15,6 +15,7 @@ type LoginFormState = {
 
 const DoctorLogin: FC = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { success: Success, errorToast } = useToast();
   const isDarkMode = useAppSelector((state) => state.theme.isDarkMode);
 
@@ -37,20 +38,33 @@ const DoctorLogin: FC = () => {
 
       if (error || !data.user) throw error;
 
-      // ✅ Fetch role from profiles
+      // ✅ Fetch role and approval status
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("role")
         .eq("id", data.user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError || profile?.role !== "doctor") {
         await supabase.auth.signOut();
         throw new Error("This is not a doctor account");
       }
 
+      const { data: doctor } = await supabase
+        .from("doctors")
+        .select("approved")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (doctor && !doctor.approved) {
+        Success("Logged in! Awaiting health center approval.");
+        router.push("/pending-approval");
+        return;
+      }
+
       Success("Login successful!");
-      router.push("/doctor");
+      const nextUrl = searchParams.get("next") || "/doctor";
+      router.push(nextUrl);
     } catch (err) {
       errorToast(
         err instanceof Error ? err.message : "Login failed"

@@ -101,11 +101,17 @@ export async function POST(req: Request): Promise<NextResponse> {
 
     /* -------------------- CLOUDINARY UPLOAD -------------------- */
 
+    const targetFolder = appointmentId
+      ? `mediconnection/appointments/${fileType}`
+      : consultId
+      ? `mediconnection/liveconsult/${fileType}`
+      : "mediconnection/documents";
+
     const uploadResult = await new Promise<cloudinary.UploadApiResponse>(
       (resolve, reject) => {
         const uploadStream = cloudinary.v2.uploader.upload_stream(
           {
-            folder: "documents",
+            folder: targetFolder,
             resource_type: "auto",
           },
           (error, result) => {
